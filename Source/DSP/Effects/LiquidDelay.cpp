@@ -10,6 +10,19 @@ namespace
     constexpr float kApMsL[3] { 2.7f, 4.9f,  7.3f };
     constexpr float kApMsR[3] { 3.1f, 5.3f,  8.1f };
 
+    /** One-pole glide with a hard rate limit, in samples of delay per sample.
+        The limit bounds how fast the read pointer can move relative to the
+        write pointer, which is exactly the pitch warp you hear: with a limit of
+        L the playback ratio stays inside [1-L, 1+L]. That is what turns a big
+        jump in delay time into a musical tape glide instead of a scream or a
+        reversal, and it is why a time change under high feedback cannot click.
+    */
+    inline float glideTowards (float current, float target, float coeff, float maxStep) noexcept
+    {
+        const float step = math::clamp ((target - current) * coeff, -maxStep, maxStep);
+        return current + step;
+    }
+
     /** Linear below -3 dBFS, asymptotic to 1.0 above: the loop cannot diverge
         but ordinary programme material passes untouched. */
     inline float loopBound (float x) noexcept
@@ -57,8 +70,8 @@ void LiquidDelay::prepare (double sampleRate, int maxBlockSize)
     const float hpHz = 35.0f;
     hpCoeff_ = 1.0f - std::exp (-math::twoPi * hpHz / fs);
 
+    setParams (params_);   // before reset(), so every smoothed value starts exact
     reset();
-    setParams (params_);
 }
 
 void LiquidDelay::reset() noexcept
@@ -212,7 +225,7 @@ void LiquidDelay::process (juce::AudioBuffer<float>& buffer) noexcept
             const float chScale = (c == 1) ? (1.0f + 0.12f * spread) : 1.0f;
             const float target  = std::max (2.0f, timeTarget_ * chScale * fs - apCompSamples_[c]);
 
-            timeSmoothed_[c] += (target - timeSmoothed_[c]) * timeCoeff_;
+            timeSmoothed_[c] = glideTowards (timeSmoothed_[c], target, timeCoeff_, kTimeSlew);
 
             const float readDelay = timeSmoothed_[c] + modDepth_ * modOffset_[c];
 

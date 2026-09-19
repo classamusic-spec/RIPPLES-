@@ -12,6 +12,22 @@ namespace
     constexpr float kModHz[4] { 0.071f, 0.103f, 0.137f, 0.179f };
 }
 
+namespace
+{
+    /** One-pole glide with a hard rate limit, in samples of delay per sample.
+        The limit bounds how fast the read pointer can move relative to the
+        write pointer, which is exactly the pitch warp you hear: with a limit of
+        L the playback ratio stays inside [1-L, 1+L]. That is what turns a big
+        jump in delay time into a musical tape glide instead of a scream or a
+        reversal, and it is why a time change under high feedback cannot click.
+    */
+    inline float glideTowards (float current, float target, float coeff, float maxStep) noexcept
+    {
+        const float step = math::clamp ((target - current) * coeff, -maxStep, maxStep);
+        return current + step;
+    }
+}
+
 void DiffusionNetwork::prepare (double sampleRate, int maxBlockSize)
 {
     juce::ignoreUnused (maxBlockSize);   // processed sample-by-sample, in place
@@ -40,8 +56,8 @@ void DiffusionNetwork::prepare (double sampleRate, int maxBlockSize)
     delaySmooth_ = math::onePoleCoeff (0.06f, sampleRate_);
     enableCoeff_ = math::onePoleCoeff (dsp::kSmoothingSeconds, sampleRate_);
 
+    setParams (params_);   // before reset(), so every smoothed value starts exact
     reset();
-    setParams (params_);
 }
 
 void DiffusionNetwork::reset() noexcept
@@ -156,7 +172,8 @@ void DiffusionNetwork::process (juce::AudioBuffer<float>& buffer) noexcept
 
             for (int s = 0; s < kNumStages; ++s)
             {
-                delay_[c][s] += (delayTarget_[c][s] - delay_[c][s]) * delaySmooth_;
+                delay_[c][s] = glideTowards (delay_[c][s], delayTarget_[c][s],
+                                             delaySmooth_, kStageSlew);
 
                 float d = line_[c][s].readCubic (delay_[c][s]);
 

@@ -3,6 +3,22 @@
 namespace ripples
 {
 
+namespace
+{
+    /** One-pole glide with a hard rate limit, in samples of delay per sample.
+        The limit bounds how fast the read pointer can move relative to the
+        write pointer, which is exactly the pitch warp you hear: with a limit of
+        L the playback ratio stays inside [1-L, 1+L]. That is what turns a big
+        jump in delay time into a musical tape glide instead of a scream or a
+        reversal, and it is why a time change under high feedback cannot click.
+    */
+    inline float glideTowards (float current, float target, float coeff, float maxStep) noexcept
+    {
+        const float step = math::clamp ((target - current) * coeff, -maxStep, maxStep);
+        return current + step;
+    }
+}
+
 void LiquidChorus::prepare (double sampleRate, int maxBlockSize)
 {
     juce::ignoreUnused (maxBlockSize);   // processed sample-by-sample, in place
@@ -21,8 +37,8 @@ void LiquidChorus::prepare (double sampleRate, int maxBlockSize)
     const float fc = std::min (6000.0f, 0.45f * (float) sampleRate_);
     fbCoeff_ = 1.0f - std::exp (-math::twoPi * fc / (float) sampleRate_);
 
+    setParams (params_);   // before reset(), so every smoothed value starts exact
     reset();
-    setParams (params_);
 }
 
 void LiquidChorus::reset() noexcept
@@ -159,7 +175,8 @@ void LiquidChorus::process (juce::AudioBuffer<float>& buffer) noexcept
 
             for (int t = 0; t < kNumTaps; ++t)
             {
-                tapDelay_[c][t] += (tapTarget_[c][t] - tapDelay_[c][t]) * delaySmooth_;
+                tapDelay_[c][t] = glideTowards (tapDelay_[c][t], tapTarget_[c][t],
+                                                delaySmooth_, kTapSlew);
                 const float tap = line_[c].readCubic (tapDelay_[c][t]);
 
                 if (t == 0)

@@ -7,6 +7,7 @@
 #include "UI/Theme/RippleTheme.h"
 
 #include <cmath>
+#include <vector>
 
 namespace ripples
 {
@@ -44,10 +45,10 @@ namespace
     }
 
     void layoutRow (juce::Rectangle<int> area,
-                    const juce::Array<juce::Component*>& items,
+                    const std::vector<juce::Component*>& items,
                     int gap)
     {
-        const int n = items.size();
+        const int n = (int) items.size();
 
         if (n <= 0 || area.isEmpty())
             return;

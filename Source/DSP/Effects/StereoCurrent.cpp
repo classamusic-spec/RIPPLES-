@@ -11,8 +11,8 @@ void StereoCurrent::prepare (double sampleRate, int maxBlockSize)
     smoothCoeff_ = math::onePoleCoeff (dsp::kSlowSmoothingSec, sampleRate_);
     enableCoeff_ = math::onePoleCoeff (dsp::kSmoothingSeconds, sampleRate_);
 
+    setParams (params_);   // before reset(), so every smoothed value starts exact
     reset();
-    setParams (params_);
 }
 
 void StereoCurrent::reset() noexcept

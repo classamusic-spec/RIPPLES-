@@ -50,6 +50,9 @@ private:
     static constexpr float kMaxBufferSec    = 0.14f;   // 40 ms base + 20 ms mod + guard
     static constexpr float kMaxBaseMs       = 40.0f;
     static constexpr float kMaxModMs        = 20.0f;
+    /** Deliberately generous: the deepest, fastest modulation needs about
+        1.0, so this never touches the warble, only a dragged knob. */
+    static constexpr float kTapSlew         = 2.0f;
 
     /** Power-of-two circular delay line with cubic (Catmull-Rom) reads. */
     struct DelayLine

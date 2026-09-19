@@ -18,6 +18,19 @@ namespace
     constexpr float kInputApMsR[4] { 5.31f, 3.97f, 13.61f, 10.17f };
     constexpr float kInputApG  [4] { 0.75f, 0.75f, 0.625f, 0.625f };
 
+    /** One-pole glide with a hard rate limit, in samples of delay per sample.
+        The limit bounds how fast the read pointer can move relative to the
+        write pointer, which is exactly the pitch warp you hear: with a limit of
+        L the playback ratio stays inside [1-L, 1+L]. That is what turns a big
+        jump in delay time into a musical tape glide instead of a scream or a
+        reversal, and it is why a time change under high feedback cannot click.
+    */
+    inline float glideTowards (float current, float target, float coeff, float maxStep) noexcept
+    {
+        const float step = math::clamp ((target - current) * coeff, -maxStep, maxStep);
+        return current + step;
+    }
+
     /** Orthonormal 8-point Hadamard (fast Walsh transform + 1/sqrt(8)). */
     inline void hadamard8 (float* v) noexcept
     {
@@ -76,8 +89,8 @@ void AbyssReverb::prepare (double sampleRate, int maxBlockSize)
     delaySmooth_ = math::onePoleCoeff (0.03f, sampleRate_);
     enableCoeff_ = math::onePoleCoeff (dsp::kSmoothingSeconds, sampleRate_);
 
+    setParams (params_);   // before reset(), so every smoothed value starts exact
     reset();
-    setParams (params_);
 }
 
 void AbyssReverb::reset() noexcept
@@ -238,7 +251,7 @@ void AbyssReverb::process (juce::AudioBuffer<float>& buffer) noexcept
 
         for (int i = 0; i < kNumLines; ++i)
         {
-            delay_[i]    += (delayTarget_[i] - delay_[i]) * delaySmooth_;
+            delay_[i]    = glideTowards (delay_[i], delayTarget_[i], delaySmooth_, kDelaySlew);
             lineGain_[i] += (lineGainTarget_[i] - lineGain_[i]) * smoothCoeff_;
 
             float y = line_[i].readCubic (delay_[i]);

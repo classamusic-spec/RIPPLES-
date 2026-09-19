@@ -59,6 +59,8 @@ private:
     static constexpr int   kControlInterval = dsp::kModBlockSize;
     static constexpr float kMinTimeSeconds  = 0.025f;
     static constexpr float kMaxFeedback     = 0.995f;
+    /** Max delay-time change per sample: bounds the tape warp to +/-40%. */
+    static constexpr float kTimeSlew        = 0.4f;
 
     struct DelayLine
     {

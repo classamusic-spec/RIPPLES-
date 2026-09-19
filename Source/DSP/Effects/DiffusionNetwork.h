@@ -51,6 +51,7 @@ private:
     static constexpr int   kControlInterval = dsp::kModBlockSize;
     static constexpr float kMaxStageMs      = 46.0f;    // longest base length
     static constexpr float kMaxSizeScale    = 2.0f;
+    static constexpr float kStageSlew       = 0.5f;   // tames a SIZE sweep
 
     struct DelayLine
     {

@@ -42,8 +42,8 @@ void MasterShaper::prepare (double sampleRate, int maxBlockSize)
     relCoeff_    = coeffFor (0.2500f, sampleRate_);    // 250 ms
     glideCoeff_  = coeffFor (0.0030f, sampleRate_);    // S-curve smoother
 
+    setParams (params_);   // before reset(), so every smoothed value starts exact
     reset();
-    setParams (params_);
 }
 
 void MasterShaper::reset() noexcept
@@ -172,9 +172,12 @@ void MasterShaper::process (juce::AudioBuffer<float>& buffer) noexcept
         const float g = math::clamp (limGainSmooth_, 0.0f, 1.0f);
 
         // Soft knee: exactly linear below 85% of the ceiling, asymptotic above,
-        // so the ceiling is a hard guarantee even without look-ahead.
-        const float knee = kKneeStart * ceiling_;
-        const float span = std::max (ceiling_ - knee, 1.0e-6f);
+        // so the ceiling is a hard guarantee even without look-ahead. Clamping
+        // against min(smoothed, target) means a ceiling the user drags DOWN
+        // binds from the very first sample, while one dragged up glides.
+        const float ceilNow = std::min (ceiling_, ceilingTarget_);
+        const float knee = kKneeStart * ceilNow;
+        const float span = std::max (ceilNow - knee, 1.0e-6f);
 
         for (int c = 0; c < 2; ++c)
         {

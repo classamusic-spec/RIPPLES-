@@ -4,6 +4,8 @@
 #include "Parameters/ParameterIDs.h"
 #include "UI/Theme/RippleTheme.h"
 
+#include <vector>
+
 namespace ripples
 {
 
@@ -31,10 +33,10 @@ namespace
 
     /** Lays components out as equal cells across a row, without rounding drift. */
     void layoutRow (juce::Rectangle<int> area,
-                    const juce::Array<juce::Component*>& items,
+                    const std::vector<juce::Component*>& items,
                     int gap)
     {
-        const int n = items.size();
+        const int n = (int) items.size();
 
         if (n <= 0 || area.isEmpty())
             return;
@@ -258,11 +260,11 @@ void OscillatorPanel::resized()
     body.removeFromBottom (gap);
     waveform.setBounds (body);
 
-    juce::Array<juce::Component*> knobRowItems { octave.get(), shape.get(),
+    std::vector<juce::Component*> knobRowItems { octave.get(), shape.get(),
                                                  detune.get(), level.get() };
 
     if (interactionAmount != nullptr)
-        knobRowItems.add (interactionAmount.get());
+        knobRowItems.push_back (interactionAmount.get());
 
     layoutRow (knobRow, knobRowItems, tight ? RippleTheme::xs : RippleTheme::sm);
 }
