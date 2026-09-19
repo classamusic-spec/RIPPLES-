@@ -19,7 +19,8 @@ void addAbyssBank (std::vector<Preset>& out)
     // --- DRY AQUATIC #7 ----------------------------------------------------
     out.push_back (make (kAbyss, "ABYSS BASS", "Bass", { "Deep", "Dark", "Submerged" }, Dry::Yes,
         "A PLAYED bass, not a drone: mono legato, full key tracking so it stays "
-        "in tune up the neck, a tight mod envelope on a resonant LP24 at 180 Hz, "
+        "in tune up the neck, a tight mod envelope on a resonant LP24 set at 2.2 kHz that DEPTH
+        "closes to around 560 Hz, "
         "and a note-mode droplet per attack for the gulp. Compare OCEAN FLOOR, "
         "which is the same depth with none of the articulation.",
     {
@@ -43,13 +44,13 @@ void addAbyssBank (std::vector<Preset>& out)
 
         { pid::subWave,       sw (SubWave::Triangle) },
         { pid::subOctave,     subOct (-1) },
-        { pid::subLevel,      lvl (-5.0f) },
+        { pid::subLevel,      lvl (-9.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-24.0f) },
         { pid::noiseTone,     0.18f },
 
         { pid::filtMode,      fm (FilterMode::LP24) },
-        { pid::filtCutoff,    hz (180.0f) },
+        { pid::filtCutoff,    hz (2200.0f) },
         { pid::filtReso,      0.55f },
         { pid::filtDrive,     0.35f },
         { pid::filtKeyTrack,  1.00f },
@@ -162,13 +163,13 @@ void addAbyssBank (std::vector<Preset>& out)
 
         { pid::subWave,       sw (SubWave::Sine) },
         { pid::subOctave,     subOct (-2) },
-        { pid::subLevel,      lvl (-8.0f) },
+        { pid::subLevel,      lvl (-12.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-18.0f) },
-        { pid::noiseTone,     0.06f },
+        { pid::noiseTone,     0.16f },
 
         { pid::filtMode,      fm (FilterMode::LP24) },
-        { pid::filtCutoff,    hz (150.0f) },
+        { pid::filtCutoff,    hz (3000.0f) },
         { pid::filtReso,      0.18f },
         { pid::filtDrive,     0.22f },
         { pid::filtKeyTrack,  0.15f },
@@ -268,13 +269,13 @@ void addAbyssBank (std::vector<Preset>& out)
         { pid::oscBInterAmt,  0.55f },
 
         { pid::subWave,       sw (SubWave::Square) },
-        { pid::subLevel,      lvl (-7.0f) },
+        { pid::subLevel,      lvl (-14.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-26.0f) },
         { pid::noiseTone,     0.25f },
 
         { pid::filtMode,      fm (FilterMode::LP24) },
-        { pid::filtCutoff,    hz (260.0f) },
+        { pid::filtCutoff,    hz (2400.0f) },
         { pid::filtReso,      0.48f },
         { pid::filtDrive,     0.55f },
         { pid::filtKeyTrack,  0.90f },
@@ -365,13 +366,13 @@ void addAbyssBank (std::vector<Preset>& out)
         { pid::oscBStereo,    0.95f },
         { pid::oscBLevel,     lvl (-9.0f) },
 
-        { pid::subLevel,      lvl (-11.0f) },
+        { pid::subLevel,      lvl (-22.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-24.0f) },
         { pid::noiseTone,     0.15f },
 
         { pid::filtMode,      fm (FilterMode::Notch) },
-        { pid::filtCutoff,    hz (700.0f) },
+        { pid::filtCutoff,    hz (3400.0f) },
         { pid::filtReso,      0.55f },
         { pid::filtDrive,     0.20f },
         { pid::filtKeyTrack,  0.30f },
@@ -470,13 +471,13 @@ void addAbyssBank (std::vector<Preset>& out)
         { pid::oscBInterMode, im (InteractionMode::RingMod) },
         { pid::oscBInterAmt,  0.60f },
 
-        { pid::subLevel,      lvl (-12.0f) },
+        { pid::subLevel,      lvl (-26.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-12.0f) },
         { pid::noiseTone,     0.32f },
 
         { pid::filtMode,      fm (FilterMode::BP12) },
-        { pid::filtCutoff,    hz (420.0f) },
+        { pid::filtCutoff,    hz (4200.0f) },
         { pid::filtReso,      0.60f },
         { pid::filtDrive,     0.62f },
         { pid::filtKeyTrack,  0.35f },
@@ -585,13 +586,13 @@ void addAbyssBank (std::vector<Preset>& out)
         { pid::oscBDetune,    0.14f },
         { pid::oscBLevel,     lvl (-6.0f) },
 
-        { pid::subLevel,      lvl (-10.0f) },
+        { pid::subLevel,      lvl (-20.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-25.0f) },
         { pid::noiseTone,     0.20f },
 
         { pid::filtMode,      fm (FilterMode::LP24) },
-        { pid::filtCutoff,    hz (520.0f) },
+        { pid::filtCutoff,    hz (5000.0f) },
         { pid::filtReso,      0.40f },
         { pid::filtDrive,     0.38f },
         { pid::filtKeyTrack,  0.55f },

@@ -176,9 +176,11 @@ void addDeepBlueBank (std::vector<Preset>& out)
 
     // --- DRY AQUATIC #6 ----------------------------------------------------
     out.push_back (make (kDeepBlue, "SUBMERGED", "Pad", { "Submerged", "Deep", "Wet" }, Dry::Yes,
-        "The proof that the reverb is optional. Everything muffled, everything "
-        "moving: a low LP24 with heavy pressure, Deep noise breathing under the "
-        "Tide, and a large slow resonator standing in for the room.",
+        "The proof that the reverb is optional. Six-voice Water spread hard "
+        "across the field, Deep noise breathing under the Tide, and a large slow "
+        "resonator standing in for the room. The LP24 is written high enough "
+        "that DEPTH at 0.80 still leaves it open around a kilohertz, so the "
+        "patch is submerged rather than smothered.",
     {
         RIPPLES_FX_BYPASSED,
 
@@ -198,13 +200,13 @@ void addDeepBlueBank (std::vector<Preset>& out)
         { pid::oscBLevel,     lvl (-8.0f) },
 
         { pid::subWave,       sw (SubWave::Sine) },
-        { pid::subLevel,      lvl (-13.0f) },
+        { pid::subLevel,      lvl (-19.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-21.0f) },
         { pid::noiseTone,     0.22f },
 
         { pid::filtMode,      fm (FilterMode::LP24) },
-        { pid::filtCutoff,    hz (480.0f) },
+        { pid::filtCutoff,    hz (3400.0f) },
         { pid::filtReso,      0.34f },
         { pid::filtDrive,     0.24f },
         { pid::filtKeyTrack,  0.30f },
@@ -223,7 +225,7 @@ void addDeepBlueBank (std::vector<Preset>& out)
         { pid::aenvRelease,   rel (6.50f) },
         { pid::aenvVelocity,  0.30f },
 
-        { pid::macroDepth,    0.85f },
+        { pid::macroDepth,    0.80f },
         { pid::macroWet,      0.70f },
         { pid::macroCurrent,  0.55f },
         { pid::macroPressure, 0.70f },
@@ -305,7 +307,7 @@ void addDeepBlueBank (std::vector<Preset>& out)
         { pid::oscBStereo,    0.95f },
         { pid::oscBLevel,     lvl (-13.0f) },
 
-        { pid::subLevel,      lvl (-16.0f) },
+        { pid::subLevel,      lvl (-20.0f) },
         { pid::noiseType,     nz (NoiseType::Air) },
         { pid::noiseLevel,    lvl (-28.0f) },
         { pid::noiseTone,     0.55f },
@@ -426,7 +428,7 @@ void addDeepBlueBank (std::vector<Preset>& out)
         { pid::oscBInterMode, im (InteractionMode::Crossfade) },
         { pid::oscBInterAmt,  0.45f },
 
-        { pid::subLevel,      lvl (-15.0f) },
+        { pid::subLevel,      lvl (-19.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-27.0f) },
         { pid::noiseTone,     0.30f },

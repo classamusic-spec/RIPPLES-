@@ -29,7 +29,7 @@ void addDropletsBank (std::vector<Preset>& out)
         { pid::oscAUnison,    uni (2) },
         { pid::oscADetune,    0.12f },
         { pid::oscAStereo,    0.70f },
-        { pid::oscALevel,     lvl (-19.0f) },
+        { pid::oscALevel,     lvl (-15.0f) },
 
         { pid::oscBWave,      wv (OscWave::Glass) },
         { pid::oscBOctave,    oct (2) },
@@ -39,7 +39,7 @@ void addDropletsBank (std::vector<Preset>& out)
 
         { pid::subLevel,      lvl (kSilentDb) },
         { pid::noiseType,     nz (NoiseType::Bubble) },
-        { pid::noiseLevel,    lvl (-14.0f) },
+        { pid::noiseLevel,    lvl (-19.0f) },
         { pid::noiseTone,     0.80f },
 
         { pid::filtMode,      fm (FilterMode::BP12) },
@@ -122,7 +122,7 @@ void addDropletsBank (std::vector<Preset>& out)
         { pid::oscBOctave,    oct (-1) },
         { pid::oscBLevel,     lvl (-26.0f) },
 
-        { pid::subLevel,      lvl (-28.0f) },
+        { pid::subLevel,      lvl (-42.0f) },
         { pid::noiseType,     nz (NoiseType::Deep) },
         { pid::noiseLevel,    lvl (-30.0f) },
         { pid::noiseTone,     0.25f },
@@ -416,7 +416,7 @@ void addDropletsBank (std::vector<Preset>& out)
         { pid::oscBUnison,    uni (2) },
         { pid::oscBLevel,     lvl (-18.0f) },
 
-        { pid::subLevel,      lvl (-20.0f) },
+        { pid::subLevel,      lvl (-32.0f) },
         { pid::noiseType,     nz (NoiseType::Surf) },
         { pid::noiseLevel,    lvl (-26.0f) },
         { pid::noiseTone,     0.40f },

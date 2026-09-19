@@ -229,16 +229,16 @@ void addSurfaceBank (std::vector<Preset>& out)
         { pid::oscAUnison,    uni (4) },
         { pid::oscADetune,    0.30f },
         { pid::oscAStereo,    0.85f },
-        { pid::oscALevel,     lvl (-16.0f) },
+        { pid::oscALevel,     lvl (-9.0f) },
 
         { pid::oscBWave,      wv (OscWave::Hollow) },
         { pid::oscBOctave,    oct (1) },
-        { pid::oscBLevel,     lvl (-22.0f) },
+        { pid::oscBLevel,     lvl (-15.0f) },
         { pid::oscBStereo,    0.80f },
 
         { pid::subLevel,      lvl (kSilentDb) },
         { pid::noiseType,     nz (NoiseType::Surf) },
-        { pid::noiseLevel,    lvl (-4.0f) },
+        { pid::noiseLevel,    lvl (-7.0f) },
         { pid::noiseTone,     0.62f },
 
         { pid::filtMode,      fm (FilterMode::BP12) },
