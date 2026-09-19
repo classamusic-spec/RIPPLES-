@@ -4048,7 +4048,7 @@ void addStormsBank (std::vector<Preset>& out)
     }));
 
     // --- DRY AQUATIC -------------------------------------------------------
-    out.push_back (make (kStorms, "SPINDRIFT", "Texture", { "Bright", "Surface", "Chaotic" }, Dry::Yes,
+    out.push_back (make (kStorms, "SPUME", "Texture", { "Bright", "Surface", "Chaotic" }, Dry::Yes,
         "Spray torn off a wave top and carried downwind. Air noise through a "
         "high-pass with almost no oscillator under it; the width is entirely "
         "decorrelated noise, opposed pans and a fast Current. Nothing wet.",
@@ -4155,10 +4155,10 @@ void addStormsBank (std::vector<Preset>& out)
     }));
 
     // --- DRY AQUATIC -------------------------------------------------------
-    out.push_back (make (kStorms, "CATSPAW", "Texture", { "Surface", "Organic", "Calm" }, Dry::Yes,
-        "The dark patch a gust draws on flat water. Small, quiet and almost "
-        "polite for this bank — a band-passed wash that arrives, crosses the "
-        "stereo field once under the Current, and is gone.",
+    out.push_back (make (kStorms, "RIFFLE", "Texture", { "Surface", "Organic", "Calm" }, Dry::Yes,
+        "A riffle: the dark patch a gust draws on flat water. Small, quiet "
+        "and almost polite for this bank — a band-passed wash that arrives, "
+        "crosses the stereo field once under the Current, and is gone.",
     {
         RIPPLES_FX_BYPASSED,
 
