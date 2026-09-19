@@ -1140,7 +1140,7 @@ void addAbyssBank (std::vector<Preset>& out)
     }));
 
     // --- DRY AQUATIC #10 ---------------------------------------------------
-    out.push_back (make (kAbyss, "MARINE SNOW", "Pad", { "Deep", "Wet", "Dreamy", "Submerged" }, Dry::Yes,
+    out.push_back (make (kAbyss, "DETRITAL FALL", "Pad", { "Deep", "Wet", "Dreamy", "Submerged" }, Dry::Yes,
         "Detritus falling for weeks. The pad itself is almost a bed — the "
         "content is the droplet engine running atmospheric, small, high and "
         "wide, scattered through a large open resonator. No reverb anywhere: "
@@ -3031,7 +3031,7 @@ void addAbyssBank (std::vector<Preset>& out)
         { ModSource::Drift,       ModDest::FineAll,       0.12f },
     }));
 
-    out.push_back (make (kAbyss, "SOUNDING LINE", "Lead", { "Dark", "Glassy", "Cinematic" }, Dry::No,
+    out.push_back (make (kAbyss, "HADAL WHISTLE", "Lead", { "Dark", "Glassy", "Cinematic" }, Dry::No,
         "A thin, precise lead for the top of a dark arrangement: almost a sine, "
         "with one Glass partial phase-modulating it and the resonator tuned "
         "small and long so every note leaves a hairline ring. No glide at all — "
@@ -5627,7 +5627,7 @@ void addAbyssBank (std::vector<Preset>& out)
         { ModSource::ModWheel,    ModDest::DelayFeedback,  0.35f },
     }));
 
-    out.push_back (make (kAbyss, "ECHO SOUNDER", "FX", { "Bright", "Wet", "Cinematic" }, Dry::No,
+    out.push_back (make (kAbyss, "TRANSPONDER", "FX", { "Bright", "Wet", "Cinematic" }, Dry::No,
         "A survey ping and its returns. The voice lasts forty milliseconds; "
         "everything you hear after that is a quarter-note delay with very high "
         "feedback and heavy damping, so each repeat comes back darker than the "
@@ -5876,7 +5876,7 @@ void addAbyssBank (std::vector<Preset>& out)
         { ModSource::Current,     ModDest::NoiseTone,      0.30f },
     }));
 
-    out.push_back (make (kAbyss, "SURFACING", "FX", { "Bright", "Wet", "Cinematic" }, Dry::No,
+    out.push_back (make (kAbyss, "ABYSSAL ASCENT", "FX", { "Bright", "Wet", "Cinematic" }, Dry::No,
         "The only thing in this bank that gets lighter. DEPTH is left low and "
         "GLOW high so the filter starts above eight kilohertz, and a slow Tide "
         "carries pitch and cutoff upward over eight seconds until the droplets "

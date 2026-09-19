@@ -4155,8 +4155,8 @@ void addStormsBank (std::vector<Preset>& out)
     }));
 
     // --- DRY AQUATIC -------------------------------------------------------
-    out.push_back (make (kStorms, "RIFFLE", "Texture", { "Surface", "Organic", "Calm" }, Dry::Yes,
-        "A riffle: the dark patch a gust draws on flat water. Small, quiet "
+    out.push_back (make (kStorms, "FIRST GUST", "Texture", { "Surface", "Organic", "Calm" }, Dry::Yes,
+        "The dark patch the first gust draws on flat water. Small, quiet "
         "and almost polite for this bank — a band-passed wash that arrives, "
         "crosses the stereo field once under the Current, and is gone.",
     {
