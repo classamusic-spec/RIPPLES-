@@ -490,7 +490,7 @@ void FluidField::advance (float dt)
 
     // Two independent wrapped phases rather than a free-running clock: the
     // drift stays continuous for as long as the plug-in is open.
-    const float driftRate = math::twoPi * RippleTheme::get().ambientMotionRate * dt;
+    const float driftRate = math::twoPi * t.ambientMotionRate * dt;
 
     driftPhaseA += driftRate;
     if (driftPhaseA >= math::twoPi) driftPhaseA -= math::twoPi;

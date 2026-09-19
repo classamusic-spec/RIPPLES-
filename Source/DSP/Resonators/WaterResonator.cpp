@@ -19,7 +19,7 @@ namespace
     constexpr float kMotionRates[dsp::kNumResonatorBanks] =
         { 0.031f, 0.047f, 0.067f, 0.083f, 0.109f, 0.131f, 0.167f, 0.191f };
 
-    constexpr float kMaxPoleRadius   = 0.99995f;   // strictly < 1 — never self-oscillates
+    constexpr float kAbsMaxPoleRadius = 0.999999f;  // hard ceiling — strictly < 1, always
     constexpr float kMinRingSeconds  = 0.008f;
     constexpr float kMaxRingSeconds  = 8.0f;
     constexpr float kBankLimit       = 6.0f;       // in-loop saturator ceiling
@@ -60,6 +60,13 @@ void WaterResonator::prepare (double newSampleRate, uint32_t seed)
             b.lfoInc   = kMotionRates[i] * (float) dsp::kModBlockSize / (float) sampleRate;
         }
     }
+
+    // The longest ring the bank may ask for, expressed as a pole radius. Derived
+    // from the sample rate so that DECAY means the same ring time at 44.1 kHz and
+    // at 192 kHz, and hard-capped strictly below 1 so the bank can never
+    // self-oscillate however the coefficients are driven.
+    maxPoleRadius = math::clamp (math::decayCoeff (kMaxRingSeconds, sampleRate),
+                                 0.0f, kAbsMaxPoleRadius);
 
     // Control-rate smoothing is applied once per kModBlockSize samples.
     const double ctlRate = sampleRate / (double) dsp::kModBlockSize;
@@ -187,7 +194,7 @@ void WaterResonator::updateCoefficients() noexcept
             // Higher partials lose energy faster — the essence of "submerged".
             const float ring = math::clamp (ringSeconds / (1.0f + dampingS * 5.0f * (ratio - 1.0f)),
                                             0.004f, kMaxRingSeconds);
-            const float R = math::clamp (math::decayCoeff (ring, sampleRate), 0.0f, kMaxPoleRadius);
+            const float R = math::clamp (math::decayCoeff (ring, sampleRate), 0.0f, maxPoleRadius);
 
             b.b1 =  2.0f * R * std::cos (theta);
             b.b2 = -R * R;

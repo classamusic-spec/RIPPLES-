@@ -3,6 +3,7 @@
 #include "Utilities/MathUtils.h"
 #include "Utilities/DSPConstants.h"
 
+#include <algorithm>
 #include <cmath>
 
 namespace ripples
@@ -14,11 +15,11 @@ namespace
     constexpr float kMaxFeedback   = 4.55f;   // ladder self-oscillates at k = 4
     constexpr float kMinCutoffRel  = 0.45f;   // highest cutoff as a fraction of fs
 
-    // Integrator-state soft limiter. Fully transparent below the threshold, so
-    // ordinary programme material is untouched; above it the state asymptotes,
-    // which is what turns a runaway resonance into a steady limit cycle.
-    constexpr float kStateKnee     = 2.0f;
-    constexpr float kStateRange    = 2.5f;    // asymptote = knee + range
+    // Integrator-state ceiling. Transparent below the knee, asymptotic above
+    // it, and applied as ONE common gain across all four states — see the note
+    // at the call site for why that matters to the tuning.
+    constexpr float kStateKnee     = 3.0f;
+    constexpr float kStateRange    = 3.0f;    // asymptote = knee + range
     constexpr float kInputKnee     = 6.0f;
     constexpr float kInputRange    = 4.0f;
     constexpr float kOutputKnee    = 2.5f;
@@ -29,19 +30,20 @@ namespace
     // difference between a bass patch and silence.
     constexpr float kBassCompBase  = 0.36f;
     constexpr float kBassCompLow   = 0.40f;
-    constexpr float kLowTame       = 0.16f;   // resonance reduction at 20 Hz
+    constexpr float kLowTame       = 0.07f;   // resonance reduction at 20 Hz
     constexpr float kTrimPerK      = 0.22f;
 
     // PRESSURE
-    constexpr float kPressLowGain  = 0.95f;
-    constexpr float kPressSoften   = 2.30f;
-    constexpr float kPressSatG     = 2.50f;
-    constexpr float kPressAsym     = 0.16f;
-    constexpr float kPressMakeup   = 1.30f;
+    constexpr float kPressLowGain  = 1.35f;   // low-mid weight
+    constexpr float kPressSoften   = 1.80f;   // transient softening depth
+    constexpr float kPressSatG     = 2.20f;   // density saturation hardness
+    constexpr float kPressAsym     = 0.16f;   // even-harmonic tilt
+    constexpr float kPressMakeup   = 2.40f;
     constexpr float kMinSatG       = 0.0015f; // "off" hardness -> linear
 
     // DRIVE
     constexpr float kMaxDriveG     = 9.0f;
+    constexpr float kDriveMakeup   = 1.80f;
 
     //=========================================================================
     /** C1-continuous soft limiter: identity for |x| <= knee, asymptotic to
@@ -148,8 +150,8 @@ void DepthFilter::prepare (double sampleRate)
     invLowRange_ = 1.0f / std::max (gLowHi_ - gLowLo, 1.0e-9f);
 
     lowBandG_ = tptGain (math::clamp (280.0f, minCutoff_, maxCutoff_) * wdScale_);
-    envAtt_   = math::onePoleCoeff (0.0015f, sampleRate_);
-    envRel_   = math::onePoleCoeff (0.0600f, sampleRate_);
+    envAtt_   = math::onePoleCoeff (0.0004f, sampleRate_);
+    envRel_   = math::onePoleCoeff (0.0800f, sampleRate_);
     dcR_      = 1.0f - math::twoPi * 5.0f / fs;
     if (dcR_ < 0.0f)  dcR_ = 0.0f;
     if (dcR_ > 0.9999f) dcR_ = 0.9999f;
@@ -239,7 +241,7 @@ void DepthFilter::updateDerived() noexcept
     // bypass; raising g adds saturation at constant small-signal gain, which is
     // the level compensation the brief asks for.
     driveG_   = kMinSatG + drive_ * drive_ * kMaxDriveG;
-    driveInv_ = 1.0f / driveG_;
+    driveInv_ = (1.0f + kDriveMakeup * drive_ * drive_ * drive_) / driveG_;
 
     // PRESSURE: low-mid weight, transient softening, asymmetric density.
     const float p = pressure_;
@@ -316,12 +318,31 @@ float DepthFilter::processOne (float x, ChannelState& c) noexcept
     const float y4b = v + c.s4;
     c.s4 = y4b + v;
 
-    // Bounded, denormal-free state. This is also what gives self-oscillation a
-    // stable amplitude instead of an exponential blow-up once k passes 4.
-    c.s1 = softLimit (math::antiDenormal (c.s1), kStateKnee, kStateRange);
-    c.s2 = softLimit (math::antiDenormal (c.s2), kStateKnee, kStateRange);
-    c.s3 = softLimit (math::antiDenormal (c.s3), kStateKnee, kStateRange);
-    c.s4 = softLimit (math::antiDenormal (c.s4), kStateKnee, kStateRange);
+    // Bounded, denormal-free state. This is what gives self-oscillation a stable
+    // amplitude instead of an exponential blow-up once k passes 4.
+    //
+    // The four integrators are scaled by ONE common gain rather than limited
+    // individually. Scaling the whole state vector only scales the linear
+    // system's trajectory, so the limit cycle keeps the shape and the frequency
+    // the linear ladder would have had: a self-oscillating DEPTH stays in tune.
+    // Limiting each state on its own instead acts like per-stage leakage and
+    // pulls the oscillation ~3 % sharp, which is half a semitone of detune when
+    // the filter is being played as a sine source.
+    c.s1 = math::antiDenormal (c.s1);
+    c.s2 = math::antiDenormal (c.s2);
+    c.s3 = math::antiDenormal (c.s3);
+    c.s4 = math::antiDenormal (c.s4);
+
+    const float sMax = std::max (std::max (std::fabs (c.s1), std::fabs (c.s2)),
+                                 std::max (std::fabs (c.s3), std::fabs (c.s4)));
+    if (sMax > kStateKnee)
+    {
+        const float scale = softLimit (sMax, kStateKnee, kStateRange) / sMax;
+        c.s1 *= scale;
+        c.s2 *= scale;
+        c.s3 *= scale;
+        c.s4 *= scale;
+    }
 
     //---------------------------------------------------------------- tap mix
     const float out = tap_[0] * u

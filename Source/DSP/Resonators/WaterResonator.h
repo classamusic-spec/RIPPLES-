@@ -74,6 +74,7 @@ private:
     void updateCoefficients() noexcept;
 
     double sampleRate = 44100.0;
+    float  maxPoleRadius = 0.99995f;   // strictly < 1 at every sample rate
 
     Params params {};
     // Control-rate smoothed copies.

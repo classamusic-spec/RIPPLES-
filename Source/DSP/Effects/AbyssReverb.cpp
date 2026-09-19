@@ -175,7 +175,7 @@ void AbyssReverb::updateControlRate() noexcept
     const float gAvg = gainSum * (1.0f / (float) kNumLines);
     const float norm = std::sqrt (std::max (1.0e-4f, 1.0f - gAvg * gAvg));
 
-    inGainTarget_ = 1.35f * norm;
+    inGainTarget_ = 1.9f * norm;
 }
 
 void AbyssReverb::process (juce::AudioBuffer<float>& buffer) noexcept

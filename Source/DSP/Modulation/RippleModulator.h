@@ -20,10 +20,11 @@ namespace ripples
     It has to retrigger without clicking. A new trigger restarts the wave at
     phase zero, where the wave is silent, and carries the difference between the
     old output and the new one forward as a residual that fades over about
-    twelve milliseconds. The residual is scaled by (1 - |wave|), so the sum can
-    never leave -1..1 and the blend disappears exactly as the new ripple takes
-    over. The same mechanism covers a parameter change mid-ring, including a
-    polarity flip.
+    twelve milliseconds. The residual is carried as a signed position between
+    the wave and the boundary rather than as a plain offset, so the output can
+    never leave -1..1 and can still be held exactly where it was — including at
+    the opposite sign. The same mechanism covers a parameter change mid-ring,
+    polarity flips included.
 
     And it has to stop. `decay` is expressed in nepers per cycle so it means the
     same thing at any rate, and `cycles` clamps it from below so the ring can

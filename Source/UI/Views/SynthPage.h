@@ -55,7 +55,6 @@ private:
     void refreshLfoView();
 
     void setFilterMoreVisible (bool);
-    void setEnvMoreVisible (bool);
     void setModMoreVisible (bool);
     void setEnvSelection (EnvSelection);
     void updateModulatorVisibility();
@@ -69,8 +68,15 @@ private:
 
     Modulator currentModulator() const noexcept;
 
+    /** Watches a control so the graphs can follow it. Unwatched in the dtor. */
+    void observe (RippleKnob& knob);
+    void observe (RippleSelector& selector);
+
     //==========================================================================
     juce::AudioProcessorValueTreeState& state;
+
+    juce::Array<juce::Slider*>   observedSliders;
+    juce::Array<juce::ComboBox*> observedBoxes;
 
     // --- DEPTH / FILTER -----------------------------------------------------
     GlassPanel         filterPanel;
@@ -88,12 +94,9 @@ private:
     SectionHeader envHeader { "ENVELOPE", "SHAPE OVER TIME" };
     RippleButton  ampTabButton { "AMP" }, modTabButton { "MOD" };
     EnvelopeView  envView;
-    RippleButton  envMoreButton { "MORE" };
-    GlassPanel    envMorePanel;
     std::unique_ptr<RippleKnob> ampAttack, ampDecay, ampSustain, ampRelease, ampVelocity;
     std::unique_ptr<RippleKnob> modAttack, modDecay, modSustain, modRelease, modVelocity;
     EnvSelection envSelection = EnvSelection::Amp;
-    bool envMoreVisible = false;
 
     // --- MODULATORS ---------------------------------------------------------
     GlassPanel     modPanel;

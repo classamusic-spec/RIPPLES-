@@ -21,16 +21,27 @@ namespace
     constexpr double kAttackRatio = 0.30;
     constexpr double kDecayRatio  = 0.0002;
 
-    /** Level at which the release is considered finished: -100 dB. */
-    constexpr double kIdleLevel   = 1.0e-5;
+    /** Level at which a release is considered finished: -114 dB. */
+    constexpr double kIdleLevel   = 2.0e-6;
 
-    /** Pole placing the one-pole exactly on its end point after rateSamples. */
-    inline double calcCoef (double rateSamples, double targetRatio) noexcept
+    /** Pole of a one-pole heading for `target` that travels from `from` to `to`
+        in exactly `rateSamples` samples. Deriving it from the actual span is
+        what makes a decay take its programmed time whatever the sustain level
+        is, instead of finishing early because it had less ground to cover. */
+    inline double poleFor (double rateSamples, double from, double to, double target) noexcept
     {
         if (! (rateSamples > 1.0))
             rateSamples = 1.0;
 
-        return std::exp (-std::log ((1.0 + targetRatio) / targetRatio) / rateSamples);
+        const double den = std::fabs (from - target);
+        if (! (den > 0.0))
+            return 0.0;
+
+        const double ratio = std::fabs (to - target) / den;
+        if (! (ratio > 0.0) || ratio >= 1.0)
+            return 0.0;                      // nothing to travel: land at once
+
+        return std::exp (std::log (ratio) / rateSamples);
     }
 
     /** NaN-safe clamp into [lo, hi]. */
@@ -90,13 +101,18 @@ void Envelope::recalculate() noexcept
 
     const double sr = sampleRate_;
 
-    attackCoef_  = calcCoef ((double) params_.attack * sr, kAttackRatio);
+    // Attack: 0 -> 1 aiming at 1 + kAttackRatio.
+    attackCoef_  = poleFor ((double) params_.attack * sr, 0.0, 1.0, 1.0 + kAttackRatio);
     attackBase_  = (1.0 + kAttackRatio) * (1.0 - attackCoef_);
 
-    decayCoef_   = calcCoef ((double) params_.decay * sr, kDecayRatio);
+    // Decay: 1 -> sustain aiming just below sustain.
+    decayCoef_   = poleFor ((double) params_.decay * sr, 1.0, sustain_, sustain_ - kDecayRatio);
     decayBase_   = (sustain_ - kDecayRatio) * (1.0 - decayCoef_);
 
-    releaseCoef_ = calcCoef ((double) params_.release * sr, kDecayRatio);
+    // Release: quoted as the time to fall from full scale to silence, so a
+    // release from a lower sustain is correspondingly shorter — as an
+    // exponential tail should be.
+    releaseCoef_ = poleFor ((double) params_.release * sr, 1.0, 0.0, -kDecayRatio);
     releaseBase_ = -kDecayRatio * (1.0 - releaseCoef_);
 
     coeffsValid_ = true;

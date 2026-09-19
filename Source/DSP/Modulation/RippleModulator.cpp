@@ -36,6 +36,24 @@ namespace
         return p < 0.0 ? p + 1.0 : p;
     }
 
+    /** The blend. `residual` is a signed 0..1 position between the wave and the
+        boundary it is heading for, so the result is always inside -1..1 *and*
+        can still reproduce any earlier output exactly — including the opposite
+        sign, which a plain (1 - |wave|) scaling could not reach. */
+    inline float blend (float wave, float residual) noexcept
+    {
+        const float room = residual >= 0.0f ? (1.0f - wave) : (1.0f + wave);
+        return wave + residual * room;
+    }
+
+    /** Inverse of blend(): the residual that reproduces `target` from `wave`. */
+    inline float blendResidual (float target, float wave) noexcept
+    {
+        const float d = target - wave;
+        const float room = d >= 0.0f ? (1.0f - wave) : (1.0f + wave);
+        return d / std::max (room, 1.0e-4f);
+    }
+
     inline bool sameParams (const RippleModulator::Params& a,
                             const RippleModulator::Params& b) noexcept
     {
@@ -82,12 +100,8 @@ void RippleModulator::setParams (const Params& p) noexcept
     recompute();
     updateWave();
 
-    // Invert of refreshOutputs(): the residual that reproduces the old value.
-    const float roomL = std::max (1.0f - std::fabs (waveL), 0.05f);
-    const float roomR = std::max (1.0f - std::fabs (waveR), 0.05f);
-
-    residualL = math::clamp (math::sanitise ((oldL - waveL) / roomL), -1.0f, 1.0f);
-    residualR = math::clamp (math::sanitise ((oldR - waveR) / roomR), -1.0f, 1.0f);
+    residualL = math::clamp (math::sanitise (blendResidual (oldL, waveL)), -1.0f, 1.0f);
+    residualR = math::clamp (math::sanitise (blendResidual (oldR, waveR)), -1.0f, 1.0f);
 
     refreshOutputs();
 }
@@ -144,8 +158,8 @@ void RippleModulator::trigger (float intensity) noexcept
 
     // Whatever was already on the output carries forward, so a retrigger on a
     // still-ringing modulator blends instead of snapping.
-    residualL = math::clamp (oldL - waveL, -1.0f, 1.0f);
-    residualR = math::clamp (oldR - waveR, -1.0f, 1.0f);
+    residualL = math::clamp (math::sanitise (blendResidual (oldL, waveL)), -1.0f, 1.0f);
+    residualR = math::clamp (math::sanitise (blendResidual (oldR, waveR)), -1.0f, 1.0f);
 
     refreshOutputs();
 }
@@ -185,10 +199,8 @@ void RippleModulator::updateWave() noexcept
 
 void RippleModulator::refreshOutputs() noexcept
 {
-    // The residual is scaled by the room the wave leaves, so the sum is a
-    // convex blend and cannot leave -1..1 however hard the retrigger was.
-    value  = math::clamp (math::sanitise (waveL + residualL * (1.0f - std::fabs (waveL))), -1.0f, 1.0f);
-    valueR = math::clamp (math::sanitise (waveR + residualR * (1.0f - std::fabs (waveR))), -1.0f, 1.0f);
+    value  = math::clamp (math::sanitise (blend (waveL, residualL)), -1.0f, 1.0f);
+    valueR = math::clamp (math::sanitise (blend (waveR, residualR)), -1.0f, 1.0f);
 }
 
 float RippleModulator::advance (int numSamples) noexcept
