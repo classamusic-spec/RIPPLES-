@@ -101,12 +101,19 @@ public:
         //----------------------------------------------------------------------
         // DEPTH — surface to ocean floor.
         //----------------------------------------------------------------------
-        // Brightness falls by up to ~3.5 octaves, but never to nothing: even the
-        // abyss keeps some definition or the instrument just sounds broken.
-        m.cutoffMultiplier   = std::pow (2.0f, -3.5f * d);
+        // Brightness falls by up to ~2.2 octaves. This used to be 3.5, which was
+        // too much: a preset that had already chosen a dark cutoff ended up with
+        // the filter shut below its own fundamental, leaving only the sub
+        // audible. The macro should shape the patch, not overrule it.
+        m.cutoffMultiplier   = std::pow (2.0f, -2.2f * d);
         m.noiseToneOffset    = -0.55f * d;          // noise darkens with depth
-        m.subLevelMultiplier = 1.0f + 0.85f * d;    // low end swells
-        m.lowMidGainDb       = 3.5f * d;            // low-mid emphasis
+        // Low end is deliberately understated here. Depth and Pressure each reach
+        // the bottom octave by three separate routes -- this sub gain, the master
+        // low shelf, and the filter's own PRESSURE tilt -- and those compound.
+        // Adding a "musical" amount on each one stacked to roughly +13 dB and
+        // buried the note under its own sub, so each route stays small.
+        m.subLevelMultiplier = 1.0f + 0.25f * d;    // low end swells
+        m.lowMidGainDb       = 1.5f * d;            // low-mid emphasis
         m.highShelfGainDb    = -7.0f * d;           // high-frequency damping
         m.reverbDampingOffset = 0.45f * d;          // the water absorbs the tail
         m.stereoWidthMultiplier = 1.0f - 0.3f * d;  // subtle narrowing when deep
@@ -119,8 +126,8 @@ public:
         m.driveOffset           = 0.65f * p;
         m.pressureOffset        = p;
         m.resonanceOffset       = 0.22f * p;
-        m.lowMidGainDb         += 4.0f * p;         // body, on top of Depth's
-        m.subLevelMultiplier   *= 1.0f + 0.4f * p;  // sub reinforcement
+        m.lowMidGainDb         += 2.0f * p;         // body, on top of Depth's
+        m.subLevelMultiplier   *= 1.0f + 0.12f * p; // sub reinforcement
         m.resonatorAmountOffset = 0.3f * p;         // resonators bite harder
 
         //----------------------------------------------------------------------

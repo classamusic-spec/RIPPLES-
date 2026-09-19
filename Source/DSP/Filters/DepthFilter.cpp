@@ -31,6 +31,8 @@ namespace
     constexpr float kBassCompBase  = 0.36f;
     constexpr float kBassCompLow   = 0.40f;
     constexpr float kLowTame       = 0.07f;   // resonance reduction at 20 Hz
+    constexpr float kLowTameHi     = 400.0f;  // taming fades in below this
+    constexpr float kLowTameSpan   = 340.0f;  // ... and is full by 60 Hz
     constexpr float kTrimPerK      = 0.22f;
 
     // PRESSURE
@@ -38,7 +40,10 @@ namespace
     constexpr float kPressSoften   = 1.80f;   // transient softening depth
     constexpr float kPressSatG     = 2.20f;   // density saturation hardness
     constexpr float kPressAsym     = 0.16f;   // even-harmonic tilt
-    constexpr float kPressMakeup   = 2.40f;
+    // Makeup is chosen so the softener is unity around a 0.3 peak — a normal
+    // voice level — which leaves quiet material lifted and loud material held
+    // down instead of the whole axis being a volume control.
+    constexpr float kPressMakeup   = 0.60f;
     constexpr float kMinSatG       = 0.0015f; // "off" hardness -> linear
 
     // DRIVE
@@ -144,20 +149,15 @@ void DepthFilter::prepare (double sampleRate)
 
     smoothCoeff_ = math::onePoleCoeff (dsp::kSmoothingSeconds, sampleRate_);
 
-    // Bass-taming window expressed in G so setCutoff stays divide-light.
-    gLowHi_ = tptGain (math::clamp (400.0f, minCutoff_, maxCutoff_) * wdScale_);
-    const float gLowLo = tptGain (math::clamp (60.0f, minCutoff_, maxCutoff_) * wdScale_);
-    invLowRange_ = 1.0f / std::max (gLowHi_ - gLowLo, 1.0e-9f);
-
     lowBandG_ = tptGain (math::clamp (280.0f, minCutoff_, maxCutoff_) * wdScale_);
-    envAtt_   = math::onePoleCoeff (0.0004f, sampleRate_);
+    envAtt_   = 1.0f;     // instant attack: the follower must catch the peak
     envRel_   = math::onePoleCoeff (0.0800f, sampleRate_);
     dcR_      = 1.0f - math::twoPi * 5.0f / fs;
     if (dcR_ < 0.0f)  dcR_ = 0.0f;
     if (dcR_ > 0.9999f) dcR_ = 0.9999f;
 
-    reset();
     setCutoff (cutoffHz_);
+    reset();
 }
 
 //==============================================================================
@@ -212,30 +212,40 @@ void DepthFilter::setParams (const Params& p) noexcept
 //==============================================================================
 void DepthFilter::setCutoff (float hz) noexcept
 {
+    // Deliberately just a clamp: the prewarp depends on the smoothed resonance
+    // as well as on the cutoff, so the coefficients are built once per sample in
+    // updateDerived() where both are known to agree.
     if (! (hz > minCutoff_)) hz = minCutoff_;    // NaN-safe
-    if (hz > maxCutoff_)     hz = maxCutoff_;
-    cutoffHz_ = hz;
-
-    const float G = tptGain (hz * wdScale_);
-    G_         = G;
-    oneMinusG_ = 1.0f - G;
-    G2_        = G * G;
-    G3_        = G2_ * G;
-    G4_        = G2_ * G2_;
-
-    // How deep into the bass we are, 0..1, used to trade resonance for weight.
-    const float ln = (gLowHi_ - G) * invLowRange_;
-    lowness_ = ln <= 0.0f ? 0.0f : (ln >= 1.0f ? 1.0f : ln);
+    cutoffHz_ = hz > maxCutoff_ ? maxCutoff_ : hz;
 }
 
 //==============================================================================
 void DepthFilter::updateDerived() noexcept
 {
+    // How deep into the bass we are, 0..1.
+    lowness_ = math::smoothstep ((kLowTameHi - cutoffHz_) * (1.0f / kLowTameSpan));
+
     // Resonance is eased off in the sub-bass so a resonant bass patch keeps its
     // fundamental, and the input gain compensates the ladder's 1/(1+k) DC loss
     // — harder the lower the cutoff sits.
     kEff_   = k_ * (1.0f - kLowTame * lowness_);
     inComp_ = 1.0f + (kBassCompBase + kBassCompLow * lowness_) * kEff_;
+
+    // A 4-pole ladder rings at fc * (k/4)^(1/4). Below the self-oscillation
+    // threshold that is the authentic ladder behaviour — the peak sits under the
+    // cutoff and climbs to meet it as resonance comes up — but past k = 4 it
+    // would leave a singing filter sharp (+3.3 % at k = 4.55, half a semitone).
+    // Above the threshold the prewarp is pulled back by the same factor, using a
+    // two-term series for (1 + d)^-1/4 that is good to 0.3 cents over the range.
+    const float d = kEff_ * 0.25f - 1.0f;
+    const float freqComp = d > 0.0f ? (1.0f - 0.25f * d + 0.15625f * d * d) : 1.0f;
+
+    const float G = tptGain (cutoffHz_ * wdScale_ * freqComp);
+    G_         = G;
+    oneMinusG_ = 1.0f - G;
+    G2_        = G * G;
+    G3_        = G2_ * G;
+    G4_        = G2_ * G2_;
 
     // DRIVE: y = tanh(g x) / g. g -> 0 is exactly linear, so drive = 0 is a
     // bypass; raising g adds saturation at constant small-signal gain, which is
@@ -265,7 +275,11 @@ float DepthFilter::processOne (float x, ChannelState& c) noexcept
 
         float w = x + lowGain_ * lo;
 
-        // Fast-attack / slow-release follower -> transient softening.
+        // Peak follower with instant attack and an 80 ms release. Instant
+        // attack is the point: the gain is already down on the sample that
+        // carries the transient, so attacks are rounded rather than merely
+        // followed by a duck. Between peaks the hold keeps the level up, which
+        // is what reads as density.
         const float mag = std::fabs (w);
         c.env += (mag > c.env ? envAtt_ : envRel_) * (mag - c.env);
         c.env  = math::antiDenormal (c.env);

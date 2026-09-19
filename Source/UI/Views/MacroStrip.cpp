@@ -46,7 +46,7 @@ MacroStrip::MacroStrip (juce::AudioProcessorValueTreeState& apvts)
 {
     const auto& t = RippleTheme::get();
 
-    setContentInset (RippleTheme::lg);
+    setContentInset (RippleTheme::md);
 
     for (size_t i = 0; i < kMacros.size(); ++i)
     {

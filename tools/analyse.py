@@ -17,12 +17,21 @@ def read_wav(path):
     with wave.open(path, 'rb') as w:
         n_ch, width, rate, n_frames = w.getnchannels(), w.getsampwidth(), w.getframerate(), w.getnframes()
         raw = w.readframes(n_frames)
-    dtype = {1: np.uint8, 2: np.int16, 4: np.int32}[width]
-    data = np.frombuffer(raw, dtype=dtype).astype(np.float64)
-    if width == 1:
-        data = (data - 128.0) / 128.0
+    if width == 3:
+        # 24-bit has no numpy dtype: widen each sample to 32-bit, sign-extending
+        # via the high byte so negative values survive.
+        b = np.frombuffer(raw, dtype=np.uint8).reshape(-1, 3)
+        data = (b[:, 0].astype(np.int32)
+                | (b[:, 1].astype(np.int32) << 8)
+                | (b[:, 2].astype(np.int8).astype(np.int32) << 16)).astype(np.float64)
+        data /= float(2 ** 23)
     else:
-        data /= float(2 ** (8 * width - 1))
+        dtype = {1: np.uint8, 2: np.int16, 4: np.int32}[width]
+        data = np.frombuffer(raw, dtype=dtype).astype(np.float64)
+        if width == 1:
+            data = (data - 128.0) / 128.0
+        else:
+            data /= float(2 ** (8 * width - 1))
     return data.reshape(-1, n_ch), rate
 
 

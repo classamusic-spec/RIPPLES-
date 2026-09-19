@@ -143,7 +143,35 @@ if(RIPPLES_BUILD_TESTS)
         JUCE_REPORT_APP_USAGE=0
         JUCE_MODAL_LOOPS_PERMITTED=0)
 
+    # The plug-in target links its JUCE modules privately, so the harness has to
+    # name them itself to get the include paths and module defines.
+    juce_add_console_app(RIPPLES_EditorTest PRODUCT_NAME "RIPPLES_EditorTest")
+    target_sources(RIPPLES_EditorTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Tests/EditorSmokeTest.cpp")
+    target_include_directories(RIPPLES_EditorTest PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+    target_compile_definitions(RIPPLES_EditorTest PRIVATE
+        JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_STANDALONE_APPLICATION=1
+        JUCE_DISPLAY_SPLASH_SCREEN=0 JUCE_REPORT_APP_USAGE=0 JUCE_MODAL_LOOPS_PERMITTED=0)
+    target_link_libraries(RIPPLES_EditorTest PRIVATE
+        RIPPLES
+        juce::juce_audio_basics juce::juce_audio_devices juce::juce_audio_formats
+        juce::juce_audio_processors juce::juce_audio_utils juce::juce_core
+        juce::juce_data_structures juce::juce_dsp juce::juce_events
+        juce::juce_graphics juce::juce_gui_basics juce::juce_gui_extra
+        juce::juce_recommended_config_flags)
+
     target_link_libraries(RIPPLES_Render PRIVATE
         RIPPLES
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_formats
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_core
+        juce::juce_data_structures
+        juce::juce_dsp
+        juce::juce_events
+        juce::juce_graphics
+        juce::juce_gui_basics
+        juce::juce_gui_extra
         juce::juce_recommended_config_flags)
 endif()

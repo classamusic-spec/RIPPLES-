@@ -381,7 +381,7 @@ void SynthPage::observe (RippleSelector& selector)
     observedBoxes.add (&selector.getComboBox());
 }
 
-SynthPage::Modulator SynthPage::currentModulator() const noexcept
+SynthPage::Modulator SynthPage::currentModulator() noexcept
 {
     const auto index = juce::jlimit (0, 3, modulatorSelector.getComboBox().getSelectedItemIndex());
     return (Modulator) index;
@@ -766,9 +766,14 @@ void SynthPage::layoutModulatorPanel()
             case Modulator::Tide:
             {
                 auto top = inner.removeFromTop (juce::jmin (t.selectorHeight, inner.getHeight()));
-                layoutRow (top, { &tideShape, &tideSyncRate, &tideSync }, RippleTheme::xs);
-                tideSync.setBounds (tideSync.getBounds()
-                                        .withSizeKeepingCentre (tideSync.getWidth(), t.toggleHeight));
+
+                auto toggleArea = top.removeFromRight (juce::jmin (tideSync.getPreferredSize().x,
+                                                                   top.getWidth() / 2));
+                tideSync.setBounds (toggleArea.withSizeKeepingCentre (toggleArea.getWidth(),
+                                                                      t.toggleHeight));
+                top.removeFromRight (RippleTheme::xs);
+
+                layoutRow (top, { &tideShape, &tideSyncRate }, RippleTheme::xs);
                 inner.removeFromTop (RippleTheme::sm);
                 layoutRow (inner.removeFromTop (juce::jmin (knobRowH, inner.getHeight())),
                            { tideStereo.get() }, RippleTheme::xs);
@@ -784,10 +789,14 @@ void SynthPage::layoutModulatorPanel()
             case Modulator::Ripple:
             {
                 auto top = inner.removeFromTop (juce::jmin (t.selectorHeight, inner.getHeight()));
-                layoutRow (top, { &rippleTrigger, &ripplePolarity }, RippleTheme::xs);
-                ripplePolarity.setBounds (ripplePolarity.getBounds()
-                                              .withSizeKeepingCentre (ripplePolarity.getWidth(),
-                                                                      t.toggleHeight));
+
+                auto toggleArea = top.removeFromRight (juce::jmin (ripplePolarity.getPreferredSize().x,
+                                                                   top.getWidth() / 2));
+                ripplePolarity.setBounds (toggleArea.withSizeKeepingCentre (toggleArea.getWidth(),
+                                                                            t.toggleHeight));
+                top.removeFromRight (RippleTheme::xs);
+
+                layoutRow (top, { &rippleTrigger }, RippleTheme::xs);
                 inner.removeFromTop (RippleTheme::sm);
                 layoutRow (inner.removeFromTop (juce::jmin (knobRowH, inner.getHeight())),
                            { rippleCycles.get(), rippleSpread.get() }, RippleTheme::sm);

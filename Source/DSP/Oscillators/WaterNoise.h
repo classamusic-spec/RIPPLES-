@@ -51,6 +51,7 @@ private:
     {
         RandomGenerator rng;
 
+        float white[2] {};      // fixed 19 kHz band limit on the raw source
         float pink[7] {};
         float deepLp[3] {};
         float deepCoef = 0.02f;
@@ -82,6 +83,8 @@ private:
 
     float pinkPole_[6] {};
     float pinkGain_[6] {};
+    float bandLimitCoef_ = 1.0f;
+    float whiteGain_ = 1.0f;
     float tiltCoef_ = 0.1f;
     float dcCoef_   = 0.9995f;
     float blipProb_ = 0.0002f;

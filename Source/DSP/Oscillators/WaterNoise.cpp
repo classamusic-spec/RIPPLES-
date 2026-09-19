@@ -21,12 +21,12 @@ namespace
         every colour arrives at the filter at the same working level. */
     constexpr float kTypeGain[(size_t) NoiseType::NumTypes][3]
     {
-        { 0.426f, 0.520f, 0.426f },     // White
-        { 0.184f, 0.301f, 0.615f },     // Pink
-        { 2.129f, 1.442f, 1.135f },     // Deep
-        { 0.874f, 1.083f, 1.469f },     // Surf
-        { 0.545f, 0.545f, 0.545f },     // Bubble
-        { 0.393f, 0.487f, 0.594f }      // Air
+        { 1.059f, 0.519f, 0.268f },     // White
+        { 0.147f, 0.231f, 0.186f },     // Pink
+        { 0.421f, 0.417f, 0.573f },     // Deep
+        { 2.731f, 2.091f, 0.863f },     // Surf
+        { 1.047f, 1.337f, 0.964f },     // Bubble
+        { 3.417f, 0.716f, 0.421f }      // Air
     };
 
     /** sin(2.pi.p) to about 1%, which is plenty for a 0.1 Hz swell and costs
@@ -42,6 +42,28 @@ namespace
     {
         const float c = 1.0f - std::exp (-math::twoPi * hz * invSampleRate);
         return math::clamp (c, 0.0f, 1.0f);
+    }
+
+    /** Coefficient for a topology-preserving (bilinear) one-pole. Unlike the
+        naive form its corner lands on the requested frequency and its
+        complementary highpass keeps full gain right up to Nyquist, so the
+        brightness of the tone tilt and of AIR is the same at 44.1 kHz as it is
+        at 192 kHz. */
+    inline float tptCoeff (float hz, double sampleRate) noexcept
+    {
+        const float w = math::clamp ((float) (hz / sampleRate), 1.0e-5f, 0.49f);
+        const float g = std::tan (math::pi * w);
+        return g / (1.0f + g);
+    }
+
+    /** Runs one TPT one-pole and returns its lowpass output; x - result is the
+        matching highpass. */
+    inline float tptLowpass (float& state, float x, float coeff) noexcept
+    {
+        const float v  = (x - state) * coeff;
+        const float lp = v + state;
+        state = lp + v;
+        return lp;
     }
 }
 
@@ -65,10 +87,24 @@ void WaterNoise::prepare (double sampleRate, uint32_t seed)
         pinkGain_[i] = kPinkGain44[i] * ((1.0f - newMag) / (1.0f - mag));
     }
 
-    tiltCoef_ = onePoleFromHz (700.0f, invSampleRate_);
+    // Band limit the raw source to a fixed 19 kHz, whatever the sample rate.
+    // Without it every fixed-corner filter downstream (the air highpass above
+    // all) would gain a whole extra octave of energy at 96 or 192 kHz, and the
+    // noise would arrive at the filter far louder than it does at 44.1 kHz.
+    {
+        const float g = math::clamp (onePoleFromHz (19000.0f, invSampleRate_), 1.0e-4f, 1.0f);
+        const float a = 1.0f - g;
+        const float a2 = a * a;
+        const float variance = (g * g * g * g) * (1.0f + a2)
+                             / std::max (1.0e-9f, (1.0f - a2) * (1.0f - a2) * (1.0f - a2));
+        bandLimitCoef_ = g;
+        whiteGain_ = 1.0f / std::sqrt (std::max (1.0e-9f, variance));
+    }
+
+    tiltCoef_ = tptCoeff (700.0f, sampleRate_);
     dcCoef_   = std::exp (-math::twoPi * 5.0f * invSampleRate_);
     toneCoef_ = math::clamp (math::onePoleCoeff (0.015f, sampleRate_), 0.0f, 1.0f);
-    blipProb_ = math::clamp (7.0f * invSampleRate_, 0.0f, 1.0f);      // about seven bubbles a second
+    blipProb_ = math::clamp (22.0f * invSampleRate_, 0.0f, 1.0f);     // a couple of dozen bubbles a second
 
     left_  = Channel {};
     right_ = Channel {};
@@ -101,6 +137,7 @@ void WaterNoise::reset() noexcept
             b.re = b.im = 0.0f;
         }
 
+        for (auto& v : ch.white)  v = math::sanitise (v);
         for (auto& v : ch.pink)   v = math::sanitise (v);
         for (auto& v : ch.deepLp) v = math::sanitise (v);
         for (auto& v : ch.airLp)  v = math::sanitise (v);
@@ -235,8 +272,7 @@ void WaterNoise::updateControl (Channel& ch, NoiseType type, float tone) noexcep
         case NoiseType::Air:
         {
             const float hz = math::lerp (2400.0f, 9000.0f, tone);
-            ch.airCoef = onePoleFromHz (math::clamp (hz, 40.0f, (float) (sampleRate_ * 0.45)),
-                                        invSampleRate_);
+            ch.airCoef = tptCoeff (math::clamp (hz, 40.0f, (float) (sampleRate_ * 0.45)), sampleRate_);
             break;
         }
 
@@ -254,7 +290,11 @@ float WaterNoise::generate (Channel& ch, NoiseType type, float tone, bool doCont
     if (doControl)
         updateControl (ch, type, tone);
 
-    const float white = ch.rng.nextBipolar();
+    const float raw = ch.rng.nextBipolar();
+    ch.white[0] += bandLimitCoef_ * (raw - ch.white[0]);
+    ch.white[1] += bandLimitCoef_ * (ch.white[0] - ch.white[1]);
+    const float white = ch.white[1] * whiteGain_;
+
     float y = 0.0f;
 
     switch (type)
@@ -308,7 +348,7 @@ float WaterNoise::generate (Channel& ch, NoiseType type, float tone, bool doCont
                     b.sinW   = std::sin (w);
                     b.decay  = math::decayCoeff (decaySec, sampleRate_);
                     b.glide  = 1.0f + ch.rng.nextRange (0.004f, 0.020f);   // per control block
-                    b.re     = ch.rng.nextRange (0.45f, 1.0f);
+                    b.re     = ch.rng.nextRange (0.30f, 0.70f);
                     b.im     = 0.0f;
                     b.active = true;
                     break;
@@ -342,10 +382,8 @@ float WaterNoise::generate (Channel& ch, NoiseType type, float tone, bool doCont
         {
             // Two complementary one-poles in series: a clean 12 dB/oct highpass.
             const float c = ch.airCoef;
-            ch.airLp[0] += c * (white - ch.airLp[0]);
-            const float h1 = white - ch.airLp[0];
-            ch.airLp[1] += c * (h1 - ch.airLp[1]);
-            y = h1 - ch.airLp[1];
+            const float h1 = white - tptLowpass (ch.airLp[0], white, c);
+            y = h1 - tptLowpass (ch.airLp[1], h1, c);
             break;
         }
 
@@ -357,14 +395,14 @@ float WaterNoise::generate (Channel& ch, NoiseType type, float tone, bool doCont
     }
 
     // --- tone: a tilt around 700 Hz, flat at 0.5 -----------------------------
-    ch.tiltLp += tiltCoef_ * (y - ch.tiltLp);
-    const float hp = y - ch.tiltLp;
+    const float tilted = tptLowpass (ch.tiltLp, y, tiltCoef_);
+    const float hp = y - tilted;
 
     float weight = tone;
     if (type == NoiseType::Deep)        weight = 0.5f + (tone - 0.5f) * 0.35f;
     else if (type == NoiseType::Bubble) weight = 0.5f + (tone - 0.5f) * 0.50f;
 
-    y = 2.0f * ((1.0f - weight) * ch.tiltLp + weight * hp);
+    y = 2.0f * ((1.0f - weight) * tilted + weight * hp);
 
     // --- DC blocker ----------------------------------------------------------
     const float dcOut = y - ch.dcX + dcCoef_ * ch.dcY;

@@ -360,7 +360,12 @@ void Header::resized()
     const int meterW = RippleTheme::grid (5);
 
     auto outArea = r.removeFromRight (knobW + meterW + RippleTheme::xs);
-    outputGain->setBounds (outArea.removeFromRight (knobW));
+
+    // Cap the knob at its natural height so it never inflates in a tall header.
+    const int knobH = juce::jmin (outArea.getHeight(),
+                                  RippleKnob::getPreferredSize (RippleKnob::Size::Small).y);
+    outputGain->setBounds (outArea.removeFromRight (knobW)
+                               .withSizeKeepingCentre (knobW, knobH));
     outArea.removeFromRight (RippleTheme::xs);
     meter->setBounds (outArea.reduced (0, RippleTheme::sm));
 

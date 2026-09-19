@@ -15,9 +15,9 @@ namespace
     /** Peak trim per additive wave, chosen so that every shape stays inside
         +/-1 without squashing the level. */
     constexpr float kSineMakeup   = 1.00f;
-    constexpr float kHollowMakeup = 1.28f;
-    constexpr float kGlassMakeup  = 1.45f;
-    constexpr float kWaterMakeup  = 1.20f;
+    constexpr float kHollowMakeup = 1.00f;
+    constexpr float kGlassMakeup  = 0.78f;
+    constexpr float kWaterMakeup  = 1.05f;
 
     //==========================================================================
     /** Shared, read-only sine table. Built once at static-init time, so no
@@ -64,13 +64,104 @@ namespace
 
     const HarmonicLogs harmonicLogs;
 
-    /** Low-discrepancy phase offsets: unison voices never start bunched up
-        (a comb-filtered attack) and never sit perfectly evenly spaced
-        (which would cancel the fundamental when detune is zero). */
-    inline float goldenOffset (int i) noexcept
+    /** Start-phase offsets for the unison stack, ordered outwards from the
+        centre voice. Solved numerically so that for every stack size and for
+        the first eight harmonics the voices sum like independent phases: never
+        bunched up (which would crack on the attack) and never evenly spread
+        (which would cancel the fundamental whenever detune sits at zero). */
+    constexpr float kUnisonPhase[dsp::kMaxUnison]
     {
-        return math::wrapPhase (0.61803399f * (float) i);
+        0.000f, 0.336f, 0.114f, 0.591f, 0.028f, 0.842f, 0.017f
+    };
+
+    /** Distance rank from the centre voice: 0, then alternating outwards, so
+        the offsets used by a stack of n voices are always the first n. */
+    inline int centreRank (int index, int centreIndex) noexcept
+    {
+        const int d = index - centreIndex;
+        const int r = (d == 0) ? 0 : (d < 0 ? -2 * d - 1 : 2 * d);
+        return math::clamp (r, 0, dsp::kMaxUnison - 1);
     }
+
+    //==========================================================================
+    /** 4-point polyBLEP: the residual of the cubic B-spline step against the
+        ideal one, in the same +/-1 convention as math::polyBlep, which stays
+        as the fallback once the increment is too wide for a 4-sample kernel.
+        Worth about 10 dB of alias rejection over the 2-point residual. */
+    inline float blep (float t, float dt) noexcept
+    {
+        if (dt <= 0.0f)  return 0.0f;
+        if (dt > 0.2f)   return math::polyBlep (t, dt);
+
+        const float two = 2.0f * dt;
+
+        if (t < two)
+        {
+            const float s = t / dt;
+            if (s < 1.0f)
+            {
+                const float s2 = s * s;
+                return 2.0f * (-0.5f + (2.0f / 3.0f) * s - s2 * s / 3.0f + s2 * s2 * 0.125f);
+            }
+            const float u = 2.0f - s, u2 = u * u;
+            return -2.0f * u2 * u2 * (1.0f / 24.0f);
+        }
+
+        if (t > 1.0f - two)
+        {
+            const float s = (t - 1.0f) / dt;        // -2 .. 0
+            if (s >= -1.0f)
+            {
+                const float s2 = s * s;
+                return 2.0f * (0.5f + (2.0f / 3.0f) * s - s2 * s / 3.0f - s2 * s2 * 0.125f);
+            }
+            const float u = 2.0f + s, u2 = u * u;
+            return 2.0f * u2 * u2 * (1.0f / 24.0f);
+        }
+
+        return 0.0f;
+    }
+
+    /** 4-point polyBLAMP — the integral of the residual above, for slope
+        discontinuities. Same convention as math::polyBlamp. */
+    inline float blamp (float t, float dt) noexcept
+    {
+        if (dt <= 0.0f)  return 0.0f;
+        if (dt > 0.2f)   return math::polyBlamp (t, dt);
+
+        const float two = 2.0f * dt;
+
+        if (t < two)
+        {
+            const float s = t / dt;
+            if (s < 1.0f)
+            {
+                const float s2 = s * s;
+                return 2.0f * (7.0f / 30.0f - 0.5f * s + s2 / 3.0f - s2 * s2 / 12.0f + s2 * s2 * s / 40.0f);
+            }
+            const float u = 2.0f - s, u2 = u * u;
+            return 2.0f * u2 * u2 * u * (1.0f / 120.0f);
+        }
+
+        if (t > 1.0f - two)
+        {
+            const float s = (t - 1.0f) / dt;
+            if (s >= -1.0f)
+            {
+                const float s2 = s * s;
+                return 2.0f * (7.0f / 30.0f + 0.5f * s + s2 / 3.0f - s2 * s2 / 12.0f - s2 * s2 * s / 40.0f);
+            }
+            const float u = 2.0f + s, u2 = u * u;
+            return 2.0f * u2 * u2 * u * (1.0f / 120.0f);
+        }
+
+        return 0.0f;
+    }
+
+    /** Above this many partials the polyBLEP path is used; below it the exact
+        Fourier series takes over, with a cross-fade in between. */
+    constexpr float kFourierFadeLow  = 12.0f;
+    constexpr float kFourierFadeHigh = (float) BandLimitedOscillator::kMaxPartials;
 }
 
 //==============================================================================
@@ -146,14 +237,17 @@ void BandLimitedOscillator::setParams (const Params& p) noexcept
         case OscWave::Hollow:
         case OscWave::Glass:
         case OscWave::Water:  usesPartials_ = true;  partialLimit_ = kMaxPartials;  break;
-        default:              usesPartials_ = false; partialLimit_ = 1;             break;
+        default:              usesPartials_ = false; partialLimit_ = kMaxPartials;  break;
     }
 
     if (waveChanged)
     {
         controlCounter_ = 0;
         activePartials_ = 1;
+        pendingSnap_    = true;
     }
+
+    setFrequency (baseFreq_);
 
     if (layoutChanged || ! phasesReady_)
         rebuildUnison (false, nullptr);
@@ -179,6 +273,28 @@ void BandLimitedOscillator::setFrequency (float hz) noexcept
         uv.inc = math::clamp (hz * uv.ratio * invSampleRate_, 0.0f, 0.49f);
         uv.numPartials = math::clamp ((int) (maxPartials * uv.invRatio), 1, partialLimit_);
     }
+
+    // The jump waves ride polyBLEP low down, where a harmonic series would need
+    // hundreds of partials, and cross over to their exact Fourier series once
+    // the whole series fits — which is where aliasing would otherwise bite.
+    const float previous = additiveMix_;
+
+    if (usesPartials_)
+    {
+        additiveMix_ = 1.0f;
+    }
+    else
+    {
+        const float available = maxPartials * voices_[centreIndex_].invRatio;
+        additiveMix_ = math::clamp ((kFourierFadeHigh - available)
+                                        / (kFourierFadeHigh - kFourierFadeLow), 0.0f, 1.0f);
+    }
+
+    if (previous <= 0.0f && additiveMix_ > 0.0f)
+    {
+        controlCounter_ = 0;        // refresh the coefficients before they are heard
+        pendingSnap_    = true;
+    }
 }
 
 //==============================================================================
@@ -190,12 +306,18 @@ bool BandLimitedOscillator::processSample (float& outL, float& outR,
     deriveShapeConstants();
 
     // --- additive engine: control-rate targets, per-sample glide -------------
-    if (usesPartials_)
+    if (usesPartials_ || additiveMix_ > 0.0f)
     {
         if (controlCounter_ <= 0)
         {
             updatePartialTargets();
             controlCounter_ = kControlInterval;
+
+            if (pendingSnap_)
+            {
+                snapPartialGains();
+                pendingSnap_ = false;
+            }
         }
         --controlCounter_;
 
@@ -257,9 +379,11 @@ void BandLimitedOscillator::rebuildUnison (bool retrigger, RandomGenerator* rng)
     const float spreadCents = math::clamp (params_.detune, 0.0f, 1.0f) * kMaxDetuneCents;
     const float stereo      = math::clamp (params_.stereo, 0.0f, 1.0f);
 
-    // Equal power across the stack: the unison level is constant as voices are
-    // added, and a single centred voice comes out at unity in both channels.
-    const float level = 1.41421356f / std::sqrt ((float) n);
+    // Just past equal power across the stack: the level holds as voices are
+    // added (a touch quieter, never louder), a single centred voice comes out
+    // at unity in both channels, and a seven-voice stack cannot spike past
+    // about 2.3 even in the instant every voice lines up.
+    const float level = 1.41421356f / std::pow ((float) n, 0.58f);
 
     const float start   = params_.startPhase;
     const bool  freeRun = ! (start >= 0.0f);
@@ -287,23 +411,25 @@ void BandLimitedOscillator::rebuildUnison (bool retrigger, RandomGenerator* rng)
 
         // The centre voice is the hard-sync master, so it lands exactly on
         // startPhase; the rest fan out around it.
-        const int   ring   = ((i - centreIndex_) + dsp::kMaxUnison) % dsp::kMaxUnison;
-        const float offset = freeRun ? (rng != nullptr ? rng->nextFloat() : internalRng_.nextFloat())
-                                     : goldenOffset (ring);
+        if (freeRun)
+        {
+            // Free-running: the phases are never forced on a note, but they do
+            // need a spread to sync back to, and it is drawn once rather than
+            // every time a parameter moves — otherwise hard sync would land
+            // somewhere new on every reset.
+            if (retrigger || ! phasesReady_)
+                uv.startPhase = (rng != nullptr ? rng->nextFloat() : internalRng_.nextFloat());
 
-        uv.startPhase = freeRun ? offset : math::wrapPhase (start + offset);
-
-        if (retrigger)
-            uv.phase = freeRun ? uv.phase : uv.startPhase;
-    }
-
-    if (retrigger && freeRun)
-    {
-        // Free-running: keep whatever phase the oscillator was already at, but
-        // make sure it is valid the very first time round.
-        if (! phasesReady_)
-            for (auto& uv : voices_)
+            if (! phasesReady_)
                 uv.phase = uv.startPhase;
+        }
+        else
+        {
+            uv.startPhase = math::wrapPhase (start + kUnisonPhase[centreRank (i, centreIndex_)]);
+
+            if (retrigger)
+                uv.phase = uv.startPhase;
+        }
     }
 
     // Keep the increments and partial counts in step with the new ratios.
@@ -365,6 +491,129 @@ void BandLimitedOscillator::deriveShapeConstants() noexcept
 
 //==============================================================================
 void BandLimitedOscillator::updatePartialTargets() noexcept
+{
+    if (usesPartials_)
+        updateAquaticTargets();
+    else
+        updateFourierTargets();
+}
+
+//==============================================================================
+/** Exact Fourier coefficients for the four jump waves, used at the top of the
+    keyboard where the whole harmonic series fits inside kMaxPartials. Each set
+    is derived from the same piecewise-linear definition the polyBLEP path
+    renders, so the two agree in level and in phase. */
+void BandLimitedOscillator::updateFourierTargets() noexcept
+{
+    const int limit = math::clamp (partialLimit_, 1, kMaxPartials);
+    constexpr float invPi = 1.0f / math::pi;
+
+    float re[kMaxPartials] {};
+    float im[kMaxPartials] {};
+
+    // sin/cos of 2.pi.k.edge, advanced by complex rotation.
+    float edge = 0.0f;
+    switch (wave_)
+    {
+        case OscWave::Triangle: edge = triWidth_;   break;
+        case OscWave::Square:
+        case OscWave::Pulse:    edge = pulseWidth_; break;
+        case OscWave::Shark:    edge = sharkEdge_;  break;
+        default:                edge = 0.0f;        break;
+    }
+
+    const float se = sineTable (edge);
+    const float ce = sineTable (edge + 0.25f);
+    float sk = se, ck = ce;
+
+    for (int k = 1; k <= limit; ++k)
+    {
+        const float invPiK = invPi / (float) k;
+        const float invTwoPiK = invPiK * 0.5f;
+
+        switch (wave_)
+        {
+            case OscWave::Saw:
+            {
+                // Saw: -2/(pi.k).sin. Below shape 0.5 it blends into a triangle,
+                // above it picks up the same saw an octave up.
+                const float base = -2.0f * invPiK;
+                const float sign = (k & 1) ? -1.0f : 1.0f;      // saw at phase + 0.5
+                re[k - 1] = sawTriMix_ * base + sawOctave_ * base * sign;
+                im[k - 1] = (k & 1) ? (1.0f - sawTriMix_) * (-8.0f * invPi * invPiK / (float) k)
+                                    : 0.0f;
+                break;
+            }
+
+            case OscWave::Triangle:
+            {
+                // The integral of a pulse of duty w, scaled to reach +/-1.
+                const float pre = 2.0f * invPiK * (1.0f - ck);
+                const float pim = 2.0f * invPiK * sk;
+                const float g   = triInvW_ * triInvComp_ * invTwoPiK;
+                re[k - 1] =  g * pim;
+                im[k - 1] = -g * pre;
+                break;
+            }
+
+            case OscWave::Square:
+            case OscWave::Pulse:
+            {
+                re[k - 1] = 2.0f * invPiK * (1.0f - ck) * pulseScale_;
+                im[k - 1] = 2.0f * invPiK * sk * pulseScale_;
+                break;
+            }
+
+            case OscWave::Shark:
+            {
+                // Folded saw: a pulse derivative plus the impulse of the jump.
+                const float pre = 2.0f * invPiK * (1.0f - ck);
+                const float pim = 2.0f * invPiK * sk;
+                re[k - 1] = (2.0f * pim - 4.0f * sharkThr_) * invTwoPiK * sharkScale_;
+                im[k - 1] = -2.0f * pre * invTwoPiK * sharkScale_;
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        const float ns = sk * ce + ck * se;
+        const float nc = ck * ce - sk * se;
+        sk = ns;
+        ck = nc;
+    }
+
+    // Band limit, with the topmost partial faded so the count can change
+    // without a step.
+    const int   nCentre   = math::clamp (voices_[centreIndex_].numPartials, 1, limit);
+    const float fadeStart = 0.85f * (float) nCentre;
+    const float fadeSpan  = std::max (1.0f, (float) nCentre - fadeStart);
+
+    int active = 1;
+    for (int k = 0; k < kMaxPartials; ++k)
+    {
+        if (k >= limit || k >= nCentre)
+        {
+            targetRe_[k] = targetIm_[k] = 0.0f;
+            continue;
+        }
+
+        const float h = (float) (k + 1);
+        const float g = (h > fadeStart) ? 1.0f - math::smoothstep ((h - fadeStart) / fadeSpan)
+                                        : 1.0f;
+        targetRe_[k] = re[k] * g;
+        targetIm_[k] = im[k] * g;
+
+        if (std::fabs (targetRe_[k]) + std::fabs (targetIm_[k]) > 2.0e-4f)
+            active = k + 1;
+    }
+
+    activePartials_ = active;
+}
+
+//==============================================================================
+void BandLimitedOscillator::updateAquaticTargets() noexcept
 {
     const float sh    = math::clamp (shapeSmoothed_, 0.0f, 1.0f);
     const int   limit = math::clamp (partialLimit_, 1, kMaxPartials);
@@ -465,7 +714,7 @@ void BandLimitedOscillator::updatePartialTargets() noexcept
     const float fadeStart = 0.68f * (float) nCentre;
     const float fadeSpan  = std::max (1.0f, (float) nCentre - fadeStart);
 
-    float sum = 0.0f;
+    float sum = 0.0f, sumSq = 0.0f;
     for (int k = 0; k < limit; ++k)
     {
         if (k >= nCentre)
@@ -478,12 +727,16 @@ void BandLimitedOscillator::updatePartialTargets() noexcept
         if (h > fadeStart)
             amp[k] *= 1.0f - math::smoothstep ((h - fadeStart) / fadeSpan);
 
-        sum += amp[k];
+        sum   += amp[k];
+        sumSq += amp[k] * amp[k];
     }
 
-    // Normalising by the sum of the partial amplitudes bounds the waveform at
-    // +/-1 whatever the spectrum does, so no shape can ever jump the level.
-    const float norm = (sum > 1.0e-6f) ? (makeup / sum) : 0.0f;
+    // Peak estimate for the partial sum. The sum of the amplitudes is the hard
+    // bound but is far too pessimistic once there are many partials, so the
+    // energy term takes over there. Either way the level cannot jump when the
+    // spectrum moves, which is what keeps Water and Glass from surging.
+    const float estimate = std::max (0.72f * sum, std::sqrt (sumSq));
+    const float norm = (estimate > 1.0e-6f) ? (makeup / estimate) : 0.0f;
 
     int active = 1;
     for (int k = 0; k < limit; ++k)
@@ -516,25 +769,28 @@ void BandLimitedOscillator::snapPartialGains() noexcept
 float BandLimitedOscillator::renderWave (float phase, float dt, const UnisonVoice& uv) const noexcept
 {
     const float p = math::wrapPhase (phase);
+    const int   n = uv.numPartials < activePartials_ ? uv.numPartials : activePartials_;
 
+    if (usesPartials_)
+        return renderPartials (p, n);
+
+    const float mix = additiveMix_;
+
+    if (mix >= 1.0f)
+        return renderPartials (p, n);
+
+    float y = 0.0f;
     switch (wave_)
     {
-        case OscWave::Triangle: return renderTriangle (p, dt, triWidth_, triInvW_, triInvComp_);
-        case OscWave::Saw:      return renderSaw (p, dt);
+        case OscWave::Triangle: y = renderTriangle (p, dt, triWidth_, triInvW_, triInvComp_); break;
+        case OscWave::Saw:      y = renderSaw (p, dt);   break;
         case OscWave::Square:
-        case OscWave::Pulse:    return renderPulse (p, dt);
-        case OscWave::Shark:    return renderShark (p, dt);
-
-        case OscWave::Sine:
-        case OscWave::Hollow:
-        case OscWave::Glass:
-        case OscWave::Water:
-            return renderPartials (p, uv.numPartials < activePartials_ ? uv.numPartials : activePartials_);
-
-        case OscWave::NumWaves:
-        default:
-            return 0.0f;
+        case OscWave::Pulse:    y = renderPulse (p, dt); break;
+        case OscWave::Shark:    y = renderShark (p, dt); break;
+        default:                return 0.0f;
     }
+
+    return mix > 0.0f ? math::lerp (y, renderPartials (p, n), mix) : y;
 }
 
 //==============================================================================
@@ -569,8 +825,8 @@ float BandLimitedOscillator::renderTriangle (float p, float dt, float width,
     // Both corners are slope discontinuities: polyBLAMP rounds them at exactly
     // the rate the slope changes, which is what keeps a high triangle clean.
     const float slopeStep = 2.0f * (invW + invComp) * dt;   // change in level per sample
-    y += 0.5f * slopeStep * math::polyBlamp (p, dt);
-    y -= 0.5f * slopeStep * math::polyBlamp (math::wrapPhase (p - width), dt);
+    y += 0.5f * slopeStep * blamp (p, dt);
+    y -= 0.5f * slopeStep * blamp (math::wrapPhase (p - width), dt);
 
     return y;
 }
@@ -578,7 +834,7 @@ float BandLimitedOscillator::renderTriangle (float p, float dt, float width,
 //==============================================================================
 float BandLimitedOscillator::renderSaw (float p, float dt) const noexcept
 {
-    float y = (2.0f * p - 1.0f) - math::polyBlep (p, dt);
+    float y = (2.0f * p - 1.0f) - blep (p, dt);
 
     if (sawTriMix_ < 1.0f)
         y = math::lerp (renderTriangle (p, dt, 0.5f, 2.0f, 2.0f), y, sawTriMix_);
@@ -586,7 +842,7 @@ float BandLimitedOscillator::renderSaw (float p, float dt) const noexcept
     if (sawOctave_ > 0.0f)
     {
         const float q = math::wrapPhase (p + 0.5f);
-        y += sawOctave_ * ((2.0f * q - 1.0f) - math::polyBlep (q, dt));
+        y += sawOctave_ * ((2.0f * q - 1.0f) - blep (q, dt));
     }
 
     return y;
@@ -597,8 +853,8 @@ float BandLimitedOscillator::renderPulse (float p, float dt) const noexcept
 {
     float y = (p < pulseWidth_) ? 1.0f : -1.0f;
 
-    y += math::polyBlep (p, dt);                                        // rising edge
-    y -= math::polyBlep (math::wrapPhase (p - pulseWidth_), dt);        // falling edge
+    y += blep (p, dt);                                        // rising edge
+    y -= blep (math::wrapPhase (p - pulseWidth_), dt);        // falling edge
 
     return (y - pulseDc_) * pulseScale_;
 }
@@ -610,8 +866,8 @@ float BandLimitedOscillator::renderShark (float p, float dt) const noexcept
 
     float y = (s > sharkThr_) ? (2.0f * sharkThr_ - s) : s;
 
-    y -= sharkThr_ * math::polyBlep (p, dt);                                    // jump of -2 * thr
-    y -= 2.0f * dt * math::polyBlamp (math::wrapPhase (p - sharkEdge_), dt);    // fold corner
+    y -= sharkThr_ * blep (p, dt);                                    // jump of -2 * thr
+    y -= 2.0f * dt * blamp (math::wrapPhase (p - sharkEdge_), dt);    // fold corner
 
     return (y - sharkDc_) * sharkScale_;
 }

@@ -81,10 +81,8 @@ private:
     float  envAtt_       = 1.0f;
     float  envRel_       = 1.0f;
     float  dcR_          = 0.9995f;
-    float  gLowHi_       = 1.0f;         // TPT gain at the bass-taming corners
-    float  invLowRange_  = 1.0f;
 
-    //== cutoff-derived (updated by setCutoff, cheap) ==========================
+    //== cutoff-derived (rebuilt once per sample in updateDerived) =============
     float cutoffHz_  = 1000.0f;
     float G_         = 0.0f;
     float oneMinusG_ = 1.0f;

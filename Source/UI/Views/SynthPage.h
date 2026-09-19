@@ -66,7 +66,7 @@ private:
     void layoutSourcePanel();
     void layoutDrawers (juce::Rectangle<int> pageArea);
 
-    Modulator currentModulator() const noexcept;
+    Modulator currentModulator() noexcept;
 
     /** Watches a control so the graphs can follow it. Unwatched in the dtor. */
     void observe (RippleKnob& knob);

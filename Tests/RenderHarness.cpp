@@ -39,6 +39,40 @@ void bypassGlobalEffects (juce::AudioProcessorValueTreeState& apvts)
         setParam (apvts, id, 0.0f);
 }
 
+/** Zeroes the eight primary macros, isolating a preset's own programming from
+    whatever the macro layer adds on top. */
+void zeroMacros (juce::AudioProcessorValueTreeState& apvts)
+{
+    for (auto* id : { pid::macroDepth, pid::macroWet, pid::macroRipple, pid::macroCurrent,
+                      pid::macroDrops, pid::macroPressure, pid::macroSpace, pid::macroGlow })
+        setParam (apvts, id, 0.0f);
+}
+
+/** Applies any --set <paramID>=<normalised> overrides, so a single parameter can
+    be isolated without editing a preset. */
+void applyOverrides (juce::AudioProcessorValueTreeState& apvts, const juce::StringArray& args)
+{
+    for (int i = 0; i + 1 < args.size(); ++i)
+    {
+        if (args[i] != "--set")
+            continue;
+
+        const auto pair = args[i + 1];
+        const auto eq = pair.indexOfChar ('=');
+
+        if (eq <= 0)
+            continue;
+
+        const auto id = pair.substring (0, eq);
+        const auto value = pair.substring (eq + 1).getFloatValue();
+
+        if (apvts.getParameter (id) == nullptr)
+            std::fprintf (stderr, "warning: unknown parameter '%s'\n", id.toRawUTF8());
+        else
+            setParam (apvts, id, value);
+    }
+}
+
 int getIntArg (const juce::StringArray& args, const juce::String& flag, int fallback)
 {
     const int i = args.indexOf (flag);
@@ -84,6 +118,11 @@ int main (int argc, char** argv)
 
     if (dry)
         bypassGlobalEffects (processor.getAPVTS());
+
+    if (args.contains ("--zero-macros"))
+        zeroMacros (processor.getAPVTS());
+
+    applyOverrides (processor.getAPVTS(), args);
 
     processor.setPlayConfigDetails (0, 2, sampleRate, blockSize);
     processor.prepareToPlay (sampleRate, blockSize);

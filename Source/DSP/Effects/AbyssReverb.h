@@ -67,7 +67,7 @@ private:
     static constexpr float kMaxLineMs       = 80.0f;
     static constexpr float kMaxModMs        = 2.5f;
     static constexpr float kMaxLineGain     = 0.9995f;
-    static constexpr float kStateCeiling    = 8.0f;   // catastrophic backstop only
+    static constexpr float kStateCeiling    = 32.0f;  // catastrophic backstop only
     /** Max line-length change per sample; far above the modulation rate,
         so it only ever tames a SIZE sweep into a smooth morph. */
     static constexpr float kDelaySlew       = 0.3f;

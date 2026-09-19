@@ -13,6 +13,14 @@
       Sine / Hollow / Glass / Water  summed band-limited partials, the partial
                                      count falling as the frequency rises
 
+    The BLEP/BLAMP residuals are the 4-point (cubic B-spline) form built on
+    math::polyBlep / math::polyBlamp, which buys about 10 dB over the 2-point
+    kernel. Above roughly D#6 — where the whole harmonic series fits inside
+    kMaxPartials — the jump waves cross-fade onto their exact Fourier series
+    instead, so the top of the keyboard is alias-free rather than merely
+    band-limited. The two paths are the same waveform at the same phase, so
+    the cross-fade is inaudible.
+
     Realtime safety: every buffer is a fixed-size member array, nothing is
     allocated, locked or logged once prepare() has run.
 */
@@ -75,6 +83,8 @@ private:
     void rebuildUnison (bool randomisePhases, RandomGenerator* rng) noexcept;
     void deriveShapeConstants() noexcept;
     void updatePartialTargets() noexcept;
+    void updateAquaticTargets() noexcept;
+    void updateFourierTargets() noexcept;
     void snapPartialGains() noexcept;
 
     float renderWave (float phase, float dt, const UnisonVoice& uv) const noexcept;
@@ -95,8 +105,10 @@ private:
 
     Params  params_ {};
     OscWave wave_          = OscWave::Saw;
-    bool    usesPartials_  = false;
+    bool    usesPartials_  = false;   // wave is purely additive
     int     partialLimit_  = 1;
+    float   additiveMix_   = 0.0f;    // 0 = polyBLEP, 1 = exact Fourier series
+    bool    pendingSnap_   = false;
 
     UnisonVoice voices_[dsp::kMaxUnison] {};
     int   numVoices_   = 1;

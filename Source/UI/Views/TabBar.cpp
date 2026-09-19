@@ -101,7 +101,7 @@ void TabBar::resized()
 void TabBar::paint (juce::Graphics& g)
 {
     const auto& t = RippleTheme::get();
-    const auto bounds = getLocalBounds().toFloat();
+    auto bounds = getLocalBounds().toFloat();
 
     // Hairline rule under the whole bar.
     g.setColour (t.panelBorderSoft);

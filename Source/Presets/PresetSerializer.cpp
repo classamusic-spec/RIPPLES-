@@ -74,7 +74,10 @@ std::unique_ptr<juce::XmlElement> PresetSerializer::toXml (const Preset& preset)
     auto root = std::make_unique<juce::XmlElement> (kRootTag);
 
     root->setAttribute (kAttrVersion, pid::kParameterVersion);
+
+   #if defined (JucePlugin_VersionString)
     root->setAttribute (kAttrPluginVer, JucePlugin_VersionString);
+   #endif
 
     auto* info = root->createNewChildElement (kInfoTag);
     info->setAttribute (kAttrName, preset.info.name);
