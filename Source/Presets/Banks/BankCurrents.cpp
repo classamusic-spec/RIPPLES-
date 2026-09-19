@@ -879,7 +879,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         { ModSource::Velocity,      ModDest::DropletAmount,    0.30f },
     }));
 
-    out.push_back (make (kCurrents, "SLACK WATER", "Pad", { "Calm", "Submerged", "Dark" }, Dry::No,
+    out.push_back (make (kCurrents, "TIDAL STAND", "Pad", { "Calm", "Submerged", "Dark" }, Dry::No,
         "The turn of the tide, when nothing appears to move. Drift is set to a "
         "full eight-minute period and is the only thing running; two bars apart "
         "sound identical, two minutes apart do not.",
@@ -3404,7 +3404,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         { ModSource::Velocity,      ModDest::DropletAmount,  0.35f },
     }));
 
-    out.push_back (make (kCurrents, "SEICHE", "Arp", { "Dreamy", "Wet", "Calm" }, Dry::No,
+    out.push_back (make (kCurrents, "BASIN SWING", "Arp", { "Dreamy", "Wet", "Calm" }, Dry::No,
         "A basin sloshing on its own long period. Sixteenths run underneath, "
         "but a four-bar tide raises and lowers the whole pattern, so the figure "
         "breathes over a phrase rather than a beat.",
@@ -3759,7 +3759,7 @@ void addCurrentsBank (std::vector<Preset>& out)
     }));
 
     // --- DRY AQUATIC #23 ---------------------------------------------------
-    out.push_back (make (kCurrents, "LANGMUIR CELLS", "Texture", { "Organic", "Submerged", "Calm" }, Dry::Yes,
+    out.push_back (make (kCurrents, "COUNTERROLL", "Texture", { "Organic", "Submerged", "Calm" }, Dry::Yes,
         "The counter-rotating rolls that line up under a steady wind. The two "
         "oscillators are hard-panned and their pans are driven by the same "
         "fully decorrelated Current with opposite signs, so the image turns "
@@ -3986,7 +3986,7 @@ void addCurrentsBank (std::vector<Preset>& out)
     }));
 
     // --- DRY AQUATIC #24 ---------------------------------------------------
-    out.push_back (make (kCurrents, "HALOCLINE", "Texture", { "Submerged", "Dreamy", "Deep" }, Dry::Yes,
+    out.push_back (make (kCurrents, "SALT WEDGE", "Texture", { "Submerged", "Dreamy", "Deep" }, Dry::Yes,
         "Fresh over salt, and the boundary migrating. Drift on a five-minute "
         "period is wired to the oscillator balance and nothing else is, so the "
         "texture crosses from one water to the other and back without ever "
@@ -5398,7 +5398,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         { ModSource::Velocity,    ModDest::FilterEnvAmount, 0.40f },
     }));
 
-    out.push_back (make (kCurrents, "CAVITATION", "FX", { "Chaotic", "Bright", "Glassy" }, Dry::No,
+    out.push_back (make (kCurrents, "PROPWASH", "FX", { "Chaotic", "Bright", "Glassy" }, Dry::No,
         "Bubbles collapsing against a propeller. Ripple at forty hertz with a "
         "very short decay fires on every note into ring modulation, which makes "
         "a metallic crack that is never quite the same twice.",
