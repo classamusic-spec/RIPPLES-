@@ -54,11 +54,14 @@ namespace
     constexpr float kRingSquashSurface = 1.00f;
     constexpr float kRingSquashDepth   = 0.84f;
     constexpr float kDragBulge        = 0.085f;  // liquid bulge toward the drag direction
-    constexpr float kRingAlphaNear    = 0.115f;
-    constexpr float kRingAlphaFar     = 0.022f;
+    // Ring opacity: raised from the first pass, where a deep patch dimmed the
+    // rings to near-invisibility and left the centre of the interface empty.
+    // Still low enough to stay a calm surface rather than a neon target.
+    constexpr float kRingAlphaNear    = 0.190f;
+    constexpr float kRingAlphaFar     = 0.052f;
     constexpr float kRingWidthNear    = 1.35f;
     constexpr float kRingWidthFar     = 0.62f;
-    constexpr float kRingDepthDim     = 0.32f;
+    constexpr float kRingDepthDim     = 0.52f;
     constexpr float kRingEnergyLift   = 0.40f;
     constexpr float kRingVioletTint   = 0.22f;
     constexpr float kRingGlowTint     = 0.30f;
@@ -70,7 +73,7 @@ namespace
     //--- Depth well ---------------------------------------------------------
     constexpr float kWellRadiusBase   = 0.12f;
     constexpr float kWellRadiusSpan   = 0.50f;
-    constexpr float kWellAlpha        = 0.058f;
+    constexpr float kWellAlpha        = 0.072f;
 
     //--- Particles ----------------------------------------------------------
     constexpr float kParticleRise     = 0.014f;  // outward drift, field radii / second
