@@ -1,0 +1,510 @@
+#include "Presets/PresetAuthoring.h"
+#include "Presets/Banks.h"
+
+/*
+    RIPPLES — the DROPLETS bank.
+
+    See Presets/PresetAuthoring.h for the unit helpers and the make() form, and
+    docs/PRESET_GUIDE.md for what makes a preset in this bank good.
+*/
+
+namespace ripples::factory
+{
+
+//==============================================================================
+//  DROPLETS — the droplet engine in front. Percussive, sparse, physical.
+//==============================================================================
+void addDropletsBank (std::vector<Preset>& out)
+{
+    // --- DRY AQUATIC #9 ----------------------------------------------------
+    out.push_back (make (kDroplets, "TINY BUBBLES", "Texture", { "Organic", "Wet", "Surface" }, Dry::Yes,
+        "Small, fast, high. Dense little droplets with almost no size, a Bubble "
+        "noise bed and a short bright resonator. The oscillator is only there to "
+        "give the bubbles a key to sit in.",
+    {
+        RIPPLES_FX_BYPASSED,
+
+        { pid::oscAWave,      wv (OscWave::Sine) },
+        { pid::oscAOctave,    oct (1) },
+        { pid::oscAUnison,    uni (2) },
+        { pid::oscADetune,    0.12f },
+        { pid::oscAStereo,    0.70f },
+        { pid::oscALevel,     lvl (-19.0f) },
+
+        { pid::oscBWave,      wv (OscWave::Glass) },
+        { pid::oscBOctave,    oct (2) },
+        { pid::oscBShape,     0.72f },
+        { pid::oscBLevel,     lvl (-24.0f) },
+        { pid::oscBStereo,    0.85f },
+
+        { pid::subLevel,      lvl (kSilentDb) },
+        { pid::noiseType,     nz (NoiseType::Bubble) },
+        { pid::noiseLevel,    lvl (-14.0f) },
+        { pid::noiseTone,     0.80f },
+
+        { pid::filtMode,      fm (FilterMode::BP12) },
+        { pid::filtCutoff,    hz (3200.0f) },
+        { pid::filtReso,      0.38f },
+        { pid::filtDrive,     0.08f },
+        { pid::filtKeyTrack,  0.55f },
+        { pid::filtEnvAmt,    bip (0.30f) },
+        { pid::filtMovement,  0.55f },
+
+        { pid::fenvAttack,    att (0.010f) },
+        { pid::fenvDecay,     dec (0.80f) },
+        { pid::fenvSustain,   0.35f },
+        { pid::fenvRelease,   rel (1.00f) },
+
+        { pid::aenvAttack,    att (0.060f) },
+        { pid::aenvDecay,     dec (1.50f) },
+        { pid::aenvSustain,   0.55f },
+        { pid::aenvRelease,   rel (1.40f) },
+        { pid::aenvVelocity,  0.45f },
+
+        { pid::macroDrops,    0.95f },
+        { pid::macroWet,      0.60f },
+        { pid::macroGlow,     0.65f },
+        { pid::macroCurrent,  0.45f },
+        { pid::fluidX,        bip (0.35f) },
+        { pid::fluidY,        bip (-0.65f) },
+
+        { pid::tideRate,      tideHz (1.2f) },
+        { pid::tideDepth,     0.25f },
+        { pid::tideStereo,    0.75f },
+        { pid::currRate,      currHz (2.0f) },
+        { pid::currAmount,    0.50f },
+        { pid::currSmooth,    0.35f },
+        { pid::currStereo,    0.90f },
+        { pid::driftRate,     driftHz (0.10f) },
+        { pid::driftAmount,   0.30f },
+
+        { pid::dropAmount,    0.90f },
+        { pid::dropDensity,   0.88f },
+        { pid::dropSize,      0.12f },
+        { pid::dropTone,      0.88f },
+        { pid::dropSplash,    0.45f },
+        { pid::dropGravity,   0.25f },
+        { pid::dropBounce,    0.40f },
+        { pid::dropRandom,    0.80f },
+        { pid::dropSpread,    1.00f },
+        { pid::dropMode,      dm (DropletMode::Atmospheric) },
+
+        { pid::resoAmount,    0.42f },
+        { pid::resoSize,      0.28f },
+        { pid::resoDecay,     0.32f },
+        { pid::resoDamping,   0.30f },
+        { pid::resoScatter,   0.60f },
+        { pid::resoMotion,    0.50f },
+
+        { pid::mastLow,       eqdb (-3.0f) },
+        { pid::mastHigh,      eqdb (2.0f) },
+    },
+    {
+        { ModSource::Current,     ModDest::DropletDensity, 0.45f },
+        { ModSource::Current,     ModDest::DropletTone,    0.35f },
+        { ModSource::Tide,        ModDest::DropletSize,    0.30f },
+        { ModSource::Drift,       ModDest::FilterCutoff,   0.35f },
+        { ModSource::AmpEnvelope, ModDest::DropletAmount,  0.50f },
+        { ModSource::Velocity,    ModDest::DropletDensity, 0.35f },
+        { ModSource::KeyTrack,    ModDest::DropletSize,   -0.40f },
+        { ModSource::ModWheel,    ModDest::DropletDensity, 0.45f },
+    }));
+
+    out.push_back (make (kDroplets, "CAVE DRIP", "FX", { "Organic", "Calm", "Submerged" }, Dry::No,
+        "High gravity and high bounce give the accelerating repeat of a real "
+        "drip; a long dark reverb gives it somewhere to land.",
+    {
+        { pid::oscAWave,      wv (OscWave::Sine) },
+        { pid::oscALevel,     lvl (-22.0f) },
+        { pid::oscAUnison,    uni (1) },
+
+        { pid::oscBWave,      wv (OscWave::Hollow) },
+        { pid::oscBOctave,    oct (-1) },
+        { pid::oscBLevel,     lvl (-26.0f) },
+
+        { pid::subLevel,      lvl (-28.0f) },
+        { pid::noiseType,     nz (NoiseType::Deep) },
+        { pid::noiseLevel,    lvl (-30.0f) },
+        { pid::noiseTone,     0.25f },
+
+        { pid::filtMode,      fm (FilterMode::LP12) },
+        { pid::filtCutoff,    hz (1300.0f) },
+        { pid::filtReso,      0.28f },
+        { pid::filtKeyTrack,  0.45f },
+        { pid::filtEnvAmt,    bip (0.30f) },
+        { pid::filtPressure,  0.45f },
+
+        { pid::fenvAttack,    att (0.020f) },
+        { pid::fenvDecay,     dec (2.00f) },
+        { pid::fenvSustain,   0.20f },
+        { pid::fenvRelease,   rel (2.00f) },
+
+        { pid::aenvAttack,    att (0.100f) },
+        { pid::aenvDecay,     dec (3.00f) },
+        { pid::aenvSustain,   0.40f },
+        { pid::aenvRelease,   rel (3.00f) },
+        { pid::aenvVelocity,  0.35f },
+
+        { pid::macroDrops,    0.85f },
+        { pid::macroSpace,    0.80f },
+        { pid::macroWet,      0.55f },
+        { pid::macroDepth,    0.55f },
+        { pid::fluidX,        bip (-0.30f) },
+        { pid::fluidY,        bip (0.40f) },
+
+        { pid::tideRate,      tideHz (0.18f) },
+        { pid::tideDepth,     0.35f },
+        { pid::currRate,      currHz (0.30f) },
+        { pid::currAmount,    0.40f },
+        { pid::currSmooth,    0.65f },
+        { pid::driftRate,     driftHz (0.05f) },
+        { pid::driftAmount,   0.40f },
+        { pid::rippleRate,    rippleHz (3.0f) },
+        { pid::rippleDecay,   0.70f },
+        { pid::rippleDepth,   0.35f },
+        { pid::rippleTrigger, rtg (RippleTrigger::Droplet) },
+
+        { pid::dropAmount,    0.85f },
+        { pid::dropDensity,   0.22f },
+        { pid::dropSize,      0.58f },
+        { pid::dropTone,      0.45f },
+        { pid::dropSplash,    0.35f },
+        { pid::dropGravity,   0.92f },
+        { pid::dropBounce,    0.88f },
+        { pid::dropRandom,    0.55f },
+        { pid::dropSpread,    0.80f },
+
+        { pid::resoAmount,    0.45f },
+        { pid::resoSize,      0.62f },
+        { pid::resoDecay,     0.70f },
+        { pid::resoDamping,   0.45f },
+        { pid::resoScatter,   0.40f },
+        { pid::resoMotion,    0.25f },
+
+        { pid::scurEnable,    on },
+        { pid::scurAmount,    0.35f },
+        { pid::dlyEnable,     on },
+        { pid::dlyTime,       dtime (0.90f) },
+        { pid::dlyFeedback,   0.45f },
+        { pid::dlySpread,     0.65f },
+        { pid::dlyDamping,    0.78f },
+        { pid::dlyMix,        0.26f },
+        { pid::diffEnable,    on },
+        { pid::diffAmount,    0.55f },
+        { pid::diffMix,       0.30f },
+        { pid::verbEnable,    on },
+        { pid::verbSize,      0.88f },
+        { pid::verbDecay,     0.85f },
+        { pid::verbPredelay,  pre (60.0f) },
+        { pid::verbDamping,   0.62f },
+        { pid::verbHighCut,   vHighHz (5500.0f) },
+        { pid::verbMix,       0.50f },
+        { pid::mastLow,       eqdb (-1.0f) },
+    },
+    {
+        { ModSource::Ripple,      ModDest::FilterCutoff,   0.40f },
+        { ModSource::Ripple,      ModDest::ResonatorSize,  0.25f },
+        { ModSource::Drift,       ModDest::DropletDensity, 0.45f },
+        { ModSource::Drift,       ModDest::DropletSize,    0.35f },
+        { ModSource::Current,     ModDest::DropletTone,    0.35f },
+        { ModSource::AmpEnvelope, ModDest::DropletAmount,  0.40f },
+        { ModSource::ModWheel,    ModDest::DropletDensity, 0.50f },
+    }));
+
+    // --- DRY AQUATIC #10 ---------------------------------------------------
+    out.push_back (make (kDroplets, "RAIN ON GLASS", "Texture", { "Wet", "Glassy", "Calm" }, Dry::Yes,
+        "Heard from inside. Very dense, very small droplets against a bright "
+        "band-pass, with the resonator tuned short and glassy so each hit has a "
+        "pitch but no tail. No reverb — the resonator is the window.",
+    {
+        RIPPLES_FX_BYPASSED,
+
+        { pid::oscAWave,      wv (OscWave::Glass) },
+        { pid::oscAShape,     0.80f },
+        { pid::oscAOctave,    oct (1) },
+        { pid::oscAUnison,    uni (3) },
+        { pid::oscADetune,    0.14f },
+        { pid::oscAStereo,    0.90f },
+        { pid::oscALevel,     lvl (-15.0f) },
+
+        { pid::oscBWave,      wv (OscWave::Triangle) },
+        { pid::oscBOctave,    oct (2) },
+        { pid::oscBLevel,     lvl (-25.0f) },
+        { pid::oscBStereo,    0.85f },
+
+        { pid::subLevel,      lvl (kSilentDb) },
+        { pid::noiseType,     nz (NoiseType::Air) },
+        { pid::noiseLevel,    lvl (-17.0f) },
+        { pid::noiseTone,     0.88f },
+
+        { pid::filtMode,      fm (FilterMode::BP12) },
+        { pid::filtCutoff,    hz (4200.0f) },
+        { pid::filtReso,      0.34f },
+        { pid::filtKeyTrack,  0.50f },
+        { pid::filtEnvAmt,    bip (0.18f) },
+        { pid::filtMovement,  0.65f },
+
+        { pid::fenvAttack,    att (0.30f) },
+        { pid::fenvDecay,     dec (2.00f) },
+        { pid::fenvSustain,   0.50f },
+        { pid::fenvRelease,   rel (2.00f) },
+
+        { pid::aenvAttack,    att (0.50f) },
+        { pid::aenvDecay,     dec (2.50f) },
+        { pid::aenvSustain,   0.65f },
+        { pid::aenvRelease,   rel (2.50f) },
+        { pid::aenvVelocity,  0.30f },
+
+        { pid::macroDrops,    1.00f },
+        { pid::macroWet,      0.55f },
+        { pid::macroGlow,     0.70f },
+        { pid::macroCurrent,  0.50f },
+        { pid::fluidX,        bip (0.45f) },
+        { pid::fluidY,        bip (-0.70f) },
+
+        { pid::tideShape,     ts (TideShape::Flow) },
+        { pid::tideRate,      tideHz (0.35f) },
+        { pid::tideDepth,     0.40f },
+        { pid::tideStereo,    0.80f },
+        { pid::currRate,      currHz (1.6f) },
+        { pid::currAmount,    0.55f },
+        { pid::currSmooth,    0.45f },
+        { pid::currStereo,    0.95f },
+        { pid::driftRate,     driftHz (0.07f) },
+        { pid::driftAmount,   0.35f },
+
+        { pid::dropAmount,    0.95f },
+        { pid::dropDensity,   1.00f },
+        { pid::dropSize,      0.10f },
+        { pid::dropTone,      0.92f },
+        { pid::dropSplash,    0.30f },
+        { pid::dropGravity,   0.20f },
+        { pid::dropBounce,    0.15f },
+        { pid::dropRandom,    0.95f },
+        { pid::dropSpread,    1.00f },
+
+        { pid::resoAmount,    0.55f },
+        { pid::resoSize,      0.22f },
+        { pid::resoDecay,     0.26f },
+        { pid::resoDamping,   0.25f },
+        { pid::resoScatter,   0.55f },
+        { pid::resoMotion,    0.40f },
+
+        { pid::mastLow,       eqdb (-4.0f) },
+        { pid::mastHigh,      eqdb (1.5f) },
+    },
+    {
+        { ModSource::Tide,        ModDest::DropletDensity, 0.35f },
+        { ModSource::Current,     ModDest::DropletTone,    0.40f },
+        { ModSource::Current,     ModDest::FilterCutoff,   0.35f },
+        { ModSource::Drift,       ModDest::DropletSize,    0.30f },
+        { ModSource::Drift,       ModDest::ResonatorSize,  0.25f },
+        { ModSource::AmpEnvelope, ModDest::DropletAmount,  0.55f },
+        { ModSource::ModWheel,    ModDest::DropletDensity, 0.40f },
+    }));
+
+    out.push_back (make (kDroplets, "DROPLET KEYS", "Key", { "Wet", "Organic", "Bright" }, Dry::No,
+        "Note-mode droplets tuned to the note you play, so every key strike "
+        "arrives with its own splash. Velocity decides how big the splash is.",
+    {
+        { pid::oscAWave,      wv (OscWave::Water) },
+        { pid::oscAShape,     0.52f },
+        { pid::oscAUnison,    uni (2) },
+        { pid::oscADetune,    0.10f },
+        { pid::oscAStereo,    0.55f },
+        { pid::oscALevel,     lvl (-4.0f) },
+        { pid::oscAPhase,     startPhase (0.0f) },
+
+        { pid::oscBWave,      wv (OscWave::Sine) },
+        { pid::oscBOctave,    oct (1) },
+        { pid::oscBLevel,     lvl (-14.0f) },
+
+        { pid::subLevel,      lvl (-18.0f) },
+        { pid::noiseType,     nz (NoiseType::Bubble) },
+        { pid::noiseLevel,    lvl (-22.0f) },
+        { pid::noiseTone,     0.62f },
+
+        { pid::filtMode,      fm (FilterMode::LP24) },
+        { pid::filtCutoff,    hz (1600.0f) },
+        { pid::filtReso,      0.30f },
+        { pid::filtDrive,     0.16f },
+        { pid::filtKeyTrack,  0.70f },
+        { pid::filtEnvAmt,    bip (0.50f) },
+        { pid::filtPressure,  0.30f },
+
+        { pid::fenvAttack,    att (0.002f) },
+        { pid::fenvDecay,     dec (0.45f) },
+        { pid::fenvSustain,   0.15f },
+        { pid::fenvRelease,   rel (0.60f) },
+        { pid::fenvVelocity,  0.65f },
+
+        { pid::aenvAttack,    att (0.004f) },
+        { pid::aenvDecay,     dec (1.80f) },
+        { pid::aenvSustain,   0.30f },
+        { pid::aenvRelease,   rel (1.20f) },
+        { pid::aenvVelocity,  0.70f },
+
+        { pid::macroDrops,    0.80f },
+        { pid::macroWet,      0.50f },
+        { pid::macroGlow,     0.50f },
+        { pid::macroSpace,    0.45f },
+        { pid::fluidX,        bip (0.10f) },
+        { pid::fluidY,        bip (-0.20f) },
+
+        { pid::tideRate,      tideHz (0.6f) },
+        { pid::tideDepth,     0.20f },
+        { pid::currRate,      currHz (0.9f) },
+        { pid::currAmount,    0.35f },
+        { pid::rippleRate,    rippleHz (6.5f) },
+        { pid::rippleDecay,   0.75f },
+        { pid::rippleDepth,   0.35f },
+
+        { pid::dropAmount,    0.70f },
+        { pid::dropMode,      dm (DropletMode::Note) },
+        { pid::dropDensity,   0.40f },
+        { pid::dropSize,      0.40f },
+        { pid::dropTone,      0.62f },
+        { pid::dropSplash,    0.65f },
+        { pid::dropGravity,   0.55f },
+        { pid::dropBounce,    0.50f },
+        { pid::dropRandom,    0.45f },
+        { pid::dropSpread,    0.75f },
+
+        { pid::resoAmount,    0.35f },
+        { pid::resoSize,      0.45f },
+        { pid::resoDecay,     0.45f },
+        { pid::resoDamping,   0.42f },
+
+        { pid::scurEnable,    on },
+        { pid::chorEnable,    on },
+        { pid::chorRate,      chorHz (0.5f) },
+        { pid::chorMix,       0.24f },
+        { pid::dlyEnable,     on },
+        { pid::dlySync,       on },
+        { pid::dlySyncTime,   sd (SyncDivision::Sixteenth) },
+        { pid::dlyFeedback,   0.32f },
+        { pid::dlyDamping,    0.68f },
+        { pid::dlyMix,        0.18f },
+        { pid::verbEnable,    on },
+        { pid::verbSize,      0.60f },
+        { pid::verbDecay,     0.55f },
+        { pid::verbMix,       0.30f },
+    },
+    {
+        { ModSource::Velocity,    ModDest::DropletAmount, 0.60f },
+        { ModSource::Velocity,    ModDest::DropletSize,   0.35f },
+        { ModSource::Velocity,    ModDest::FilterCutoff,  0.40f },
+        { ModSource::KeyTrack,    ModDest::DropletTone,   0.40f },
+        { ModSource::Ripple,      ModDest::DropletSize,  -0.30f },
+        { ModSource::ModEnvelope, ModDest::ShapeA,        0.30f },
+        { ModSource::RandomPerNote, ModDest::PanA,        0.35f },
+    }));
+
+    out.push_back (make (kDroplets, "CONDENSATION", "FX", { "Calm", "Wet", "Submerged" }, Dry::No,
+        "Almost nothing happening. Very sparse, very large droplets over a "
+        "barely-there pad — an ambience bed rather than an instrument.",
+    {
+        { pid::oscAWave,      wv (OscWave::Water) },
+        { pid::oscAShape,     0.30f },
+        { pid::oscAUnison,    uni (4) },
+        { pid::oscADetune,    0.26f },
+        { pid::oscAStereo,    0.95f },
+        { pid::oscALevel,     lvl (-13.0f) },
+
+        { pid::oscBWave,      wv (OscWave::Hollow) },
+        { pid::oscBOctave,    oct (-1) },
+        { pid::oscBUnison,    uni (2) },
+        { pid::oscBLevel,     lvl (-18.0f) },
+
+        { pid::subLevel,      lvl (-20.0f) },
+        { pid::noiseType,     nz (NoiseType::Surf) },
+        { pid::noiseLevel,    lvl (-26.0f) },
+        { pid::noiseTone,     0.40f },
+
+        { pid::filtMode,      fm (FilterMode::LP12) },
+        { pid::filtCutoff,    hz (900.0f) },
+        { pid::filtReso,      0.20f },
+        { pid::filtKeyTrack,  0.30f },
+        { pid::filtEnvAmt,    bip (0.20f) },
+        { pid::filtPressure,  0.50f },
+
+        { pid::fenvAttack,    att (4.00f) },
+        { pid::fenvDecay,     dec (8.00f) },
+        { pid::fenvSustain,   0.60f },
+        { pid::fenvRelease,   rel (8.00f) },
+
+        { pid::aenvAttack,    att (3.50f) },
+        { pid::aenvDecay,     dec (6.00f) },
+        { pid::aenvSustain,   0.85f },
+        { pid::aenvRelease,   rel (7.00f) },
+        { pid::aenvVelocity,  0.15f },
+
+        { pid::macroDrops,    0.60f },
+        { pid::macroSpace,    0.85f },
+        { pid::macroDepth,    0.55f },
+        { pid::macroWet,      0.55f },
+        { pid::fluidX,        bip (-0.65f) },
+        { pid::fluidY,        bip (0.35f) },
+
+        { pid::tideShape,     ts (TideShape::Swell) },
+        { pid::tideRate,      tideHz (0.06f) },
+        { pid::tideDepth,     0.45f },
+        { pid::tideStereo,    0.70f },
+        { pid::currRate,      currHz (0.12f) },
+        { pid::currAmount,    0.40f },
+        { pid::currSmooth,    0.90f },
+        { pid::driftRate,     driftHz (0.008f) },
+        { pid::driftAmount,   0.55f },
+        { pid::driftStereo,   0.95f },
+
+        { pid::dropAmount,    0.55f },
+        { pid::dropDensity,   0.06f },
+        { pid::dropSize,      0.90f },
+        { pid::dropTone,      0.35f },
+        { pid::dropSplash,    0.20f },
+        { pid::dropGravity,   0.40f },
+        { pid::dropBounce,    0.10f },
+        { pid::dropRandom,    0.90f },
+        { pid::dropSpread,    1.00f },
+
+        { pid::resoAmount,    0.38f },
+        { pid::resoSize,      0.80f },
+        { pid::resoDecay,     0.72f },
+        { pid::resoDamping,   0.60f },
+        { pid::resoMotion,    0.30f },
+
+        { pid::scurEnable,    on },
+        { pid::scurAmount,    0.45f },
+        { pid::scurRate,      scurHz (0.03f) },
+        { pid::chorEnable,    on },
+        { pid::chorRate,      chorHz (0.10f) },
+        { pid::chorDepth,     0.55f },
+        { pid::chorMix,       0.30f },
+        { pid::dlyEnable,     on },
+        { pid::dlyTime,       dtime (1.80f) },
+        { pid::dlyFeedback,   0.50f },
+        { pid::dlyDamping,    0.82f },
+        { pid::dlyMix,        0.22f },
+        { pid::diffEnable,    on },
+        { pid::diffAmount,    0.65f },
+        { pid::diffMix,       0.36f },
+        { pid::verbEnable,    on },
+        { pid::verbSize,      0.92f },
+        { pid::verbDecay,     0.90f },
+        { pid::verbDamping,   0.58f },
+        { pid::verbMix,       0.55f },
+        { pid::mastHigh,      eqdb (-1.0f) },
+        { pid::voiceCount,    vox (8) },
+    },
+    {
+        { ModSource::Drift,       ModDest::DropletDensity, 0.40f },
+        { ModSource::Drift,       ModDest::FineAll,        0.25f },
+        { ModSource::Tide,        ModDest::FilterCutoff,   0.35f },
+        { ModSource::Tide,        ModDest::DropletSize,    0.30f },
+        { ModSource::Current,     ModDest::PanA,           0.45f },
+        { ModSource::Current,     ModDest::ReverbMix,      0.20f },
+        { ModSource::AmpEnvelope, ModDest::DropletAmount,  0.35f },
+    }));
+}
+
+} // namespace ripples::factory
