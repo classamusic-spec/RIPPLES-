@@ -144,6 +144,113 @@ struct RippleTheme
         static const RippleTheme instance;
         return instance;
     }
+
+    //==========================================================================
+    // TACTILE CONTROL SET
+    //
+    // Tokens added for RippleLookAndFeel, GlassPanel, RippleKnob,
+    // RippleSelector, RippleToggle, RippleButton and SectionHeader. Everything
+    // below is additive — nothing above was changed.
+    //==========================================================================
+
+    // --- Control surfaces -----------------------------------------------------
+    juce::Colour controlFill        { 0xff0b1420 };   // flat dark well (selector, button)
+    juce::Colour controlFillHover   { 0xff101d2c };
+    juce::Colour controlFillDown    { 0xff070e18 };
+    juce::Colour controlBorder      { 0x3a41677d };   // thin neutral border
+    juce::Colour controlBorderHover { 0x664fd8ee };   // border warms to cyan on hover
+    juce::Colour focusRing          { 0xcc8cecff };   // keyboard focus indication
+
+    // --- Knob extras ----------------------------------------------------------
+    juce::Colour knobHighlight      { 0x1effffff };   // mild inner top highlight
+    juce::Colour knobShadow         { 0x59000000 };   // soft drop shadow beneath the body
+    juce::Colour knobRingHover      { 0x804fd8ee };   // ring lifts toward cyan on hover
+    juce::Colour modRing            { 0xff36c3a8 };   // modulation ring (aqua)
+    juce::Colour modRingTrack       { 0x2236c3a8 };
+
+    // --- Toggle ---------------------------------------------------------------
+    juce::Colour toggleTrackOff     { 0xff101b28 };
+    juce::Colour toggleTrackBorder  { 0x44557a8e };
+    juce::Colour toggleThumbOff     { 0xff7e93a8 };   // dim thumb, parked left
+    juce::Colour toggleThumbOn      { 0xff05121c };   // dark thumb on the lit track
+
+    // --- Popup menus, tooltips, scrollbars, editors ---------------------------
+    juce::Colour menuBackground     { 0xf00a1322 };   // dark glass popup
+    juce::Colour menuBorder         { 0x384fd8ee };
+    juce::Colour menuHighlight      { 0x3a4fd8ee };
+    juce::Colour menuSeparator      { 0x1f5fd8e8 };
+    juce::Colour tooltipBackground  { 0xf4091220 };
+    juce::Colour scrollbarThumb     { 0x662a7d90 };
+    juce::Colour scrollbarThumbOver { 0xaa4fd8ee };
+    juce::Colour selectionHighlight { 0x554fd8ee };   // text selection
+
+    // --- Extra geometry, in device-independent pixels -------------------------
+    float knobRingThickness      =  1.4f;
+    float knobModArcThickness    =  2.0f;
+    float knobIndicatorThickness =  2.0f;
+    float knobShadowOffset       =  2.0f;
+    float knobShadowSpread       =  6.0f;
+    float panelShadowSpread      = 10.0f;
+    float panelShadowOffset      =  3.0f;
+    int   shadowLayers           =  5;      // layered strokes instead of a blurred image
+    float focusRingWidth         =  1.6f;
+    float focusRingPadding       =  2.0f;
+
+    // --- Knob proportions, as fractions of the control radius ------------------
+    float knobBodyRadiusRatio      = 0.72f;
+    float knobRingRadiusRatio      = 0.755f;
+    float knobArcRadiusRatio       = 0.885f;
+    float knobModRadiusRatio       = 0.985f;
+    float knobIndicatorInnerRatio  = 0.28f;
+    float knobIndicatorOuterRatio  = 0.62f;
+    float knobHighlightRadiusRatio = 0.58f;
+    float knobShadeOffsetRatio     = 0.42f;   // radial shading centre, above the middle
+    float knobShadeSpreadRatio     = 1.45f;
+
+    // --- Rotary sweep, clockwise from twelve o'clock ---------------------------
+    float knobStartAngle = juce::MathConstants<float>::pi * 1.25f;
+    float knobEndAngle   = juce::MathConstants<float>::pi * 2.75f;
+
+    // --- Control sizes ---------------------------------------------------------
+    int knobLargeDiameter   = 62;
+    int knobMediumDiameter  = 46;
+    int knobSmallDiameter   = 34;
+    int knobLabelHeight     = 13;
+    int knobValueHeight     = 14;
+    int selectorHeight      = 26;
+    int buttonHeight        = 26;
+    int toggleWidth         = 34;
+    int toggleHeight        = 18;
+    int sectionHeaderHeight = 20;
+    int menuItemHeight      = 22;
+    int menuBorderSize      = 6;
+    int scrollbarWidth      = 10;
+    int panelTitleHeight    = 24;
+    int panelContentInset   = 12;
+
+    // --- Fine detail sizes -----------------------------------------------------
+    float chevronThickness  = 1.6f;
+    int   chevronSize       = 5;
+    float toggleThumbInset  = 2.5f;
+    float sectionTickWidth  = 2.0f;
+    int   sectionTickHeight = 10;
+    int   tooltipPadding    = 8;
+    float panelHighlightRatio = 0.34f;   // height of the internal top highlight
+
+    // --- Detail levels: small controls drop ornament, never legibility ---------
+    float knobDetailLarge     = 1.0f;
+    float knobDetailMedium    = 0.7f;
+    float knobDetailSmall     = 0.35f;
+    float knobDetailThreshold = 0.5f;
+
+    // --- Intensities -----------------------------------------------------------
+    float disabledAlpha    = 0.42f;   // disabled controls stay visible, never invisible
+    float hoverBrighten    = 0.22f;
+    float pressDarken      = 0.14f;
+    float modRingAlpha     = 0.85f;
+    float arcGlowAlpha     = 0.30f;
+    float shadowLayerAlpha = 0.16f;
+    float modRingEpsilon   = 0.002f;  // ignore modulation changes smaller than this
 };
 
 } // namespace ripples

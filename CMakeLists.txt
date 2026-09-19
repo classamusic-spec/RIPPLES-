@@ -122,3 +122,28 @@ if(MSVC)
 else()
     target_compile_options(RIPPLES PRIVATE -ffast-math -fno-finite-math-only)
 endif()
+
+# ---------------------------------------------------------------------------
+# Offline render harness — lets the synth be measured, not just compiled.
+# ---------------------------------------------------------------------------
+option(RIPPLES_BUILD_TESTS "Build the offline render harness" ON)
+
+if(RIPPLES_BUILD_TESTS)
+    juce_add_console_app(RIPPLES_Render PRODUCT_NAME "RIPPLES_Render")
+
+    target_sources(RIPPLES_Render PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Tests/RenderHarness.cpp")
+
+    target_include_directories(RIPPLES_Render PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/Source")
+
+    target_compile_definitions(RIPPLES_Render PRIVATE
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_STANDALONE_APPLICATION=1
+        JUCE_DISPLAY_SPLASH_SCREEN=0
+        JUCE_REPORT_APP_USAGE=0
+        JUCE_MODAL_LOOPS_PERMITTED=0)
+
+    target_link_libraries(RIPPLES_Render PRIVATE
+        RIPPLES
+        juce::juce_recommended_config_flags)
+endif()

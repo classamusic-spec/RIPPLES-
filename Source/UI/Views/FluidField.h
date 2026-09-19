@@ -1,0 +1,195 @@
+#pragma once
+
+#include <juce_audio_processors/juce_audio_processors.h>
+#include <juce_gui_basics/juce_gui_basics.h>
+
+#include "Utilities/VisualizationState.h"
+
+#include <array>
+#include <cstdint>
+#include <memory>
+
+namespace ripples
+{
+
+/**
+    FLUID FIELD — the visual centrepiece of RIPPLES.
+
+    A large elliptical XY field: a pool of bioluminescent water seen slightly
+    from above. Everything is drawn procedurally from concentric undulating
+    ellipses, radial gradients, suspended particles and expanding ripple pulses.
+    There is no bitmap art anywhere in this component; the only juce::Image it
+    owns is a cache of its own static backdrop, rendered at the real device
+    scale so the field stays crisp from 100% to 200% UI scaling.
+
+      X axis:  CALM (left)    <-> CHAOS (right)   -> pid::fluidX
+      Y axis:  SURFACE (top)  <-> DEPTH (bottom)  -> pid::fluidY
+
+    Interaction
+      - drag the luminous centre node (grab it, or click anywhere in the pool)
+      - hold Shift for fine adjustment
+      - double-click to return to the parameter defaults
+      Host automation is recorded properly: every drag is wrapped in a
+      begin/end gesture pair through juce::ParameterAttachment.
+
+    Audio response is read only from the lock-free VisualizationState:
+    note events spawn ripples, droplets spawn surface impacts, and the
+    depth / glow / RMS / current values shape the light. All of it is
+    deliberately restrained — the field is meant to be calm enough to stare
+    at for hours.
+*/
+class FluidField final : public juce::Component,
+                         private juce::Timer
+{
+public:
+    FluidField (juce::AudioProcessorValueTreeState& apvts, VisualizationState& vis);
+    ~FluidField() override;
+
+    //==========================================================================
+    void paint (juce::Graphics& g) override;
+    void resized() override;
+    void visibilityChanged() override;
+    void parentHierarchyChanged() override;
+
+    void mouseDown (const juce::MouseEvent& e) override;
+    void mouseDrag (const juce::MouseEvent& e) override;
+    void mouseUp (const juce::MouseEvent& e) override;
+    void mouseMove (const juce::MouseEvent& e) override;
+    void mouseExit (const juce::MouseEvent& e) override;
+    void mouseDoubleClick (const juce::MouseEvent& e) override;
+
+    /** The node position, normalised 0..1 on each axis.
+        x: 0 = CALM, 1 = CHAOS.  y: 0 = SURFACE, 1 = DEPTH. */
+    juce::Point<float> getNodePosition() const noexcept { return { nodeX, nodeY }; }
+
+private:
+    //==========================================================================
+    // Fixed pool sizes. Nothing here is ever resized at runtime.
+    static constexpr int kRingCount     = 16;    // concentric undulating ellipses
+    static constexpr int kAngleSteps    = 128;   // power of two: harmonic tables use a mask
+    static constexpr int kAngleMask     = kAngleSteps - 1;
+    static constexpr int kHarmonics     = 3;     // sine terms summed into each ring radius
+    static constexpr int kParticleCount = 64;    // suspended motes
+    static constexpr int kRippleCount   = 20;    // note + droplet pulses
+    static constexpr int kBloomSteps    = 9;     // stacked passes that fake the node bloom
+    static constexpr int kWellSteps     = 7;     // stacked passes that fake the depth well
+    static constexpr int kGuideSegs     = 8;     // crosshair fade segments per arm
+
+    /** One suspended mote. Stored in polar field coordinates so the slow
+        orbital drift is a single add per frame. */
+    struct Particle
+    {
+        float angle = 0.0f;        // radians around the field centre
+        float radius = 0.0f;       // 0..1 of the field radius
+        float angVel = 0.0f;       // radians / second (very slow)
+        float breathePhase = 0.0f; // radial breathing
+        float breatheRate = 0.0f;
+        float depth = 0.0f;        // 0 = just under the surface, 1 = far down
+        float size = 1.0f;         // relative dot size
+        float twinklePhase = 0.0f;
+        float twinkleRate = 0.0f;
+        float brightness = 0.5f;
+    };
+
+    /** One expanding ripple. Recycled from a fixed pool, never allocated. */
+    struct RipplePulse
+    {
+        bool  active = false;
+        bool  isDroplet = false;
+        float age = 0.0f;
+        float life = 1.0f;
+        float originX = 0.0f;   // field-normalised, -1..1 across the field radius
+        float originY = 0.0f;
+        float intensity = 0.0f;
+        float spread = 1.0f;    // final radius as a fraction of the field radius
+    };
+
+    //==========================================================================
+    void timerCallback() override;
+    void updateTimerState();
+    void advance (float dt);
+    void pollParameters();
+    void consumeAudioEvents();
+    void spawnRipple (float ox, float oy, float intensity, bool droplet);
+    void seedParticle (Particle& p, bool anywhere);
+
+    void recomputeGeometry();
+    void rebuildBackdrop (float deviceScale);
+
+    void paintDepthWell (juce::Graphics& g) const;
+    void paintRings (juce::Graphics& g);
+    void paintRipples (juce::Graphics& g) const;
+    void paintParticles (juce::Graphics& g) const;
+    void paintGuides (juce::Graphics& g) const;
+    void paintNode (juce::Graphics& g) const;
+    void paintLabels (juce::Graphics& g) const;
+
+    juce::Point<float> nodeToPixels (float nx, float ny) const noexcept;
+    void setNormalisedParameters (float nx, float ny, bool partOfGesture);
+
+    //==========================================================================
+    // Bindings.
+    juce::AudioProcessorValueTreeState& state;
+    VisualizationState& visual;
+
+    juce::RangedAudioParameter* paramX = nullptr;
+    juce::RangedAudioParameter* paramY = nullptr;
+    std::unique_ptr<juce::ParameterAttachment> attachX, attachY;
+
+    // Node state, all normalised 0..1.
+    float targetX = 0.5f, targetY = 0.5f;
+    float nodeX   = 0.5f, nodeY   = 0.5f;
+    float defaultX = 0.5f, defaultY = 0.5f;
+
+    // Interaction.
+    bool  dragging = false;
+    bool  hoveringNode = false;
+    float hoverAmount = 0.0f;
+    juce::Point<float> grabMouse;
+    float grabX = 0.5f, grabY = 0.5f;
+    float dragVecX = 0.0f, dragVecY = 0.0f;   // smoothed drag direction, decays to zero
+    float lastNodeX = 0.5f, lastNodeY = 0.5f;
+
+    // Audio-derived, all smoothed towards their VisualizationState targets.
+    float glowSmoothed    = 0.3f;
+    float depthSmoothed   = 0.5f;
+    float motionSmoothed  = 0.3f;
+    float rmsSmoothed     = 0.0f;
+    float currentSmoothed = 0.0f;
+    float energy          = 0.0f;
+    uint32_t lastDropletCount = 0;
+
+    // Time.
+    double   lastTickMs  = 0.0;
+    float    timeSeconds = 0.0f;
+    std::array<float, kHarmonics> harmonicPhase {};
+
+    // Geometry in logical pixels, recomputed on resize.
+    juce::Rectangle<float> fieldArea;
+    float centreX = 0.0f, centreY = 0.0f;   // static centre of the field
+    float fieldCx = 0.0f, fieldCy = 0.0f;   // live centre, including the slow current drift
+    float fieldRx = 1.0f, fieldRy = 1.0f;
+    float uiScale = 1.0f;
+
+    // Cached static layer: deep gradient + pool + vignette.
+    juce::Image backdrop;
+    float backdropScale = 0.0f;
+
+    // Reusable scratch. Cleared and rebuilt, never reallocated after warm-up.
+    juce::Path ringPath;
+
+    // Lookup tables for the ring harmonics.
+    std::array<float, kAngleSteps> cosTable {};
+    std::array<float, kAngleSteps> sinTable {};
+
+    // Fixed pools.
+    std::array<Particle, kParticleCount> particles {};
+    std::array<RipplePulse, kRippleCount> ripples {};
+    int nextRippleSlot = 0;
+
+    juce::Random rng;
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (FluidField)
+};
+
+} // namespace ripples
