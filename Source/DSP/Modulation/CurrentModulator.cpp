@@ -76,8 +76,14 @@ void CurrentModulator::setParams (const Params& p) noexcept
 
 void CurrentModulator::recompute() noexcept
 {
-    const float rate   = math::clamp (params.rate, kMinRateHz, kMaxRateHz);
-    const float smooth = math::clamp (params.smoothness, 0.0f, 1.0f);
+    // sanitise() first: a NaN parameter would survive a bare clamp.
+    params.rate       = math::clamp (math::sanitise (params.rate), kMinRateHz, kMaxRateHz);
+    params.smoothness = math::clamp (math::sanitise (params.smoothness), 0.0f, 1.0f);
+    params.drift      = math::clamp (math::sanitise (params.drift), 0.0f, 1.0f);
+    params.stereo     = math::clamp (math::sanitise (params.stereo), 0.0f, 1.0f);
+
+    const float rate   = params.rate;
+    const float smooth = params.smoothness;
 
     omega = math::twoPi * rate;
 
@@ -97,7 +103,7 @@ void CurrentModulator::recompute() noexcept
     biasOmegaSq      = biasOmega * biasOmega;
     biasForceGain    = kBiasSd * 2.0f * std::sqrt (kBiasZeta) * biasOmega * std::sqrt (biasOmega);
 
-    const float s = math::clamp (params.stereo, 0.0f, 1.0f);
+    const float s = params.stereo;
     indepGain = s;
     corrGain  = std::sqrt (std::max (0.0f, 1.0f - s * s));
 
@@ -176,7 +182,7 @@ float CurrentModulator::advance (int numSamples) noexcept
     }
 
     //------------------------------------------------------------------- output
-    const float bias = math::clamp (params.drift, 0.0f, 1.0f);
+    const float bias = params.drift;
 
     value  = math::clamp (math::sanitise (softBound (mainL.smoothed + bias * biasL.position)), -1.0f, 1.0f);
     valueR = math::clamp (math::sanitise (softBound (mainR.smoothed + bias * biasR.position)), -1.0f, 1.0f);

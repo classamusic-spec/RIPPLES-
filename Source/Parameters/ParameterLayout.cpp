@@ -19,6 +19,11 @@ using BAttr  = juce::AudioParameterBoolAttributes;
 
 constexpr int kV = kParameterVersionHint;
 
+/** One degree, as a fraction of a cycle. The oscillator start-phase knob has a
+    single "Free" detent one step below 0 deg, so that free-running does not eat
+    half the knob's travel. */
+constexpr float kPhaseStep = 1.0f / 360.0f;
+
 //==============================================================================
 // Range helpers
 //==============================================================================
@@ -167,7 +172,7 @@ juce::String startPhaseToText (float v, int)
 float textToStartPhase (const juce::String& text)
 {
     const auto s = text.trim().toLowerCase();
-    if (s.startsWithChar ('f')) return -1.0f;
+    if (s.startsWithChar ('f')) return -kPhaseStep;
     return juce::jlimit (0.0f, 1.0f, s.getFloatValue() / 360.0f);
 }
 
@@ -240,59 +245,55 @@ juce::String invertToText (bool v, int) { return v ? "Inverted" : "Normal"; }
 // Attribute shorthands
 //==============================================================================
 
+/*  NOTE ON UNITS: every conversion below embeds the unit in the value string
+    (getText()), and deliberately leaves juce's separate `label` empty. Hosts
+    that append the label to the value text would otherwise show "1.20 kHz Hz".
+*/
 FAttr percentAttrs (bool bipolar = false)
 {
-    return FAttr().withLabel ("%")
-                  .withStringFromValueFunction (bipolar ? &bipolarPercentToText : &percentToText)
+    return FAttr().withStringFromValueFunction (bipolar ? &bipolarPercentToText : &percentToText)
                   .withValueFromStringFunction (&textToPercent);
 }
 
 FAttr freqAttrs()
 {
-    return FAttr().withLabel ("Hz")
-                  .withStringFromValueFunction (&freqToText)
+    return FAttr().withStringFromValueFunction (&freqToText)
                   .withValueFromStringFunction (&textToFreq);
 }
 
 FAttr rateAttrs()
 {
-    return FAttr().withLabel ("Hz")
-                  .withStringFromValueFunction (&rateToText)
+    return FAttr().withStringFromValueFunction (&rateToText)
                   .withValueFromStringFunction (&textToFreq);
 }
 
 FAttr secondsAttrs()
 {
-    return FAttr().withLabel ("s")
-                  .withStringFromValueFunction (&secondsToText)
+    return FAttr().withStringFromValueFunction (&secondsToText)
                   .withValueFromStringFunction (&textToSeconds);
 }
 
 FAttr msAttrs()
 {
-    return FAttr().withLabel ("ms")
-                  .withStringFromValueFunction (&msToText)
+    return FAttr().withStringFromValueFunction (&msToText)
                   .withValueFromStringFunction (&textToMs);
 }
 
 FAttr levelDbAttrs()
 {
-    return FAttr().withLabel ("dB")
-                  .withStringFromValueFunction (&levelDbToText)
+    return FAttr().withStringFromValueFunction (&levelDbToText)
                   .withValueFromStringFunction (&textToDb);
 }
 
 FAttr plainDbAttrs()
 {
-    return FAttr().withLabel ("dB")
-                  .withStringFromValueFunction (&plainDbToText)
+    return FAttr().withStringFromValueFunction (&plainDbToText)
                   .withValueFromStringFunction (&textToDb);
 }
 
 FAttr centsAttrs()
 {
-    return FAttr().withLabel ("ct")
-                  .withStringFromValueFunction (&centsToText)
+    return FAttr().withStringFromValueFunction (&centsToText)
                   .withValueFromStringFunction (&textToCents);
 }
 
@@ -375,13 +376,13 @@ void addOscillator (Layout& layout, const OscIDs& ids, const juce::String& prefi
                    .withValueFromStringFunction (&textToInt));
 
     addInt (layout, ids.semitone, prefix + " Semitone", -12, 12, d.semitone,
-            IAttr().withLabel ("st")
-                   .withStringFromValueFunction (&semitoneToText)
+            IAttr().withStringFromValueFunction (&semitoneToText)
                    .withValueFromStringFunction (&textToInt));
 
     addFloat (layout, ids.fine, prefix + " Fine", linRange (-100.0f, 100.0f, 0.1f), d.fine, centsAttrs());
 
-    addFloat (layout, ids.phase, prefix + " Phase", linRange (-1.0f, 1.0f, 0.001f), d.phase,
+    addFloat (layout, ids.phase, prefix + " Phase",
+              linRange (-kPhaseStep, 1.0f, kPhaseStep), d.phase,
               FAttr().withStringFromValueFunction (&startPhaseToText)
                      .withValueFromStringFunction (&textToStartPhase));
 
@@ -412,7 +413,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
                            pid::oscAFine, pid::oscAPhase, pid::oscAUnison, pid::oscADetune,
                            pid::oscAStereo, pid::oscAPan, pid::oscALevel };
 
-        const OscDefaults defaults { OscWave::Saw, 0.5f, 0, 0, 0.0f, -1.0f,
+        const OscDefaults defaults { OscWave::Saw, 0.5f, 0, 0, 0.0f, -kPhaseStep,
                                      1, 0.25f, 0.5f, 0.0f, 0.0f };
 
         addOscillator (layout, ids, "Osc A", defaults);
@@ -425,7 +426,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
                            pid::oscBFine, pid::oscBPhase, pid::oscBUnison, pid::oscBDetune,
                            pid::oscBStereo, pid::oscBPan, pid::oscBLevel };
 
-        const OscDefaults defaults { OscWave::Saw, 0.5f, 0, 0, 7.0f, -1.0f,
+        const OscDefaults defaults { OscWave::Saw, 0.5f, 0, 0, 7.0f, -kPhaseStep,
                                      1, 0.25f, 0.5f, 0.0f, -1.5f };
 
         addOscillator (layout, ids, "Osc B", defaults);
@@ -648,8 +649,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
                    .withValueFromStringFunction (&textToInt));
 
     addInt (layout, pid::bendRange, "Bend Range", 0, 24, 2,
-            IAttr().withLabel ("st")
-                   .withStringFromValueFunction (&bendRangeToText)
+            IAttr().withStringFromValueFunction (&bendRangeToText)
                    .withValueFromStringFunction (&textToInt));
 
     addFloat (layout, pid::masterTune, "Master Tune", linRange (-100.0f, 100.0f, 0.1f), 0.0f, centsAttrs());

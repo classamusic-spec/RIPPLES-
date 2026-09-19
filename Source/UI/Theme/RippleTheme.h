@@ -243,6 +243,12 @@ struct RippleTheme
     float knobDetailSmall     = 0.35f;
     float knobDetailThreshold = 0.5f;
 
+    // --- Knob interaction ------------------------------------------------------
+    int   knobDragPixels       = 220;    // pixels of vertical travel for the full range
+    int   knobVelocityThreshold = 1;
+    float knobFineVelocity     = 0.28f;  // sensitivity while Shift / Ctrl / Cmd is held
+    float knobWheelFineScale   = 0.22f;  // wheel step scaling in fine mode
+
     // --- Intensities -----------------------------------------------------------
     float disabledAlpha    = 0.42f;   // disabled controls stay visible, never invisible
     float hoverBrighten    = 0.22f;

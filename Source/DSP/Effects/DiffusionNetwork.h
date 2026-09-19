@@ -1,16 +1,20 @@
 #pragma once
 
 /*
-    RIPPLES — LiquidChorus.
+    RIPPLES — DiffusionNetwork.
 
-    Three modulated short delay taps per channel (six voices total) reading a
-    fractional delay with 4-point Catmull-Rom interpolation. The tap times are
-    generated at control rate and then one-pole smoothed per sample, so the read
-    pointer never steps: no zipper noise, no quantisation grit, just a smooth
-    Doppler glide.
+    Four modulated Schroeder allpasses per channel, mutually prime and
+    decorrelated between L and R. This is the "mist": it scrambles phase and
+    smears transients into a haze without adding a tail, so a dry sound becomes
+    atmospheric long before the reverb is reached.
 
-    Small depth and a 6-12 ms base delay give a gentle widening; large depth
-    with a longer base delay and some feedback gives the deep underwater warble.
+    Level neutrality comes from three things: the allpass sections are unity
+    gain by construction, the dry/wet blend is an equal-power crossfade, and the
+    in-loop damping is the only element that removes energy at all.
+
+    A very small, very slow modulation is always present. It costs nothing and
+    it stops the fixed comb pattern of a static allpass chain from ringing on
+    sustained material.
 */
 
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -23,20 +27,18 @@
 namespace ripples
 {
 
-class LiquidChorus
+class DiffusionNetwork
 {
 public:
-    LiquidChorus() = default;
+    DiffusionNetwork() = default;
 
     struct Params
     {
-        bool  enabled  = true;
-        float rate     = 0.4f;    ///< Hz
-        float depth    = 0.4f;    ///< 0..1 modulation depth
-        float delayMs  = 12.0f;   ///< base delay in milliseconds
-        float feedback = 0.15f;   ///< 0..1 (internally bounded well below unity)
-        float width    = 0.6f;    ///< 0..1 stereo spread of the modulation
-        float mix      = 0.35f;   ///< 0..1 dry/wet (equal power)
+        bool  enabled = true;
+        float amount  = 0.4f;   ///< 0..1 allpass coefficient (how thick the blur is)
+        float size    = 0.5f;   ///< 0..1 network scale, 0.25x .. 2.0x
+        float damping = 0.4f;   ///< 0..1 darkens the diffused signal
+        float mix     = 0.3f;   ///< 0..1 (equal power)
     };
 
     void prepare (double sampleRate, int maxBlockSize);
@@ -45,13 +47,11 @@ public:
     void process (juce::AudioBuffer<float>& buffer) noexcept;
 
 private:
-    static constexpr int   kNumTaps         = 3;
+    static constexpr int   kNumStages       = 4;
     static constexpr int   kControlInterval = dsp::kModBlockSize;
-    static constexpr float kMaxBufferSec    = 0.14f;   // 40 ms base + 20 ms mod + guard
-    static constexpr float kMaxBaseMs       = 40.0f;
-    static constexpr float kMaxModMs        = 20.0f;
+    static constexpr float kMaxStageMs      = 46.0f;    // longest base length
+    static constexpr float kMaxSizeScale    = 2.0f;
 
-    /** Power-of-two circular delay line with cubic (Catmull-Rom) reads. */
     struct DelayLine
     {
         std::vector<float> buf;
@@ -104,22 +104,23 @@ private:
     double sampleRate_ = 44100.0;
     Params params_ {};
 
-    DelayLine line_[2];
+    DelayLine line_[2][kNumStages];
+    float dampState_[2][kNumStages] {};
 
-    float phase_ = 0.0f, phaseInc_ = 0.0f;
-    float slowPhase_ = 0.0f, slowInc_ = 0.0f;
+    float baseSamples_[2][kNumStages] {};   // stage length at scale 1.0
+    float delay_[2][kNumStages] {};         // smoothed read length, samples
+    float delayTarget_[2][kNumStages] {};
 
-    float tapDelay_[2][kNumTaps] {};        // smoothed, in samples
-    float tapTarget_[2][kNumTaps] {};
+    float modPhase_[kNumStages] {};
+    float modInc_[kNumStages] {};
+    float modDepthSamples_ = 0.0f;
 
-    float fbState_[2] {};                   // feedback lowpass state
-    float fbCoeff_ = 0.4f;
-    float fbGain_ = 0.0f, fbGainTarget_ = 0.0f;
-    float crossFeed_ = 0.0f;
+    float sizeScale_ = 1.0f, sizeTarget_ = 1.0f;
+    float apGain_ = 0.0f, apGainTarget_ = 0.0f;
+    float dampCoeff_ = 1.0f;
 
     float dryGain_ = 1.0f, wetGain_ = 0.0f;
     float dryTarget_ = 1.0f, wetTarget_ = 0.0f;
-    float widthGain_ = 1.0f, widthTarget_ = 1.0f;
 
     float smoothCoeff_ = 0.01f;
     float delaySmooth_ = 0.01f;
@@ -127,7 +128,7 @@ private:
     float enableCoeff_ = 0.01f;
     int   controlCounter_ = 0;
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LiquidChorus)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (DiffusionNetwork)
 };
 
 } // namespace ripples

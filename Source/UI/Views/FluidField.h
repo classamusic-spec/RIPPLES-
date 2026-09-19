@@ -143,6 +143,8 @@ private:
 
     // Interaction.
     bool  dragging = false;
+    bool  gestureOpen = false;   // a begin/endGesture pair is currently open
+    bool  fineDrag = false;      // Shift was held when the drag was last anchored
     bool  hoveringNode = false;
     float hoverAmount = 0.0f;
     juce::Point<float> grabMouse;
@@ -159,9 +161,12 @@ private:
     float energy          = 0.0f;
     uint32_t lastDropletCount = 0;
 
-    // Time.
-    double   lastTickMs  = 0.0;
-    float    timeSeconds = 0.0f;
+    // Time. Every animated quantity runs on a wrapped phase rather than a
+    // free-running clock, so nothing drifts out of precision or jogs after
+    // hours of being open.
+    double lastTickMs   = 0.0;
+    float  driftPhaseA  = 0.0f;
+    float  driftPhaseB  = 0.0f;
     std::array<float, kHarmonics> harmonicPhase {};
 
     // Geometry in logical pixels, recomputed on resize.

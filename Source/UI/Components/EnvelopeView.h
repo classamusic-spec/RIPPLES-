@@ -54,15 +54,17 @@ private:
     float sustain    = 0.70f;
     float releaseSec = 0.50f;
 
-    juce::Colour accentColour = RippleTheme::get().cyan;
-    float        playhead     = -1.0f;   // <0 = hidden
+    juce::Colour accentColour   = RippleTheme::get().cyan;
+    float        playhead        = -1.0f;   // <0 = hidden
+    float        playheadPainted = -1.0f;   // last position actually drawn
 
     // Cached geometry.
     juce::Path                      curve, fill;
     std::vector<juce::Point<float>> points;     // x-monotonic, for the playhead lookup
-    juce::Rectangle<float>          plotBounds;
+    juce::Rectangle<float>          plotBounds, labelBounds;
     float                           stageX[3] {};   // x at the end of A, D and S
     float                           sustainY = 0.0f;
+    bool                            showStageLabels = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (EnvelopeView)
 };

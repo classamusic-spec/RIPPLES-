@@ -7,26 +7,38 @@ namespace ripples
     RIPPLE — a triggered damped wave: sin(2*pi*f*t) * exp(-decay*t).
 
     A stone dropped in: the surface swings hard, then settles. It is the one
-    modulator here with a beginning and an end, so two things matter more than
-    the formula.
+    modulator here with a beginning and an end, so three things matter as much
+    as the formula.
 
-    First, retriggering must not click. A new trigger restarts the wave at
-    phase zero, where the wave itself is silent, and carries the *difference*
-    between the old output and the new one forward as a residual that fades over
-    about twelve milliseconds. The output is therefore continuous through a
-    retrigger however hard it was still ringing. The same trick covers a
-    parameter change mid-ring, including a polarity flip.
+    It has to reach the depth it was asked for. A steep decay eats most of the
+    first quarter cycle, so the raw formula peaks at 0.23 when `decay` is at
+    maximum — the control would read as a depth control rather than a time
+    control. The wave is therefore normalised by its own analytic peak
+    (max of exp(-n*c)*sin(2*pi*c), which sits at c = atan(2*pi/n)/(2*pi)), so
+    `intensity` means the peak excursion whatever the decay is.
 
-    Second, it has to stop. `decay` is expressed in nepers per cycle so it means
-    the same thing at any rate, and `cycles` clamps the decay from below so the
-    ring can never outlast its allotted number of cycles. isActive() goes false
-    once the whole output is under -80 dB, which is what lets a voice free
-    itself instead of ringing inaudibly forever.
+    It has to retrigger without clicking. A new trigger restarts the wave at
+    phase zero, where the wave is silent, and carries the difference between the
+    old output and the new one forward as a residual that fades over about
+    twelve milliseconds. The residual is scaled by (1 - |wave|), so the sum can
+    never leave -1..1 and the blend disappears exactly as the new ripple takes
+    over. The same mechanism covers a parameter change mid-ring, including a
+    polarity flip.
+
+    And it has to stop. `decay` is expressed in nepers per cycle so it means the
+    same thing at any rate, and `cycles` clamps it from below so the ring can
+    never outlast its allotted number of cycles. isActive() goes false once both
+    channels are under -80 dB, which is what lets a voice free itself instead of
+    ringing inaudibly forever.
+
+    `spread` delays the right-hand ripple rather than merely offsetting its
+    phase — the wave reaches one side first, envelope and all, which is both
+    what water does and what keeps the right channel peak at 1 as well.
 
       rateHz  the frequency of the wave
       decay   0..1, higher = faster: ~37 cycles of ring down to about one
       cycles  the hard bound on the ring length
-      spread  0..1, up to half a cycle of phase offset on the right value
+      spread  0..1, up to half a cycle of delay on the right value
       invert  polarity
 */
 class RippleModulator
@@ -64,7 +76,7 @@ public:
 
 private:
     void recompute() noexcept;
-    float core (bool right) const noexcept;
+    void updateWave() noexcept;
     void refreshOutputs() noexcept;
 
     double sampleRate    = 44100.0;
@@ -72,18 +84,20 @@ private:
 
     Params params {};
 
-    // Derived.
+    // Derived from the parameters.
     float decayPerSecond = 1.0f;
-    float durationLimit  = 1.0f;   // seconds
-    float spreadPhase    = 0.0f;   // cycles
+    float durationLimit  = 1.0f;   // seconds of ring, before the stereo delay
+    float delaySeconds   = 0.0f;   // right-channel delay
+    float peakGain       = 1.0f;   // normalises the damped sine to a peak of 1
     float polarity       = 1.0f;
 
     // State.
-    double phase    = 0.0;   // 0..1
-    double elapsed  = 0.0;   // seconds since the trigger
-    float  envelope = 0.0f;
+    double elapsed   = 0.0;        // seconds since the trigger
     float  amplitude = 0.0f;
-    bool   ringing  = false;
+    bool   ringing   = false;
+
+    float envL = 0.0f, envR = 0.0f;
+    float waveL = 0.0f, waveR = 0.0f;
 
     float residualL = 0.0f, residualR = 0.0f;
 

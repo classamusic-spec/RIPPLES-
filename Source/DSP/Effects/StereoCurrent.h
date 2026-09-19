@@ -32,6 +32,8 @@ namespace ripples
 class StereoCurrent
 {
 public:
+    StereoCurrent() = default;
+
     struct Params
     {
         bool  enabled = true;

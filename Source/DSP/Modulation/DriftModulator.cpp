@@ -79,7 +79,11 @@ void DriftModulator::setParams (const Params& p) noexcept
 
 void DriftModulator::recompute() noexcept
 {
-    const float rate = math::clamp (params.rate, kMinRateHz, kMaxRateHz);
+    // sanitise() first: a NaN parameter would survive a bare clamp.
+    params.rate   = math::clamp (math::sanitise (params.rate), kMinRateHz, kMaxRateHz);
+    params.stereo = math::clamp (math::sanitise (params.stereo), 0.0f, 1.0f);
+
+    const float rate = params.rate;
 
     configureLayer (slow.twoZetaOmega, slow.omegaSq, slow.forceGain, slow.omega,
                     rate, kSlowZeta);
@@ -88,7 +92,7 @@ void DriftModulator::recompute() noexcept
     configureLayer (fine.twoZetaOmega, fine.omegaSq, fine.forceGain, fine.omega,
                     fineRate, kFineZeta);
 
-    const float s = math::clamp (params.stereo, 0.0f, 1.0f);
+    const float s = params.stereo;
     indepGain = s;
     corrGain  = std::sqrt (std::max (0.0f, 1.0f - s * s));
 }

@@ -60,6 +60,12 @@ void drawGlassSurface (juce::Graphics& g, juce::Rectangle<float> bounds, float c
 void drawControlWell (juce::Graphics& g, juce::Rectangle<float> bounds, float cornerRadius,
                       juce::Colour border, bool hovered, bool down, bool enabled);
 
+/** Track-and-thumb switch. `onAmount` is the animated 0..1 thumb position; the
+    thumb changes shape as well as colour and position, so state never depends
+    on colour alone. */
+void drawSwitch (juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour accent,
+                 float onAmount, bool hovered, bool down, bool enabled, bool focused);
+
 /** A crisp downward chevron centred in `area`. */
 void drawChevron (juce::Graphics& g, juce::Rectangle<float> area, juce::Colour colour, float thickness);
 

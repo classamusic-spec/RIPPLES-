@@ -43,7 +43,9 @@ namespace
     constexpr double kFlowRatioB = 0.4142135623730951;
     constexpr double kFlowRatioC = 0.2679491924311227;
 
-    constexpr float kShapeFadeSeconds = 0.012f;
+    // Long enough that the largest possible shape difference (a full 2.0,
+    // Sine to Swell) never moves the output more than ~0.03 per control block.
+    constexpr float kShapeFadeSeconds = 0.05f;
 
     // Swell: the crest arrives late in the cycle, then the wave breaks.
     constexpr float kSwellCrest    = 0.78f;
@@ -73,7 +75,7 @@ void TideLFO::prepare (double newSampleRate)
 
 void TideLFO::reset (float phase01) noexcept
 {
-    const double p = wrap01 ((double) phase01);
+    const double p = wrap01 ((double) math::sanitise (phase01));
 
     phase  = p;
     phaseB = wrap01 (p * kFlowRatioB);
@@ -94,9 +96,11 @@ void TideLFO::setParams (const Params& p) noexcept
     }
 
     params = p;
-    params.rateHz      = math::clamp (params.rateHz, kMinRateHz, kMaxRateHz);
-    params.phaseOffset = math::clamp (params.phaseOffset, 0.0f, 1.0f);
-    params.stereoPhase = math::clamp (params.stereoPhase, 0.0f, 1.0f);
+
+    // sanitise() first: a NaN would survive a bare clamp and poison the phase.
+    params.rateHz      = math::clamp (math::sanitise (params.rateHz), kMinRateHz, kMaxRateHz);
+    params.phaseOffset = math::clamp (math::sanitise (params.phaseOffset), 0.0f, 1.0f);
+    params.stereoPhase = math::clamp (math::sanitise (params.stereoPhase), 0.0f, 1.0f);
 
     increment = (double) params.rateHz * invSampleRate;
 }

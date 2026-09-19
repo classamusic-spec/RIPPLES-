@@ -138,6 +138,14 @@ void WaveformView::updateTimerState()
 
 void WaveformView::timerCallback()
 {
+    // Safety net: a parent further up may have been hidden without this
+    // component hearing about it. One frame later the timer is gone again.
+    if (! isShowing())
+    {
+        stopTimer();
+        return;
+    }
+
     const auto& theme = RippleTheme::get();
     const float dt = 1.0f / (float) juce::jmax (1, theme.targetFrameRate);
 
@@ -334,6 +342,11 @@ void WaveformView::paint (juce::Graphics& g)
         return;
 
     drawWell (g, well, theme);
+
+    // Being painted means we are on screen: if animation is wanted but the
+    // timer was stopped while hidden, this is where it comes back.
+    if (animated && ! isTimerRunning())
+        updateTimerState();
 
     if (curve.isEmpty())
         return;
