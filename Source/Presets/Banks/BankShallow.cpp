@@ -2427,7 +2427,7 @@ void addShallowBank (std::vector<Preset>& out)
         { ModSource::Current,     ModDest::FilterDrive,   0.22f },
     }));
 
-    out.push_back (make (kShallow, "TIDE RACE", "Lead", { "Chaotic", "Bright", "Wet" }, Dry::No,
+    out.push_back (make (kShallow, "FRESHET", "Lead", { "Chaotic", "Bright", "Wet" }, Dry::No,
         "Aftertouch drives the FM index from a clean tone to a hard metallic "
         "one, so the expression is in the key bed rather than the wheel. Fast "
         "envelopes and a short triplet delay keep it moving.",
@@ -3111,7 +3111,7 @@ void addShallowBank (std::vector<Preset>& out)
         { ModSource::KeyTrack,    ModDest::LevelB,        -0.25f },
     }));
 
-    out.push_back (make (kShallow, "SLACK WATER", "Pad", { "Calm", "Dreamy", "Submerged" }, Dry::No,
+    out.push_back (make (kShallow, "MILLPOND", "Pad", { "Calm", "Dreamy", "Submerged" }, Dry::No,
         "The stillest patch here: almost no tide, a drift so slow you notice it "
         "only after a minute, and sine-dominant harmonics. Written to be held "
         "under dialogue without fighting it.",
@@ -5303,7 +5303,7 @@ void addShallowBank (std::vector<Preset>& out)
         { ModSource::RandomPerNote, ModDest::DropletSize,   0.35f },
     }));
 
-    out.push_back (make (kShallow, "BACKWASH", "FX", { "Wet", "Dreamy", "Cinematic" }, Dry::No,
+    out.push_back (make (kShallow, "RUNOFF", "FX", { "Wet", "Dreamy", "Cinematic" }, Dry::No,
         "Reverse-shaped: a three-second amplitude climb with the filter closing "
         "as it rises, then a hard stop at release. Use it running into a downbeat "
         "or reversed in the arrangement.",
