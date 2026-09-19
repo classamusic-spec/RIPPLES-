@@ -113,6 +113,14 @@ int main (int argc, char** argv)
 
     RipplesAudioProcessor processor;
 
+    if (args.contains ("--list"))
+    {
+        for (int i = 0; i < processor.getNumPrograms(); ++i)
+            std::printf ("%d\t%s\n", i, processor.getProgramName (i).toRawUTF8());
+
+        return 0;
+    }
+
     if (presetIndex >= 0)
         processor.loadFactoryPreset (presetIndex);
 

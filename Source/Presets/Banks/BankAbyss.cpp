@@ -24,6 +24,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "and a note-mode droplet per attack for the gulp. Compare OCEAN FLOOR, "
         "which is the same depth with none of the articulation.",
     {
+        { pid::mastOutput,    outdb (-8.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -142,6 +143,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "and the only motion is Drift moving a nearly closed filter. The "
         "opposite pole to ABYSS BASS.",
     {
+        { pid::mastOutput,    outdb (1.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -252,6 +254,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "control becomes a formant sweep instead of a PWM — an aggressive bass "
         "that still lives below the waterline.",
     {
+        { pid::mastOutput,    outdb (-11.6f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.45f },
         { pid::oscAOctave,    oct (-1) },
@@ -350,6 +353,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "low shelf leave a hollow in the middle of the spectrum that the reverb "
         "fills in.",
     {
+        { pid::mastOutput,    outdb (7.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-1) },
@@ -456,6 +460,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "A hydrothermal vent. Ring-modulated Shark against a driven filter, with "
         "Current pushing everything around fast enough to stay unstable.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.62f },
         { pid::oscAOctave,    oct (-1) },
@@ -571,6 +576,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "Aftertouch opens the filter and pushes the drive, so it can be played "
         "as a swell rather than as notes.",
     {
+        { pid::mastOutput,    outdb (-5.4f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-1) },
@@ -677,6 +683,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "destinations. The Morph filter sits high enough that DEPTH still "
         "leaves two kilohertz of Glass on top of the weight.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -794,6 +801,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "filter movement at all, and Bubble noise supplies the only fast "
         "detail — the fizz that tells you the pad is alive.",
     {
+        { pid::mastOutput,    outdb (11.3f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.42f },
         { pid::oscAOctave,    oct (-1) },
@@ -921,6 +929,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "patch is a thin bright sheet floating on a low note — the space "
         "between them is the sound.",
     {
+        { pid::mastOutput,    outdb (-1.2f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.58f },
         { pid::oscAOctave,    oct (0) },
@@ -1033,6 +1042,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "the FM index from almost nothing up to a full metallic spread, so the "
         "chord arrives as a sine and turns into a bell while you hold it.",
     {
+        { pid::mastOutput,    outdb (-1.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (3) },
@@ -1146,6 +1156,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "wide, scattered through a large open resonator. No reverb anywhere: "
         "the space is the resonator's scatter and the droplets' own spread.",
     {
+        { pid::mastOutput,    outdb (-1.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1262,6 +1273,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "sum-and-difference clang that the resonator catches and holds for a "
         "second after the key decays.",
     {
+        { pid::mastOutput,    outdb (-1.2f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (0) },
@@ -1377,6 +1389,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "clear as the right — the definition lives around a kilohertz where a "
         "voice would sit, which is why it survives in a busy cue.",
     {
+        { pid::mastOutput,    outdb (-5.8f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (-1) },
@@ -1499,6 +1512,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "both with the mod envelope walking their widths, and a note-mode "
         "droplet fired at every key — a key patch that is half percussion.",
     {
+        { pid::mastOutput,    outdb (-4.6f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.24f },
         { pid::oscAOctave,    oct (-1) },
@@ -1627,6 +1641,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "bright resonator with heavy scatter for the silica ring, and nothing "
         "after the voice at all.",
     {
+        { pid::mastOutput,    outdb (7.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1739,6 +1754,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "so each note is a short metallic spit over a sub that is gone before "
         "the next one lands.",
     {
+        { pid::mastOutput,    outdb (6.6f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (0) },
@@ -1854,6 +1870,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "the droplet, not the oscillator, and the whole thing is gone in under "
         "a second.",
     {
+        { pid::mastOutput,    outdb (-4.2f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (2) },
@@ -1974,6 +1991,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "key, while the resonator keeps ringing after the amplitude envelope "
         "has already closed.",
     {
+        { pid::mastOutput,    outdb (8.1f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (0) },
@@ -2089,6 +2107,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "is tuned small and bright so the tail reads as a tube rather than a "
         "room. Effects off throughout.",
     {
+        { pid::mastOutput,    outdb (4.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -2208,6 +2227,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "in 200 ms — the growl is frequency modulation, not filter drive, so "
         "it keeps its shape however far down the keyboard you play it.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (1) },
@@ -2324,6 +2344,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "Current and Tide working the shape and the noise tone rather than "
         "from any stereo trick. Full key tracking, no glide, no effects.",
     {
+        { pid::mastOutput,    outdb (-10.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -2438,6 +2459,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "24 dB ladder and the master saturator. Built to be played as whole "
         "notes under a cue, not as a riff.",
     {
+        { pid::mastOutput,    outdb (-11.4f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-1) },
@@ -2555,6 +2577,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "that the ladder swallows within 120 ms, leaving a clean fundamental. "
         "Short, dry and percussive.",
     {
+        { pid::mastOutput,    outdb (-4.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Shark) },
@@ -2673,6 +2696,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "while held; the only fast thing anywhere in it is the mod envelope on "
         "the resonator damping.",
     {
+        { pid::mastOutput,    outdb (-7.8f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.30f },
         { pid::oscAOctave,    oct (-2) },
@@ -2790,6 +2814,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "high enough that the bass has a brittle edge nothing else here has. "
         "Bubble noise fizzes off the top of it.",
     {
+        { pid::mastOutput,    outdb (-7.1f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (2) },
@@ -2918,6 +2943,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "hollow bark without touching the filter. Mono, legato, and it bites "
         "hardest in the top half of the keyboard.",
     {
+        { pid::mastOutput,    outdb (-7.3f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.16f },
         { pid::oscAOctave,    oct (0) },
@@ -3037,6 +3063,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "small and long so every note leaves a hairline ring. No glide at all — "
         "the intervals have to read.",
     {
+        { pid::mastOutput,    outdb (-4.9f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (0) },
         { pid::oscAUnison,    uni (2) },
@@ -3159,6 +3186,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "with aftertouch into a rasp. No reverb — the size is all in the "
         "resonator and the slide.",
     {
+        { pid::mastOutput,    outdb (-8.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -3280,6 +3308,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "short, and a dotted-eighth delay throws every fourth one out to the "
         "sides. Rhythm with almost no top end.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.45f },
         { pid::oscAOctave,    oct (-1) },
@@ -3396,6 +3425,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "so the pattern smears and detunes as it repeats — hold one key and it "
         "arpeggiates itself into noise.",
     {
+        { pid::mastOutput,    outdb (3.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.52f },
         { pid::oscAOctave,    oct (0) },
@@ -3518,6 +3548,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "instead of gated, and a ring-modulated partial slides through it "
         "while droplets fill the gaps.",
     {
+        { pid::mastOutput,    outdb (-4.0f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-1) },
@@ -3642,6 +3673,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "resonator supplies the only tail. Everything after the voice is "
         "switched off, so the pattern stays exactly as tight as you play it.",
     {
+        { pid::mastOutput,    outdb (-0.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Pulse) },
@@ -3764,6 +3796,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "band-pass toward high-pass across about two minutes, so the same held "
         "chord keeps changing which part of itself you can hear.",
     {
+        { pid::mastOutput,    outdb (10.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.34f },
         { pid::oscAOctave,    oct (-1) },
@@ -3890,6 +3923,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "pitch, the notch pulls the meat out of the middle, and sparse "
         "atmospheric droplets knock against each other overhead.",
     {
+        { pid::mastOutput,    outdb (3.5f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.44f },
         { pid::oscAOctave,    oct (-1) },
@@ -4113,7 +4147,7 @@ void addAbyssBank (std::vector<Preset>& out)
         { pid::mastMid,       eqdb (-1.0f) },
         { pid::mastHigh,      eqdb (-2.0f) },
         { pid::mastDrive,     0.18f },
-        { pid::mastOutput,    outdb (4.0f) },
+        { pid::mastOutput,    outdb (-6.0f) },
         { pid::voiceCount,    vox (6) },
     },
     {
@@ -4134,6 +4168,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "open low-pass and lets the droplet engine run flat out — the noise is "
         "in the modulation, not in the noise generator.",
     {
+        { pid::mastOutput,    outdb (-3.5f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (2) },
@@ -4271,6 +4306,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "two hundred second Drift, which is the entire event. The spectral "
         "change is slow, but it is the only thing keeping this alive.",
     {
+        { pid::mastOutput,    outdb (-0.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -4382,6 +4418,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "note OFF here, so the texture reacts when you release rather than "
         "when you play — releases become events.",
     {
+        { pid::mastOutput,    outdb (5.7f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.36f },
         { pid::oscAOctave,    oct (-1) },
@@ -4508,6 +4545,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "un-key-tracked, so however far down you play the drone there is "
         "always a fixed thread of high partial to locate it by.",
     {
+        { pid::mastOutput,    outdb (8.9f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.26f },
         { pid::oscAOctave,    oct (-2) },
@@ -4629,6 +4667,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "mud is the resonator, scattered wide and damped lightly so it rings "
         "in the two to four kilohertz region the oscillators never reach.",
     {
+        { pid::mastOutput,    outdb (9.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.20f },
         { pid::oscAOctave,    oct (-2) },
@@ -4653,7 +4692,7 @@ void addAbyssBank (std::vector<Preset>& out)
         { pid::noiseTone,     0.22f },
 
         { pid::filtMode,      fm (FilterMode::LP24) },
-        { pid::filtCutoff,    hz (1800.0f) },
+        { pid::filtCutoff,    hz (2200.0f) },
         { pid::filtReso,      0.20f },
         { pid::filtDrive,     0.30f },
         { pid::filtKeyTrack,  0.10f },
@@ -4759,6 +4798,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "crossfade pair and a fixed upper partial, decorrelated by giving Tide, "
         "Current and Drift full stereo spread on different destinations.",
     {
+        { pid::mastOutput,    outdb (0.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4880,6 +4920,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "is small, bright and nearly undamped so the whole thing rings like a "
         "stressed plate rather than a room.",
     {
+        { pid::mastOutput,    outdb (4.3f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Shark) },
@@ -4990,6 +5031,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "it away from you, and the Tide swells the amplitude rather than the "
         "filter so the level breathes without the tone changing.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (-1) },
@@ -5121,6 +5163,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "global effect on at once — the widest, longest thing here, and the one "
         "to leave under a scene for four minutes.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.34f },
         { pid::oscAOctave,    oct (-2) },
@@ -5262,6 +5305,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "then a Ripple burst rings the resonator and a nine second reverb "
         "carries off what is left. Play it once, low.",
     {
+        { pid::mastOutput,    outdb (1.5f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (-1) },
@@ -5397,6 +5441,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "other over half a minute, and the almost undamped resonator turns the "
         "whole thing into a plate under stress. No effects at all.",
     {
+        { pid::mastOutput,    outdb (5.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -5507,6 +5552,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "downward together while the delay time stretches behind it — hold one "
         "note and let go when you land.",
     {
+        { pid::mastOutput,    outdb (8.6f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.42f },
         { pid::oscAOctave,    oct (0) },
@@ -5633,6 +5679,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "feedback and heavy damping, so each repeat comes back darker than the "
         "last until the trench swallows it.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (1) },
         { pid::oscAUnison,    uni (1) },
@@ -5753,6 +5800,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "transient — then two and a half seconds of reverb tail. Use it on a "
         "cut, not in a part.",
     {
+        { pid::mastOutput,    outdb (-6.4f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-2) },
@@ -5882,6 +5930,7 @@ void addAbyssBank (std::vector<Preset>& out)
         "carries pitch and cutoff upward over eight seconds until the droplets "
         "break through. The last cue before you see daylight.",
     {
+        { pid::mastOutput,    outdb (11.2f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (-1) },

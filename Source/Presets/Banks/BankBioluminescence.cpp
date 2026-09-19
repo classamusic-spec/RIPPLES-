@@ -23,6 +23,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "supplies the glow. The soft-edged attack and long tail come from the "
         "envelopes, not from a reverb: there isn't one.",
     {
+        { pid::mastOutput,    outdb (11.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -129,6 +130,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "moves shape and pan, the droplets are almost too small to hear on "
         "their own, and the delay keeps spreading them further out.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.75f },
         { pid::oscAOctave,    oct (1) },
@@ -242,6 +244,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "thin Glass partial two octaves up is the only bright thing in the "
         "patch — the mod wheel brings it forward and lights the resonator.",
     {
+        { pid::mastOutput,    outdb (-6.4f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.32f },
         { pid::oscAOctave,    oct (-1) },
@@ -348,6 +351,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "together so the pad contracts and releases on its own, once every few "
         "seconds, whether or not you play anything new.",
     {
+        { pid::mastOutput,    outdb (2.1f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (5) },
@@ -460,6 +464,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "undamped resonator — all of the sustain you hear is the resonator "
         "bank ringing, with no reverb or delay anywhere.",
     {
+        { pid::mastOutput,    outdb (0.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -557,6 +562,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "resonator underneath is set almost perfectly harmonic — so the strike "
         "is inharmonic and the ring that follows it is not.",
     {
+        { pid::mastOutput,    outdb (0.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -670,6 +676,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "scattered resonator, struck by an FM transient and left hanging over "
         "a floor of Deep noise you feel more than hear.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.80f },
         { pid::oscAOctave,    oct (1) },
@@ -778,6 +785,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "throws noise level up for twenty milliseconds and the resonator "
         "turns the click into a pitch.",
     {
+        { pid::mastOutput,    outdb (11.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (1) },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -896,6 +904,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "the fundamental and the first partial survive — a soft wooden knock "
         "with a glow around it rather than a bell.",
     {
+        { pid::mastOutput,    outdb (9.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1007,6 +1016,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "and all its character in the two bands either side of it. Nothing "
         "here is metallic — it is a wooden bowl with a light in it.",
     {
+        { pid::mastOutput,    outdb (6.3f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.45f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1122,6 +1132,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "small and left almost undamped so the strike is followed by a metal "
         "shell still moving.",
     {
+        { pid::mastOutput,    outdb (11.3f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.70f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1239,6 +1250,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "resonator size on every keypress, so a repeated note never lands "
         "twice in the same place. No delay — the scatter is in the voices.",
     {
+        { pid::mastOutput,    outdb (11.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1347,6 +1359,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "nothing else in the way — no scatter, no droplets, no reverb. It is "
         "meant to be the reference point the stranger presets depart from.",
     {
+        { pid::mastOutput,    outdb (8.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1446,6 +1459,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "unrelated partials with it. Phase modulation at low index keeps the "
         "attack from being purely metallic.",
     {
+        { pid::mastOutput,    outdb (7.7f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.62f },
         { pid::oscAUnison,    uni (3) },
@@ -1562,6 +1576,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "decays — dark underneath, phosphorescent on top, and never quite the "
         "same tone twice because Water keeps moving inside itself.",
     {
+        { pid::mastOutput,    outdb (4.9f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.48f },
         { pid::oscAUnison,    uni (3) },
@@ -1682,6 +1697,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "is the halo of resonator and reverb around it, and the key only "
         "exists to keep triggering it.",
     {
+        { pid::mastOutput,    outdb (4.8f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAUnison,    uni (2) },
         { pid::oscADetune,    0.07f },
@@ -1795,6 +1811,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "and a high-passed body, so there is no warmth anywhere in it — only "
         "brittle, thin, tinkling light.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1903,6 +1920,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "velocity throws resonator amount, decay and damping all at once and "
         "the same key becomes a lit bell. One preset, two instruments.",
     {
+        { pid::mastOutput,    outdb (0.1f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAUnison,    uni (2) },
         { pid::oscADetune,    0.06f },
@@ -2017,6 +2035,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "chord expects them. A Notch takes the middle out and the resonator "
         "keeps re-tuning itself under the Drift.",
     {
+        { pid::mastOutput,    outdb (11.7f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (2) },
@@ -2134,6 +2153,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "directly; the delay is synced to a dotted eighth against it, so the "
         "two grids drift in and out of phase across a bar.",
     {
+        { pid::mastOutput,    outdb (10.3f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.64f },
         { pid::oscAOctave,    oct (1) },
@@ -2250,6 +2270,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "thirty hertz over three cycles — puts a fast stutter on the front of "
         "each one before the resonator takes over.",
     {
+        { pid::mastOutput,    outdb (5.6f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.30f },
         { pid::oscAOctave,    oct (1) },
@@ -2370,6 +2391,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "the pattern rolls rather than marches, and the Water oscillator "
         "keeps the tone shifting under it.",
     {
+        { pid::mastOutput,    outdb (3.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (1) },
@@ -2491,6 +2513,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "behind it, and Current is wired to droplet density so the colony "
         "thins and thickens over half a minute.",
     {
+        { pid::mastOutput,    outdb (3.1f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.52f },
         { pid::oscAOctave,    oct (1) },
@@ -2610,6 +2633,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "wide fields of light, this one is a single line — two voices, low "
         "stereo, and the only motion is along its length.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.58f },
         { pid::oscAOctave,    oct (1) },
@@ -2719,6 +2743,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "land where the droplet engine decides — and Random per note moves "
         "pitch, pan and resonator size on every single step.",
     {
+        { pid::mastOutput,    outdb (7.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.62f },
         { pid::oscAOctave,    oct (1) },
@@ -2847,6 +2872,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "across about a bar; the width is four detuned voices panned by the "
         "Tide's stereo offset alone.",
     {
+        { pid::mastOutput,    outdb (9.1f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -2953,6 +2979,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "fades in and out of existence. The light is not in the pad — it is "
         "something that happens on top of it.",
     {
+        { pid::mastOutput,    outdb (3.5f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.42f },
         { pid::oscAUnison,    uni (4) },
@@ -3072,6 +3099,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "across half a minute, and the filter in Morph mode sweeping the "
         "response type instead of the cutoff.",
     {
+        { pid::mastOutput,    outdb (6.4f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.56f },
         { pid::oscAUnison,    uni (5) },
@@ -3194,6 +3222,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "sounds full of water. Every reflection you hear is tuned to the note "
         "you are holding, which no reverb can do.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -3300,6 +3329,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "bright rim with an empty space between them, and Ring Mod at low "
         "index keeps the rim slightly out of tune with the body.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (-1) },
@@ -3419,6 +3449,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "mono sine sub and a closed ladder carry the note; the resonator, "
         "small and almost undamped, sits above the cutoff ringing on its own.",
     {
+        { pid::mastOutput,    outdb (3.4f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-1) },
@@ -3530,6 +3561,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "and a plate-scattered resonator adds a metallic flicker that only "
         "appears when you play loudly.",
     {
+        { pid::mastOutput,    outdb (7.1f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (-1) },
@@ -3641,6 +3673,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "the resonator damped almost shut so its glow arrives late and stays "
         "under the fundamental instead of above it.",
     {
+        { pid::mastOutput,    outdb (-0.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.34f },
         { pid::oscAOctave,    oct (-1) },
@@ -3751,6 +3784,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "almost immediately, so every note is a bright spike followed by a "
         "clean low tail. Key tracking keeps the spike in the same place.",
     {
+        { pid::mastOutput,    outdb (-8.3f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -3866,6 +3900,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "the note is silence rather than space. The Tide adds a slow vibrato "
         "that only becomes audible on notes you hold.",
     {
+        { pid::mastOutput,    outdb (0.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.66f },
         { pid::oscAUnison,    uni (2) },
@@ -3975,6 +4010,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "portamento on every note, and aftertouch opening the breath further "
         "the longer you lean on a note.",
     {
+        { pid::mastOutput,    outdb (-3.4f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (2) },
@@ -4087,6 +4123,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "hard, ringing 2 kHz edge; a fast synced tide chops it, and the "
         "resonator's plate scatter keeps the sustain from settling.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.72f },
         { pid::oscAUnison,    uni (2) },
@@ -4203,6 +4240,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "only tint it. Nothing arrives or leaves — the Drift moves the filter "
         "and the resonator size on a two-minute cycle and never repeats.",
     {
+        { pid::mastOutput,    outdb (8.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.68f },
         { pid::oscAUnison,    uni (4) },
@@ -4323,6 +4361,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "gravity-biased downwards — and everything else is a quiet bed for it "
         "to fall past. No reverb: the resonator is the column.",
     {
+        { pid::mastOutput,    outdb (4.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4432,6 +4471,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "shreds the sustain into a stream of glassy particles rather than a "
         "smooth pad — the only preset here that is granular in feel.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.82f },
         { pid::oscAOctave,    oct (1) },
@@ -4559,6 +4599,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "with almost no smoothing into shape, cutoff and droplet density at "
         "once, so the texture boils rather than drifts.",
     {
+        { pid::mastOutput,    outdb (3.2f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.72f },
         { pid::oscAUnison,    uni (5) },
@@ -4688,6 +4729,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "let go. Hold the chord instead and it simply never stops — the "
         "envelopes sustain at full and nothing in the patch closes.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (-1) },
@@ -4879,7 +4921,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
 
         { pid::mastLow,       eqdb (1.0f) },
         { pid::mastHigh,      eqdb (-0.5f) },
-        { pid::mastOutput,    outdb (-4.0f) },
+        { pid::mastOutput,    outdb (-5.1f) },
         { pid::voiceCount,    vox (4) },
     },
     {
@@ -4900,6 +4942,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "few cents sharp and flat over a three-minute cycle, which is the "
         "only thing that changes in four minutes of holding a chord.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -5011,6 +5054,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "noise hanging where a pad's treble would normally be — designed to "
         "be stacked over something else that has the low end.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.86f },
         { pid::oscAOctave,    oct (2) },
@@ -5128,6 +5172,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "the sweep gains partials, reflections and particles at the same "
         "time and arrives as a bloom of light instead of a filter opening.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (5) },
@@ -5251,6 +5296,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "amount — everything after the first frame is the plate answering, "
         "and there is no oscillator sustain behind it at all.",
     {
+        { pid::mastOutput,    outdb (11.7f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.90f },
         { pid::oscAOctave,    oct (1) },
@@ -5373,6 +5419,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "driven from it at full depth over thirty-two cycles, so a single "
         "held note becomes a strobing field rather than a tone.",
     {
+        { pid::mastOutput,    outdb (10.1f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.64f },
         { pid::oscAOctave,    oct (1) },
@@ -5494,6 +5541,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "toward its fundamental, and the drive comes off — so the patch does "
         "not just get quieter, it loses its partials one layer at a time.",
     {
+        { pid::mastOutput,    outdb (8.4f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.56f },
         { pid::oscAUnison,    uni (4) },
@@ -5614,6 +5662,7 @@ void addBioluminescenceBank (std::vector<Preset>& out)
         "and disappears downwards — a downlifter for landing on a downbeat "
         "rather than leaving one.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.70f },
         { pid::oscAOctave,    oct (1) },

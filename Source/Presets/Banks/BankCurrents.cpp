@@ -22,6 +22,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "from the resonator and the per-note random pan, and Current keeps the "
         "timbre moving so a repeated pattern never sounds looped.",
     {
+        { pid::mastOutput,    outdb (8.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -126,6 +127,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "cycles a second and the drive with it, so the tone pulls away and back "
         "under a steady note.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (-1) },
@@ -222,6 +224,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "moves tuning, cutoff and stereo position together, so a held chord is "
         "never quite the same chord twice.",
     {
+        { pid::mastOutput,    outdb (-1.0f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.48f },
         { pid::oscAUnison,    uni (6) },
@@ -325,6 +328,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "A synced sixteenth-note tide against a free-running Current, so the "
         "pattern turns against itself. Ring-modulated highs for the spin.",
     {
+        { pid::mastOutput,    outdb (8.7f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.35f },
         { pid::oscAUnison,    uni (2) },
@@ -438,6 +442,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "share a slow Morph filter, and the stereo image comes entirely from "
         "decorrelated Current and Drift — there is no width effect running.",
     {
+        { pid::mastOutput,    outdb (-3.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -540,6 +545,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "oscillators to opposite sides at its own pace, so the sheet slides "
         "across the image without ever changing colour.",
     {
+        { pid::mastOutput,    outdb (-5.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -652,6 +658,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "them and Drift walks it from lowpass to highpass over about four "
         "minutes, so which layer you are hearing changes while you hold.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.62f },
         { pid::oscAUnison,    uni (6) },
@@ -773,6 +780,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "against each other while Current bends only the upper one in cents, so "
         "the chord rotates through itself instead of simply sustaining.",
     {
+        { pid::mastOutput,    outdb (-6.3f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Triangle) },
@@ -884,6 +892,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "full eight-minute period and is the only thing running; two bars apart "
         "sound identical, two minutes apart do not.",
     {
+        { pid::mastOutput,    outdb (-1.5f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAUnison,    uni (4) },
         { pid::oscADetune,    0.12f },
@@ -994,6 +1003,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "one oscillator to the other twice per cycle while Drift stretches the "
         "resonator, so the body of the sound swells and sinks on two clocks.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.44f },
         { pid::oscAOctave,    oct (-1) },
@@ -1114,6 +1124,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "not a garnish: Current shifts its colour every second or so while "
         "Drift moves the same control over minutes, so the two never agree.",
     {
+        { pid::mastOutput,    outdb (-3.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1219,6 +1230,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "part: the tide opens and closes its density while Current stirs its "
         "tone, so the sparkle gathers and thins without the pad itself changing.",
     {
+        { pid::mastOutput,    outdb (4.3f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.48f },
         { pid::oscAUnison,    uni (5) },
@@ -1347,6 +1359,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "body and Ripple retunes it at every note-on, so a repeated key never "
         "lands on exactly the same stone twice.",
     {
+        { pid::mastOutput,    outdb (10.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1457,6 +1470,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "amount at about one and a half cycles a second, so the partial "
         "structure is different at every point in the note's decay.",
     {
+        { pid::mastOutput,    outdb (-5.1f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAUnison,    uni (2) },
         { pid::oscADetune,    0.06f },
@@ -1573,6 +1587,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "half-note tide walks the pan one way while the delay spread pulls the "
         "repeats the other, so chords travel across the room as they ring.",
     {
+        { pid::mastOutput,    outdb (-5.9f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.62f },
         { pid::oscAUnison,    uni (3) },
@@ -1687,6 +1702,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "Current shakes it at three cycles a second against a slow tide, which "
         "makes a held chord chatter rather than drone.",
     {
+        { pid::mastOutput,    outdb (-8.1f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.28f },
         { pid::oscAUnison,    uni (2) },
@@ -1802,6 +1818,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "own few cents and its own Ripple on the cutoff, so a fast repeated "
         "figure scatters across the image without a delay anywhere in sight.",
     {
+        { pid::mastOutput,    outdb (10.3f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1912,6 +1929,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "sync ratio itself on Current, so the bite of the attack is different "
         "note to note even though the envelope never changes.",
     {
+        { pid::mastOutput,    outdb (2.9f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-1) },
@@ -2028,6 +2046,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "and the droplets themselves retrigger Ripple, so the tail of the pluck "
         "is a small chain reaction rather than a reverb.",
     {
+        { pid::mastOutput,    outdb (-1.1f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.52f },
         { pid::oscAUnison,    uni (2) },
@@ -2151,6 +2170,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "the grit, a four-hertz Current shoves the fold amount around, and the "
         "whole thing is over in under a second.",
     {
+        { pid::mastOutput,    outdb (6.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Shark) },
@@ -2263,6 +2283,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "six-hertz Current, which puts a growl into the bass that moves faster "
         "than any note you can play.",
     {
+        { pid::mastOutput,    outdb (-9.9f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (1) },
@@ -2379,6 +2400,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "harmonic balance so far that the same held C is a different bass "
         "three minutes later.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -2487,6 +2509,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "amplitude and cutoff together, so a held low note arrives as a wall of "
         "water every bar instead of sitting flat.",
     {
+        { pid::mastOutput,    outdb (-9.5f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.46f },
         { pid::oscAOctave,    oct (-1) },
@@ -2603,6 +2626,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "comes from the tide, but the timbre is on a slow Current, so long "
         "notes keep opening up while the pitch stays honest.",
     {
+        { pid::mastOutput,    outdb (-7.8f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.52f },
         { pid::oscAUnison,    uni (3) },
@@ -2713,6 +2737,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "wandering offset on fine tune over minutes, so phrases lean sharp then "
         "flat the way a singer does, never on a cycle you can predict.",
     {
+        { pid::mastOutput,    outdb (-7.3f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.56f },
         { pid::oscAUnison,    uni (2) },
@@ -2821,6 +2846,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "lead with no effects at all: every note fires Ripple into the shape "
         "control, so the tone rings and settles instead of arriving finished.",
     {
+        { pid::mastOutput,    outdb (-8.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -2933,6 +2959,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "with Current on the slave pitch: the lead howls and breaks, and the "
         "break lands somewhere different every time.",
     {
+        { pid::mastOutput,    outdb (-4.9f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (2) },
@@ -3052,6 +3079,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "near one and a third hertz, Drift on a two-minute turn and a Ripple "
         "fired by every note. The pattern is fixed; nothing else is.",
     {
+        { pid::mastOutput,    outdb (3.9f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (2) },
@@ -3177,6 +3205,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "a long resonator whose size sits on Drift, so the repeats go gradually "
         "out of tune with the notes that made them.",
     {
+        { pid::mastOutput,    outdb (8.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -3286,6 +3315,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "tide throws the pan hard left and right while a per-note random pulls "
         "against it, so the sequence never settles on one side.",
     {
+        { pid::mastOutput,    outdb (6.2f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.40f },
         { pid::oscAUnison,    uni (2) },
@@ -3409,6 +3439,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "but a four-bar tide raises and lowers the whole pattern, so the figure "
         "breathes over a phrase rather than a beat.",
     {
+        { pid::mastOutput,    outdb (1.4f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.55f },
         { pid::oscAUnison,    uni (3) },
@@ -3534,6 +3565,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "the arp notes are barely there and the droplet engine, stirred by a "
         "four-hertz Current, carries the rhythm.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Sine) },
@@ -3649,6 +3681,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "goes up: the Swell tide is on pitch and cutoff together, and it breaks "
         "at the top of every cycle instead of easing back down.",
     {
+        { pid::mastOutput,    outdb (2.3f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-1) },
@@ -3765,6 +3798,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "fully decorrelated Current with opposite signs, so the image turns "
         "over on itself with no width effect anywhere.",
     {
+        { pid::mastOutput,    outdb (-3.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -3870,6 +3904,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "of the sound, and Current at two hertz stirs its colour hard enough "
         "that the texture never reads as a filter sweep.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.30f },
         { pid::oscAOctave,    oct (-1) },
@@ -3992,6 +4027,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "texture crosses from one water to the other and back without ever "
         "announcing the change.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -4098,6 +4134,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "sub-octave gives the knotted, rope-like tone, and Current is wired "
         "to the resonator's scatter so the tangle keeps rearranging.",
     {
+        { pid::mastOutput,    outdb (0.8f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (-1) },
@@ -4225,6 +4262,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "fastest in the bank — and lands on drive and resonance, so the texture "
         "grinds rather than sweeps.",
     {
+        { pid::mastOutput,    outdb (-4.4f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (4) },
@@ -4351,6 +4389,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "the parts of the texture pull against each other and never agree on a "
         "direction.",
     {
+        { pid::mastOutput,    outdb (-4.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4464,6 +4503,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "near its ceiling and each droplet fires Ripple, so the grain of the "
         "texture is generated by collisions rather than by an LFO.",
     {
+        { pid::mastOutput,    outdb (2.4f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.34f },
         { pid::oscAOctave,    oct (-1) },
@@ -4592,6 +4632,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "cutoff and the reverb size at once, so the drone is measurably "
         "different every time you come back to it.",
     {
+        { pid::mastOutput,    outdb (3.9f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.36f },
         { pid::oscAOctave,    oct (-2) },
@@ -4714,6 +4755,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "here and the tide walks it slowly across the spectrum, so held "
         "harmonics vanish and return one at a time.",
     {
+        { pid::mastOutput,    outdb (3.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Saw) },
@@ -4819,6 +4861,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "high end by design, but Deep noise on a slow Current keeps the floor "
         "shifting so it never reads as a static low tone.",
     {
+        { pid::mastOutput,    outdb (-4.1f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-2) },
         { pid::oscAUnison,    uni (3) },
@@ -4933,6 +4976,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "Current at almost the same rate beat slowly against each other, so the "
         "drone has a pulse whose period is longer than either modulator's.",
     {
+        { pid::mastOutput,    outdb (1.2f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-1) },
@@ -5046,6 +5090,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "with no effects: its space is the resonator at its largest, and its "
         "width is a fully decorrelated Drift on the two oscillator pans.",
     {
+        { pid::mastOutput,    outdb (2.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -5152,6 +5197,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "fifths of its period and then breaks, taking pitch, cutoff and noise "
         "up with it, so one held note is a whole transition.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (-1) },
@@ -5279,6 +5325,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "pitch and cutoff so a struck note falls away into the reverb, and "
         "Drift decides how far down it goes this time.",
     {
+        { pid::mastOutput,    outdb (-3.7f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.45f },
         { pid::oscAOctave,    oct (0) },
@@ -5403,6 +5450,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "very short decay fires on every note into ring modulation, which makes "
         "a metallic crack that is never quite the same twice.",
     {
+        { pid::mastOutput,    outdb (7.7f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.80f },
         { pid::oscAUnison,    uni (3) },
@@ -5534,6 +5582,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "keep the spectrum boiling, and the width is Current decorrelation "
         "alone.",
     {
+        { pid::mastOutput,    outdb (-3.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -5657,6 +5706,7 @@ void addCurrentsBank (std::vector<Preset>& out)
         "eight seconds to open while a quarter-note-synced tide pumps the "
         "delay, so the swell walks into the bar it is meant to land on.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.42f },
         { pid::oscAOctave,    oct (-2) },

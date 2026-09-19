@@ -22,6 +22,7 @@ void addShallowBank (std::vector<Preset>& out)
         "resonator for the bubble that follows it, note-mode droplets for the "
         "splash. Nothing after the voice at all.",
     {
+        { pid::mastOutput,    outdb (6.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -122,6 +123,7 @@ void addShallowBank (std::vector<Preset>& out)
         "A small warm keyboard. Hollow odd harmonics, a bubble bed under it, "
         "and just enough room around it to sit in a mix.",
     {
+        { pid::mastOutput,    outdb (-8.2f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.42f },
         { pid::oscAUnison,    uni (2) },
@@ -214,6 +216,7 @@ void addShallowBank (std::vector<Preset>& out)
         "A mid bass that stays out of the sub region — for tracks that already "
         "have a low end. Key-tracked LP12, short mod envelope, mono legato.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.55f },
         { pid::oscAUnison,    uni (1) },
@@ -299,6 +302,7 @@ void addShallowBank (std::vector<Preset>& out)
         "Written for sixteenths. Tempo-synced tide on the shape, a dotted-eighth "
         "delay behind it, and a short resonator so every note leaves a ring.",
     {
+        { pid::mastOutput,    outdb (6.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (2) },
@@ -403,6 +407,7 @@ void addShallowBank (std::vector<Preset>& out)
         "A thousand small movements. Fast Current on shape, pan and resonator "
         "scatter, with dense atmospheric droplets — a shoal turning at once.",
     {
+        { pid::mastOutput,    outdb (0.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -503,6 +508,7 @@ void addShallowBank (std::vector<Preset>& out)
         "so a light touch is a felt piano and a hard one is a bell. Key tracking "
         "keeps the top octave from thinning out.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (0) },
@@ -628,6 +634,7 @@ void addShallowBank (std::vector<Preset>& out)
         "knock, the resonator supplies the body, and note-mode droplets put the "
         "water back on top. No effects at all.",
     {
+        { pid::mastOutput,    outdb (-1.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -741,6 +748,7 @@ void addShallowBank (std::vector<Preset>& out)
         "that settles into a clean sine within a second. Plays chords without "
         "turning to mud because the bell content decays away.",
     {
+        { pid::mastOutput,    outdb (-7.7f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (0) },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -857,6 +865,7 @@ void addShallowBank (std::vector<Preset>& out)
         "brackish water. Dark for this bank, but the glass partials above the "
         "notch keep it locatable in a chord.",
     {
+        { pid::mastOutput,    outdb (-7.7f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.62f },
         { pid::oscAOctave,    oct (0) },
@@ -971,6 +980,7 @@ void addShallowBank (std::vector<Preset>& out)
         "the amp — an organ you hold rather than strike. The chorus does the "
         "rotary work and the tide adds a slow swell instead of tremolo.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (0) },
@@ -1080,6 +1090,7 @@ void addShallowBank (std::vector<Preset>& out)
         "a surf bed behind it. The mod wheel opens the filter, so it can grow "
         "over eight bars without a second patch.",
     {
+        { pid::mastOutput,    outdb (-11.1f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.30f },
         { pid::oscAOctave,    oct (0) },
@@ -1190,6 +1201,7 @@ void addShallowBank (std::vector<Preset>& out)
         "with a vowel that closes as it decays. Held chords keep moving because "
         "the tide keeps nudging the sync point.",
     {
+        { pid::mastOutput,    outdb (-6.9f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (0) },
@@ -1305,6 +1317,7 @@ void addShallowBank (std::vector<Preset>& out)
         "wobble that settles in three cycles — a stone breaking the surface. "
         "Velocity controls how hard it was thrown.",
     {
+        { pid::mastOutput,    outdb (1.7f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.52f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1420,6 +1433,7 @@ void addShallowBank (std::vector<Preset>& out)
         "end at all, for tracks where the bass is already busy. Decays in a "
         "quarter of a second and leaves the mix alone.",
     {
+        { pid::mastOutput,    outdb (7.9f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.45f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1530,6 +1544,7 @@ void addShallowBank (std::vector<Preset>& out)
         "noise that the mod envelope shuts in 40 ms. The resonator hands back "
         "the body the filter took away.",
     {
+        { pid::mastOutput,    outdb (7.8f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.40f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1641,6 +1656,7 @@ void addShallowBank (std::vector<Preset>& out)
         "before the note is. A big, short resonator underneath turns each pluck "
         "into a tiny cupped space.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.44f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1752,6 +1768,7 @@ void addShallowBank (std::vector<Preset>& out)
         "with FM on the mod envelope — struck flint, still wet. Plays like a "
         "clavinet an octave below where you expect.",
     {
+        { pid::mastOutput,    outdb (6.4f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.58f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1865,6 +1882,7 @@ void addShallowBank (std::vector<Preset>& out)
         "scatters pan, droplet size and fine tune, and three-voice unison with "
         "wide stereo does the rest — no effects are involved.",
     {
+        { pid::mastOutput,    outdb (6.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1978,6 +1996,7 @@ void addShallowBank (std::vector<Preset>& out)
         "50 ms, and the band-pass sweeps down through it. The pitched part only "
         "arrives once the spray has cleared.",
     {
+        { pid::mastOutput,    outdb (-3.0f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.50f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -2091,6 +2110,7 @@ void addShallowBank (std::vector<Preset>& out)
         "a new note after a rest drops in from above; legato playing glides "
         "instead. Sits at 2 kHz where a vocal is not.",
     {
+        { pid::mastOutput,    outdb (-7.5f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.54f },
         { pid::oscAOctave,    oct (0) },
@@ -2207,6 +2227,7 @@ void addShallowBank (std::vector<Preset>& out)
         "without any vibrato at all. Always-on glide of 60 ms makes runs slur "
         "the way a line played on one breath does.",
     {
+        { pid::mastOutput,    outdb (-8.2f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (0) },
@@ -2320,6 +2341,7 @@ void addShallowBank (std::vector<Preset>& out)
         "sweeps through its formants on its own. Narrow and forward, meant to be "
         "played in the top two octaves.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (0) },
@@ -2432,6 +2454,7 @@ void addShallowBank (std::vector<Preset>& out)
         "one, so the expression is in the key bed rather than the wheel. Fast "
         "envelopes and a short triplet delay keep it moving.",
     {
+        { pid::mastOutput,    outdb (-7.7f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (0) },
         { pid::oscAUnison,    uni (2) },
@@ -2547,6 +2570,7 @@ void addShallowBank (std::vector<Preset>& out)
         "a slow chorus — a lead for long sustained lines rather than fast runs. "
         "Poly by design so two-note harmony still works.",
     {
+        { pid::mastOutput,    outdb (-8.5f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.52f },
         { pid::oscAOctave,    oct (0) },
@@ -2658,6 +2682,7 @@ void addShallowBank (std::vector<Preset>& out)
         "one hand can take the line from flute to bell mid-phrase. Sixteenth "
         "delay and always-on glide for fast scalar playing.",
     {
+        { pid::mastOutput,    outdb (-6.4f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.44f },
         { pid::oscAOctave,    oct (0) },
@@ -2779,6 +2804,7 @@ void addShallowBank (std::vector<Preset>& out)
         "three decorrelated modulators on pan, index and fine tune, so it still "
         "swims in the stereo field with the whole output chain bypassed.",
     {
+        { pid::mastOutput,    outdb (-11.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Sine) },
@@ -2893,6 +2919,7 @@ void addShallowBank (std::vector<Preset>& out)
         "right, and slow drift on each — the width is entirely oscillator and "
         "modulator, with every effect bypassed.",
     {
+        { pid::mastOutput,    outdb (-3.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -3000,6 +3027,7 @@ void addShallowBank (std::vector<Preset>& out)
         "that the tide swells in and out. Slow enough to sit under a whole "
         "section without asking for attention.",
     {
+        { pid::mastOutput,    outdb (-5.9f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (0) },
@@ -3116,6 +3144,7 @@ void addShallowBank (std::vector<Preset>& out)
         "only after a minute, and sine-dominant harmonics. Written to be held "
         "under dialogue without fighting it.",
     {
+        { pid::mastOutput,    outdb (-3.3f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (0) },
         { pid::oscAFine,      cents (-3.0f) },
@@ -3224,6 +3253,7 @@ void addShallowBank (std::vector<Preset>& out)
         "and a glass one over eight seconds, so the timbre is never quite the "
         "same twice through a held chord.",
     {
+        { pid::mastOutput,    outdb (0.1f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (0) },
@@ -3344,6 +3374,7 @@ void addShallowBank (std::vector<Preset>& out)
         "the pad clouds and clears like stirred silt. Darker than the rest of "
         "the bank but the band-pass keeps a voice in the upper mids.",
     {
+        { pid::mastOutput,    outdb (8.9f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.44f },
         { pid::oscAOctave,    oct (-1) },
@@ -3461,6 +3492,7 @@ void addShallowBank (std::vector<Preset>& out)
         "sub. Ninety percent key tracking keeps the top of the neck as even as "
         "the bottom, and the mod envelope closes in 180 ms for articulation.",
     {
+        { pid::mastOutput,    outdb (-10.7f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.58f },
         { pid::oscAOctave,    oct (0) },
@@ -3570,6 +3602,7 @@ void addShallowBank (std::vector<Preset>& out)
         "motion, not width: current on cutoff and noise tone, tide on shape, a "
         "damped resonator standing in for the room.",
     {
+        { pid::mastOutput,    outdb (-9.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -3678,6 +3711,7 @@ void addShallowBank (std::vector<Preset>& out)
         "note; the index falls away in 60 ms so the sustain is clean. Plays well "
         "with a pick-style right hand.",
     {
+        { pid::mastOutput,    outdb (-10.9f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (0) },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -3790,6 +3824,7 @@ void addShallowBank (std::vector<Preset>& out)
         "sixteenth-note tide on the shape. Short and percussive, built for "
         "syncopated lines rather than held roots.",
     {
+        { pid::mastOutput,    outdb (-7.7f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.52f },
         { pid::oscAOctave,    oct (0) },
@@ -3906,6 +3941,7 @@ void addShallowBank (std::vector<Preset>& out)
         "cutoff so every second note is darker, which is what stops a fast "
         "pattern turning into a single sustained blur.",
     {
+        { pid::mastOutput,    outdb (10.2f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.54f },
         { pid::oscAOctave,    oct (0) },
@@ -4026,6 +4062,7 @@ void addShallowBank (std::vector<Preset>& out)
         "note throws two or three note-mode drops that bounce behind it. With "
         "the effects bypassed the rhythm still has a tail.",
     {
+        { pid::mastOutput,    outdb (8.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4142,6 +4179,7 @@ void addShallowBank (std::vector<Preset>& out)
         "pulse width walking on a sixteenth tide so the pattern breathes. Low "
         "resonance, so it stacks under a vocal without whistling.",
     {
+        { pid::mastOutput,    outdb (-2.3f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.34f },
         { pid::oscAOctave,    oct (0) },
@@ -4253,6 +4291,7 @@ void addShallowBank (std::vector<Preset>& out)
         "under a deep noise bed and the drift modulator moves everything at "
         "different rates. Hold one note and it keeps rearranging itself.",
     {
+        { pid::mastOutput,    outdb (8.8f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.62f },
         { pid::oscAOctave,    oct (0) },
@@ -4372,6 +4411,7 @@ void addShallowBank (std::vector<Preset>& out)
         "the patch clicks and ticks on its own schedule. Ring modulation between "
         "two close waves supplies the crust.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.56f },
         { pid::oscAOctave,    oct (0) },
@@ -4496,6 +4536,7 @@ void addShallowBank (std::vector<Preset>& out)
         "amplitude at two crests a second while a fast current shakes the pan. "
         "Rhythmic without being tempo-synced.",
     {
+        { pid::mastOutput,    outdb (-7.3f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (0) },
@@ -4612,6 +4653,7 @@ void addShallowBank (std::vector<Preset>& out)
         "than any other patch in the bank, so what you hear over a minute is one "
         "long breath in and out.",
     {
+        { pid::mastOutput,    outdb (-1.3f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.42f },
         { pid::oscAOctave,    oct (-1) },
@@ -4727,6 +4769,7 @@ void addShallowBank (std::vector<Preset>& out)
         "large resonator as the room, and the only motion a drift on detune — "
         "the most static patch in the bank and deliberately so.",
     {
+        { pid::mastOutput,    outdb (-1.6f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.44f },
         { pid::oscAOctave,    oct (0) },
@@ -4838,6 +4881,7 @@ void addShallowBank (std::vector<Preset>& out)
         "pair of oscillators and a steady rain of atmospheric droplets. No "
         "reverb is involved, which is why it sounds like a pool and not a hall.",
     {
+        { pid::mastOutput,    outdb (10.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4955,6 +4999,7 @@ void addShallowBank (std::vector<Preset>& out)
         "phasing, comb-like character. No droplets at all — the only event in "
         "the patch is the notch passing a partial.",
     {
+        { pid::mastOutput,    outdb (-4.5f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (-1) },
@@ -5068,6 +5113,7 @@ void addShallowBank (std::vector<Preset>& out)
         "that comes up with it. Hold one note from the top of a bar and let go "
         "on the downbeat.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (0) },
@@ -5182,6 +5228,7 @@ void addShallowBank (std::vector<Preset>& out)
         "while a bubble burst collapses behind it. Play one low note and let the "
         "reverb tail carry the rest.",
     {
+        { pid::mastOutput,    outdb (-0.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.60f },
         { pid::oscAOctave,    oct (-1) },
@@ -5308,6 +5355,7 @@ void addShallowBank (std::vector<Preset>& out)
         "as it rises, then a hard stop at release. Use it running into a downbeat "
         "or reversed in the arrangement.",
     {
+        { pid::mastOutput,    outdb (5.4f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.56f },
         { pid::oscAOctave,    oct (0) },
@@ -5425,6 +5473,7 @@ void addShallowBank (std::vector<Preset>& out)
         "randomness over a ring-modulated knock, with the ripple modulator fired "
         "by the droplets rather than the keyboard.",
     {
+        { pid::mastOutput,    outdb (-0.5f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.46f },
         { pid::oscAOctave,    oct (-1) },
@@ -5551,6 +5600,7 @@ void addShallowBank (std::vector<Preset>& out)
         "droplet engine at full spread, bubble noise, and random per note on "
         "pitch and pan so no two passes are alike.",
     {
+        { pid::mastOutput,    outdb (1.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Sine) },

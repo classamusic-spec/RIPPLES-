@@ -20,6 +20,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Wind over water. Almost entirely noise: a band-pass sweeping fast under "
         "Current, with the oscillators only thick enough to give it a key.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.55f },
         { pid::oscAUnison,    uni (4) },
@@ -130,6 +131,7 @@ void addStormsBank (std::vector<Preset>& out)
         "fall — driving noise level, cutoff and droplet density together, so "
         "each cycle builds and collapses. Completely dry.",
     {
+        { pid::mastOutput,    outdb (3.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -233,6 +235,7 @@ void addStormsBank (std::vector<Preset>& out)
         "FM between two detuned Sharks, with the mod envelope on the FM amount "
         "so every note starts metallic and collapses into a clean low note.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-1) },
@@ -338,6 +341,7 @@ void addStormsBank (std::vector<Preset>& out)
         "the middle, and the longest reverb in the bank. For the two seconds "
         "before something terrible happens.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.45f },
         { pid::oscAOctave,    oct (-2) },
@@ -464,6 +468,7 @@ void addStormsBank (std::vector<Preset>& out)
         "and the Ripple modulator retriggering on every note so the pitch never "
         "settles immediately. Mod wheel takes it over the edge.",
     {
+        { pid::mastOutput,    outdb (-4.9f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (3) },
@@ -588,6 +593,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Morph filter walking from low-pass to band-pass under the Tide, and a "
         "crossfaded Glass layer that only shows on the crests.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.42f },
         { pid::oscAOctave,    oct (-1) },
@@ -706,6 +712,7 @@ void addStormsBank (std::vector<Preset>& out)
         "under two decorrelated Currents, a Hollow pair barely detuned, and the "
         "resonator standing in for a room. No effects at all.",
     {
+        { pid::mastOutput,    outdb (-4.3f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -811,6 +818,7 @@ void addStormsBank (std::vector<Preset>& out)
         "one side of the image and the Current runs free on the other, so the "
         "pad never repeats its own shape.",
     {
+        { pid::mastOutput,    outdb (5.3f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.62f },
         { pid::oscAUnison,    uni (5) },
@@ -930,6 +938,7 @@ void addStormsBank (std::vector<Preset>& out)
         "almost no event — just a slow Deep-noise heave under a pair of dull "
         "saws. The quietest thing in the bank, and still not friendly.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.35f },
         { pid::oscAOctave,    oct (-1) },
@@ -1038,6 +1047,7 @@ void addStormsBank (std::vector<Preset>& out)
         "envelope throwing the sync point down over 60 ms so every key hit "
         "cracks before it rings. Plays chords; they just arrive violently.",
     {
+        { pid::mastOutput,    outdb (-4.2f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.62f },
         { pid::oscAUnison,    uni (2) },
@@ -1157,6 +1167,7 @@ void addStormsBank (std::vector<Preset>& out)
         "and resonator scatter — no reverb, no delay — so it stays tight in a "
         "busy mix while still sounding like it was played outdoors in weather.",
     {
+        { pid::mastOutput,    outdb (-5.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1267,6 +1278,7 @@ void addStormsBank (std::vector<Preset>& out)
         "off and a wide Air-noise veil that the Tide opens and closes, so the "
         "chord seems to come and go without the notes changing.",
     {
+        { pid::mastOutput,    outdb (-8.5f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (4) },
@@ -1381,6 +1393,7 @@ void addStormsBank (std::vector<Preset>& out)
         "apart give a knocked, boxy body; the Ripple modulator retriggers on "
         "each note so the knock wobbles before it settles.",
     {
+        { pid::mastOutput,    outdb (-9.2f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-1) },
@@ -1501,6 +1514,7 @@ void addStormsBank (std::vector<Preset>& out)
         "of a Glass pluck that is gone in 400 ms. Random-per-note detunes each "
         "hit a few cents so a repeated line never machine-guns.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.70f },
         { pid::oscAOctave,    oct (1) },
@@ -1619,6 +1633,7 @@ void addStormsBank (std::vector<Preset>& out)
         "envelope that slams a high-pass open and shut, leaving a white flash "
         "and a very short tail. Velocity decides how far away it was.",
     {
+        { pid::mastOutput,    outdb (3.7f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.72f },
         { pid::oscAUnison,    uni (3) },
@@ -1740,6 +1755,7 @@ void addStormsBank (std::vector<Preset>& out)
         "The mod envelope sweeps a band-pass from 200 Hz up and out in 180 ms, "
         "so the noise reads as spray thrown off a single wave, not as hiss.",
     {
+        { pid::mastOutput,    outdb (-1.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.55f },
         { pid::oscAUnison,    uni (3) },
@@ -1851,6 +1867,7 @@ void addStormsBank (std::vector<Preset>& out)
         "with the sync point falling fast, a Deep-noise thud under it, and no "
         "sustain at all — the whole event is over in half a second.",
     {
+        { pid::mastOutput,    outdb (4.7f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-2) },
@@ -1964,6 +1981,7 @@ void addStormsBank (std::vector<Preset>& out)
         "a fast Current, so the harmonic peak slides around while the "
         "fundamental stays nailed down. Mono, key-tracked, legato.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.48f },
         { pid::oscAOctave,    oct (-1) },
@@ -2076,6 +2094,7 @@ void addStormsBank (std::vector<Preset>& out)
         "layer filtered by the same envelope, so the note has a gritty edge that "
         "drains away before the fundamental does. Slow attack for a bass.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-1) },
@@ -2189,6 +2208,7 @@ void addStormsBank (std::vector<Preset>& out)
         "fifth flat and glides up over 400 ms while the filter opens, so a held "
         "root behaves like an arrival rather than a note.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (-1) },
@@ -2307,6 +2327,7 @@ void addStormsBank (std::vector<Preset>& out)
         "so the mids never sit still and the whole thing sounds like it is "
         "sloshing. One voice, no glide — it wants to be played staccato.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.30f },
         { pid::oscAOctave,    oct (-1) },
@@ -2424,6 +2445,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Aftertouch is wired to noise level and filter drive, so the lead is "
         "civil until you lean on a note and the gust hits.",
     {
+        { pid::mastOutput,    outdb (-7.7f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.52f },
         { pid::oscAUnison,    uni (3) },
@@ -2545,6 +2567,7 @@ void addStormsBank (std::vector<Preset>& out)
         "GLOW holding the cutoff up where a lead lives, plus a sixteenth-note "
         "delay wide enough to fill a chorus without burying the line.",
     {
+        { pid::mastOutput,    outdb (-4.5f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.66f },
         { pid::oscAUnison,    uni (3) },
@@ -2666,6 +2689,7 @@ void addStormsBank (std::vector<Preset>& out)
         "lives an octave up with very little low end, so it sits on top of "
         "THUNDERHEAD or GREY SEA without fighting them for room.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.72f },
         { pid::oscAOctave,    oct (1) },
@@ -2784,6 +2808,7 @@ void addStormsBank (std::vector<Preset>& out)
         "an LFO, so the tone wanders without a tempo. The lead nobody expects to "
         "be in an aquatic synth, and the one that sells the heat.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.42f },
         { pid::oscAUnison,    uni (2) },
@@ -2901,6 +2926,7 @@ void addStormsBank (std::vector<Preset>& out)
         "note-off as well as note-on, so releasing a note throws the pitch a "
         "semitone before it dies — the line tears as it ends.",
     {
+        { pid::mastOutput,    outdb (-7.1f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (4) },
@@ -3027,6 +3053,7 @@ void addStormsBank (std::vector<Preset>& out)
         "the key, so the instrument is mostly a formant; width comes from "
         "decorrelated noise and opposed oscillator pans, not from effects.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -3134,6 +3161,7 @@ void addStormsBank (std::vector<Preset>& out)
         "pluck turns any held note into a rattle; Random-per-note moves the pan "
         "and the droplet tone so the pattern never sounds looped.",
     {
+        { pid::mastOutput,    outdb (9.6f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.68f },
         { pid::oscAUnison,    uni (2) },
@@ -3253,6 +3281,7 @@ void addStormsBank (std::vector<Preset>& out)
         "gates the amplitude hard, so a held chord becomes a run; the filter "
         "opens a little further on every second gate via the Double Wave.",
     {
+        { pid::mastOutput,    outdb (-2.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (3) },
@@ -3366,6 +3395,7 @@ void addStormsBank (std::vector<Preset>& out)
         "a clanging inharmonic hit; a triplet delay with high feedback keeps it "
         "arguing with itself long after the note has gone.",
     {
+        { pid::mastOutput,    outdb (2.4f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.48f },
         { pid::oscAUnison,    uni (2) },
@@ -3488,6 +3518,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Surf-noise layer into rhythmic bursts while the oscillators stay "
         "level — the pulse is entirely in the weather, not in the note.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.45f },
         { pid::oscAOctave,    oct (-1) },
@@ -3604,6 +3635,7 @@ void addStormsBank (std::vector<Preset>& out)
         "unison two octaves down, both held wide open; the only event in five "
         "minutes is the Drift walking the whole thing a few cents flat and back.",
     {
+        { pid::mastOutput,    outdb (0.2f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.40f },
         { pid::oscAOctave,    oct (-2) },
@@ -3719,6 +3751,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Two Tides at 0.02 and 0.05 Hz beat against each other on amplitude and "
         "cutoff, so the drone breathes on a cycle far longer than any bar.",
     {
+        { pid::mastOutput,    outdb (3.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (3) },
@@ -3836,6 +3869,7 @@ void addStormsBank (std::vector<Preset>& out)
         "distance as a sound: Deep and Surf noise stacked with no effects at "
         "all, decorrelated by two modulators running at unrelated rates.",
     {
+        { pid::mastOutput,    outdb (-8.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Shark) },
@@ -3943,6 +3977,7 @@ void addStormsBank (std::vector<Preset>& out)
         "pressure rather than sound. Square sub two octaves down through heavy "
         "PRESSURE tilt; the only top end is a thin Air layer to keep it locatable.",
     {
+        { pid::mastOutput,    outdb (-2.4f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAOctave,    oct (-2) },
         { pid::oscAUnison,    uni (4) },
@@ -4053,6 +4088,7 @@ void addStormsBank (std::vector<Preset>& out)
         "high-pass with almost no oscillator under it; the width is entirely "
         "decorrelated noise, opposed pans and a fast Current. Nothing wet.",
     {
+        { pid::mastOutput,    outdb (-8.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -4160,6 +4196,7 @@ void addStormsBank (std::vector<Preset>& out)
         "and almost polite for this bank — a band-passed wash that arrives, "
         "crosses the stereo field once under the Current, and is gone.",
     {
+        { pid::mastOutput,    outdb (-8.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4265,6 +4302,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Current runs at its roughest with smoothing almost off, so the filter "
         "and the oscillator mix jerk rather than glide.",
     {
+        { pid::mastOutput,    outdb (-9.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.66f },
         { pid::oscAUnison,    uni (5) },
@@ -4384,6 +4422,7 @@ void addStormsBank (std::vector<Preset>& out)
         "Drift rather than Tide — the motion has no period you can count, and "
         "the patch never returns to the same place twice.",
     {
+        { pid::mastOutput,    outdb (-1.7f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (-1) },
@@ -4503,6 +4542,7 @@ void addStormsBank (std::vector<Preset>& out)
         "density gives the stones; the Swell tide gives the haul. Dry, so it "
         "sits under a mix as foley rather than as another reverb.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -4608,6 +4648,7 @@ void addStormsBank (std::vector<Preset>& out)
         "nearly closed low-pass, with one thin Air layer kept deliberately "
         "above 6 kHz so the patch still has a top edge to locate it by.",
     {
+        { pid::mastOutput,    outdb (4.1f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (4) },
@@ -4721,6 +4762,7 @@ void addStormsBank (std::vector<Preset>& out)
         "at once — Air on top, Surf beneath — split hard across the image and "
         "swept in opposite directions by Current and Drift.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (6) },
@@ -4844,6 +4886,7 @@ void addStormsBank (std::vector<Preset>& out)
         "the whole pitch down a fourth over two cycles while the filter shuts — "
         "an impact that keeps falling after it has landed.",
     {
+        { pid::mastOutput,    outdb (-4.2f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (-1) },
@@ -4967,6 +5010,7 @@ void addStormsBank (std::vector<Preset>& out)
         "density and white noise, then a sustained downpour that the Current "
         "keeps re-weighting left and right. Hold it under a cut.",
     {
+        { pid::mastOutput,    outdb (1.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.52f },
         { pid::oscAUnison,    uni (4) },
@@ -5085,6 +5129,7 @@ void addStormsBank (std::vector<Preset>& out)
         "high-pass that opens in 3 ms and closes over a second, leaving only "
         "reverb. Almost no fundamental, so it never collides with a bass.",
     {
+        { pid::mastOutput,    outdb (3.3f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.78f },
         { pid::oscAOctave,    oct (2) },
@@ -5206,6 +5251,7 @@ void addStormsBank (std::vector<Preset>& out)
         "seconds of Deep noise decaying through a shutting low-pass, with a "
         "three-second delay tail standing in for the distance.",
     {
+        { pid::mastOutput,    outdb (-3.3f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.42f },
         { pid::oscAOctave,    oct (-2) },
@@ -5330,6 +5376,7 @@ void addStormsBank (std::vector<Preset>& out)
         "and droplet density all climb together under one slow Swell, then the "
         "release drops everything at once. The tension cue for this bank.",
     {
+        { pid::mastOutput,    outdb (1.2f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.56f },
         { pid::oscAUnison,    uni (6) },
@@ -5450,6 +5497,7 @@ void addStormsBank (std::vector<Preset>& out)
         "over three seconds while Bubble noise gurgles behind it. Completely "
         "dry, so the fall reads as movement and not as a reverb tail.",
     {
+        { pid::mastOutput,    outdb (-3.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -5561,6 +5609,7 @@ void addStormsBank (std::vector<Preset>& out)
         "down on its own slow Tide while ring modulation keeps the tone just "
         "wrong enough to be a warning rather than a note.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.35f },
         { pid::oscAUnison,    uni (3) },
@@ -5681,6 +5730,7 @@ void addStormsBank (std::vector<Preset>& out)
         "density over White and Surf noise, decorrelated across the image by "
         "spread alone. Layer it over anything that needs to be outdoors.",
     {
+        { pid::mastOutput,    outdb (-7.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },

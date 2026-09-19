@@ -22,6 +22,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "noise bed and a short bright resonator. The oscillator is only there to "
         "give the bubbles a key to sit in.",
     {
+        { pid::mastOutput,    outdb (8.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Sine) },
@@ -114,6 +115,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "High gravity and high bounce give the accelerating repeat of a real "
         "drip; a long dark reverb gives it somewhere to land.",
     {
+        { pid::mastOutput,    outdb (5.3f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscALevel,     lvl (-22.0f) },
         { pid::oscAUnison,    uni (1) },
@@ -217,6 +219,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "band-pass, with the resonator tuned short and glassy so each hit has a "
         "pitch but no tail. No reverb — the resonator is the window.",
     {
+        { pid::mastOutput,    outdb (6.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -307,6 +310,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "Note-mode droplets tuned to the note you play, so every key strike "
         "arrives with its own splash. Velocity decides how big the splash is.",
     {
+        { pid::mastOutput,    outdb (-4.1f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.52f },
         { pid::oscAUnison,    uni (2) },
@@ -404,6 +408,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "Almost nothing happening. Very sparse, very large droplets over a "
         "barely-there pad — an ambience bed rather than an instrument.",
     {
+        { pid::mastOutput,    outdb (5.5f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.30f },
         { pid::oscAUnison,    uni (4) },
@@ -511,6 +516,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "pushed to opposite sides, and Current and Drift running at different "
         "rates on pan and droplet size so nothing ever sits still.",
     {
+        { pid::mastOutput,    outdb (3.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -624,6 +630,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "bed for the ground itself, and mid-size droplets on a heavily damped "
         "resonator so each one thuds rather than rings.",
     {
+        { pid::mastOutput,    outdb (-8.6f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.55f },
         { pid::oscAUnison,    uni (4) },
@@ -742,6 +749,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "upward almost thirteen semitones before the pad has finished its attack. "
         "The resonator is scattered hard into glass; there is no reverb at all.",
     {
+        { pid::mastOutput,    outdb (5.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -856,6 +864,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "seconds, into a large slack resonator, with a Deep noise bed underneath "
         "and the filter well below the brightness of anything else in the bank.",
     {
+        { pid::mastOutput,    outdb (6.2f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.25f },
         { pid::oscAOctave,    oct (-1) },
@@ -983,6 +992,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "partner gives the low hum, the droplets are large and slow, and the "
         "chorus is set wide and slow so the whole thing breathes sideways.",
     {
+        { pid::mastOutput,    outdb (3.6f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAUnison,    uni (3) },
         { pid::oscADetune,    0.16f },
@@ -1108,6 +1118,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "surface is mineral rather than musical. Nothing but the resonator makes "
         "the space.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1220,6 +1231,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "damping up, and the droplets larger and duller. Stones dropped into a "
         "still pool.",
     {
+        { pid::mastOutput,    outdb (-2.7f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.48f },
         { pid::oscAPhase,     startPhase (0.1f) },
@@ -1342,6 +1354,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "square gives the body, the resonator is scattered to the limit with "
         "almost no damping, and the note-mode droplets are small and bright.",
     {
+        { pid::mastOutput,    outdb (8.9f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.32f },
         { pid::oscAOctave,    oct (1) },
@@ -1468,6 +1481,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "in atmospheric mode at high density, so the weather carries on between "
         "notes while the keys do the tune. Dry: the window is the resonator.",
     {
+        { pid::mastOutput,    outdb (7.3f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -1573,6 +1587,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "slow droplet released per note at gravity 0.15 so it falls well behind "
         "the attack instead of on top of it.",
     {
+        { pid::mastOutput,    outdb (-8.5f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.45f },
         { pid::oscAOctave,    oct (-1) },
@@ -1699,6 +1714,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "at 0.95 means no two notes scatter the same way. Dry, so the scatter is "
         "the only tail there is.",
     {
+        { pid::mastOutput,    outdb (0.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -1813,6 +1829,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "repeats. The cleanest statement of what the droplet engine actually "
         "does.",
     {
+        { pid::mastOutput,    outdb (7.7f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (1) },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -1928,6 +1945,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "at 0.68 for the metal, gravity 0.70 sends the drop clattering down it, "
         "and a ring-modulated hollow pair gives the pipe its dull ring.",
     {
+        { pid::mastOutput,    outdb (1.1f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.40f },
         { pid::oscAUnison,    uni (2) },
@@ -2054,6 +2072,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "with the resonator left long enough to be the room the drop is falling "
         "in. The opposite of SPATTER in every setting that matters.",
     {
+        { pid::mastOutput,    outdb (10.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Sine) },
@@ -2164,6 +2183,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "a four millisecond rattle. A folded Shark wave and a hard noise "
         "transient do the rest.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.68f },
         { pid::oscAOctave,    oct (1) },
@@ -2288,6 +2308,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "wired to pitch, so the chirp of the collapsing cavity is doubled by the "
         "whole voice bending up behind it.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (3) },
@@ -2408,6 +2429,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "high so it stays even up the neck, and the largest droplets in the bank "
         "falling into a resonator set nearly to its 7.9 second limit.",
     {
+        { pid::mastOutput,    outdb (-9.4f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (2) },
@@ -2526,6 +2548,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "an octave or two above the body. No reverb, no delay - the click and the "
         "resonator are the whole front end.",
     {
+        { pid::mastOutput,    outdb (-10.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Triangle) },
@@ -2583,7 +2606,7 @@ void addDropletsBank (std::vector<Preset>& out)
         { pid::tideDepth,     0.15f },
 
         { pid::currRate,      currHz (0.90f) },
-        { pid::currAmount,    0.35f },
+        { pid::currAmount,    0.55f },
         { pid::currSmooth,    0.45f },
         { pid::currStereo,    0.35f },
         { pid::driftRate,     driftHz (0.050f) },
@@ -2629,8 +2652,8 @@ void addDropletsBank (std::vector<Preset>& out)
         { ModSource::Velocity,      ModDest::FilterCutoff,     0.35f },
         { ModSource::Ripple,        ModDest::DropletTone,      0.30f },
         { ModSource::KeyTrack,      ModDest::DropletSize,     -0.35f },
-        { ModSource::Current,       ModDest::FilterCutoff,     0.25f },
-        { ModSource::Drift,         ModDest::ResonatorScatter, 0.25f },
+        { ModSource::Current,       ModDest::FilterCutoff,     0.50f },
+        { ModSource::Drift,         ModDest::ResonatorScatter, 0.45f },
         { ModSource::RandomPerNote, ModDest::DropletTone,      0.20f },
     }));
 
@@ -2639,6 +2662,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "to note-off, so releasing a note throws a damped wave across the cutoff "
         "and the droplet size while the tail is still sounding.",
     {
+        { pid::mastOutput,    outdb (-10.8f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.35f },
         { pid::oscAOctave,    oct (-1) },
@@ -2766,6 +2790,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "to remind you the water is still there. Plays as a sustained bass, not a "
         "stab.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (1) },
@@ -2882,6 +2907,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "atmospheric mode at gravity 0.2, so a 286-219-167-128 ms accelerating "
         "drip runs across the top of whatever bass line you play underneath it.",
     {
+        { pid::mastOutput,    outdb (-6.3f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.38f },
         { pid::oscAOctave,    oct (-1) },
@@ -3006,6 +3032,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "between them, and the Tide adds a slow vibrato once the note has "
         "settled.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (2) },
@@ -3130,6 +3157,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "scatter is at the limit for the metal, and the atmospheric droplets keep "
         "rattling over the top of the line whether you play or not.",
     {
+        { pid::mastOutput,    outdb (1.2f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAUnison,    uni (2) },
         { pid::oscADetune,    0.09f },
@@ -3255,6 +3283,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "always on and the Tide runs a real vibrato, so it plays like a wind "
         "instrument that happens to be made of water.",
     {
+        { pid::mastOutput,    outdb (-10.3f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.48f },
         { pid::oscAUnison,    uni (1) },
@@ -3381,6 +3410,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "against the capsule. Width comes only from droplet spread and a "
         "decorrelated Current on pan.",
     {
+        { pid::mastOutput,    outdb (1.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Sine) },
@@ -3498,6 +3528,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "twelve-semitone bend range so the line can be pulled like the surface it "
         "is named after.",
     {
+        { pid::mastOutput,    outdb (-6.0f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.26f },
         { pid::oscAOctave,    oct (1) },
@@ -3625,6 +3656,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "0.75 turns every note into a short accelerating burst, and the Bubble "
         "noise bed fills the gaps between them.",
     {
+        { pid::mastOutput,    outdb (7.2f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.55f },
         { pid::oscAPhase,     startPhase (0.0f) },
@@ -3749,6 +3781,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "gives a long geometric run of repeats off every note, so one held chord "
         "articulates itself. There is no delay and no reverb to help it.",
     {
+        { pid::mastOutput,    outdb (9.8f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -3863,6 +3896,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "the cutoff, large low droplets at high density, and a dark delay in the "
         "same division so the runs stack into each other.",
     {
+        { pid::mastOutput,    outdb (5.7f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (3) },
@@ -3989,6 +4023,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "delay with the feedback high enough that a two-note figure keeps "
         "repeating itself into a pattern you did not play.",
     {
+        { pid::mastOutput,    outdb (11.3f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.85f },
         { pid::oscAOctave,    oct (1) },
@@ -4112,6 +4147,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "the delay - and a deep Tide route on droplet size makes alternate hits "
         "large and small, so the pattern lopes instead of marching.",
     {
+        { pid::mastOutput,    outdb (2.3f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.44f },
         { pid::oscAUnison,    uni (3) },
@@ -4236,6 +4272,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "randomness almost as high, so the individual drops stop being countable "
         "and become weather. The oscillators are only there to give it a key.",
     {
+        { pid::mastOutput,    outdb (6.0f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (4) },
@@ -4357,6 +4394,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "kill the ring, so each hit is a dull tick with no pitch - the same "
         "density as DOWNPOUR would give a completely different surface.",
     {
+        { pid::mastOutput,    outdb (-3.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -4463,6 +4501,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "bright as the engine goes, and Drift is wired hard to both pans so the "
         "whole cloud moves across the image while you hold the note.",
     {
+        { pid::mastOutput,    outdb (4.4f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.88f },
         { pid::oscAOctave,    oct (2) },
@@ -4588,6 +4627,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "bed under a slow crossfade, large dull droplets arriving irregularly, "
         "and the diffuser turned up until the whole thing has no edges left.",
     {
+        { pid::mastOutput,    outdb (6.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.30f },
         { pid::oscAUnison,    uni (5) },
@@ -4717,6 +4757,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "and a resonator damped almost shut - but the noise tone is kept high "
         "enough that there is still air above the moss.",
     {
+        { pid::mastOutput,    outdb (-4.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -4826,6 +4867,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "column it is building. Everything else is static on purpose - the drip "
         "is the only event in the patch.",
     {
+        { pid::mastOutput,    outdb (-0.2f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (3) },
@@ -4952,6 +4994,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "its range with the damping low so it rings for seconds, and the droplets "
         "are pitched low and wide enough to excite it from every direction.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.22f },
         { pid::oscAOctave,    oct (-1) },
@@ -5079,6 +5122,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "stereo image is built entirely from droplet spread and two decorrelated "
         "modulators.",
     {
+        { pid::mastOutput,    outdb (-1.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -5198,6 +5242,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "for room tone - with condensation forming on it. Almost all the audible "
         "activity is the droplet engine and the Air noise above it.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAOctave,    oct (1) },
         { pid::oscAUnison,    uni (3) },
@@ -5321,6 +5366,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "filter and the resonator, so the drone is shaped by the drips landing on "
         "it rather than by any envelope.",
     {
+        { pid::mastOutput,    outdb (1.1f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (4) },
@@ -5452,6 +5498,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "throws the debris, and the RIPPLE modulator - retriggered by the "
         "droplets - bends the whole voice down behind it.",
     {
+        { pid::mastOutput,    outdb (-1.3f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.55f },
         { pid::oscAOctave,    oct (-1) },
@@ -5586,6 +5633,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "collapses into a four millisecond rattle, randomness wide open, and "
         "enough drive on the filter and the master to make the whole thing spit.",
     {
+        { pid::mastOutput,    outdb (-3.5f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.75f },
         { pid::oscAUnison,    uni (5) },
@@ -5720,6 +5768,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "density and reverb mix together, so over about eight seconds a dark "
         "empty room fills with rain and then stops dead.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAOctave,    oct (-1) },
         { pid::oscAUnison,    uni (5) },
@@ -5850,6 +5899,7 @@ void addDropletsBank (std::vector<Preset>& out)
         "droplet field with gravity high enough that the repeats become a rolling "
         "churn, and Fluid X wired to density so you can take it off the heat.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },

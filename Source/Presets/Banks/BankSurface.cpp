@@ -22,6 +22,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "1.2 kHz opening under the mod envelope. Every water extra is at zero so "
         "the raw voice can be judged on its own.",
     {
+        { pid::mastOutput,    outdb (-12.0f) },
         // Deliberately empty: INIT DEEP SAW *is* the baseline. Changing it means
         // changing initValues() above, which mirrors ParameterLayout.cpp.
     }));
@@ -31,6 +32,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "Sunlight broken on a moving surface. Glass partials, a thread of air "
         "noise and a bright scattered resonator. No effects at all.",
     {
+        { pid::mastOutput,    outdb (-3.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Glass) },
@@ -136,6 +138,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "Glints. A double-crested tide runs the amplitude so every held note "
         "flickers the way light does on a swell.",
     {
+        { pid::mastOutput,    outdb (-3.6f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.70f },
         { pid::oscAUnison,    uni (2) },
@@ -222,6 +225,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "Surf noise through a moving band-pass, with a fine spray of droplets. "
         "The wash is the instrument; the oscillators are only a thread of pitch.",
     {
+        { pid::mastOutput,    outdb (-10.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -316,6 +320,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "A stone thrown flat. The RIPPLE modulator bends the pitch in fast "
         "damped bounces and the droplet engine's gravity does the rest.",
     {
+        { pid::mastOutput,    outdb (3.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Triangle) },
@@ -408,6 +413,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "A flat, patient pad for the top of an arrangement. Five-voice unison "
         "drifting slowly out of tune with itself and back again.",
     {
+        { pid::mastOutput,    outdb (-0.1f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.45f },
         { pid::oscAUnison,    uni (5) },
@@ -505,6 +511,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "glass partial stack and a soft water wave, so the pad never holds one "
         "timbre long enough to be read as a single oscillator.",
     {
+        { pid::mastOutput,    outdb (-4.6f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.66f },
         { pid::oscAOctave,    oct (0) },
@@ -628,6 +635,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "fills the gap; the width is entirely unison spread and two decorrelated "
         "modulators pulling the oscillator pans apart.",
     {
+        { pid::mastOutput,    outdb (-0.1f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -738,6 +746,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "enough to put a thin upper formant on the pad, and a half-note delay "
         "smears it into cloud.",
     {
+        { pid::mastOutput,    outdb (-3.4f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (4) },
@@ -851,6 +860,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "difference tones on top of the pad, so held chords shimmer like light "
         "off a flat noon sea rather than blending.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.74f },
         { pid::oscAUnison,    uni (3) },
@@ -963,6 +973,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "with a slowly widening duty cycle sits inside a band-pass, and surf "
         "noise carries most of the top end.",
     {
+        { pid::mastOutput,    outdb (-3.0f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.28f },
         { pid::oscAUnison,    uni (4) },
@@ -1075,6 +1086,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "pad keeps losing and regaining its bottom while the top never leaves. "
         "Seven-voice unison on both oscillators, nothing in the centre.",
     {
+        { pid::mastOutput,    outdb (-0.6f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.60f },
         { pid::oscAFine,      cents (-6.0f) },
@@ -1186,6 +1198,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "a hard glassy edge that dies inside 200 ms, and note-mode droplets put "
         "a different scatter of beads behind every chord.",
     {
+        { pid::mastOutput,    outdb (-3.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.55f },
         { pid::oscAUnison,    uni (2) },
@@ -1295,6 +1308,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "every note starts with a metallic flash that settles in half a second. "
         "The only preset here built on square against pulse.",
     {
+        { pid::mastOutput,    outdb (-8.2f) },
         { pid::oscAWave,      wv (OscWave::Square) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (2) },
@@ -1405,6 +1419,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "coming from a small, fast-decaying resonator and sparse bubble noise. "
         "Nothing but the voice, and it still reads as water.",
     {
+        { pid::mastOutput,    outdb (-0.7f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Triangle) },
@@ -1517,6 +1532,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "gone, which leaves a thin, hard-edged instrument that sits on top of a "
         "mix without any EQ at all.",
     {
+        { pid::mastOutput,    outdb (-5.4f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (3) },
@@ -1623,6 +1639,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "held notes shiver across the stereo field. Ring modulation an octave up "
         "keeps the timbre inharmonic and small.",
     {
+        { pid::mastOutput,    outdb (-2.6f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (2) },
@@ -1732,6 +1749,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "wave is the pitch, and both are gone in under a second. Velocity opens "
         "the noise far more than it opens the filter.",
     {
+        { pid::mastOutput,    outdb (4.4f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.78f },
         { pid::oscAUnison,    uni (2) },
@@ -1839,6 +1857,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "a shriek of edge and lands on a clean partial. Random per note nudges "
         "the sync point so no two hits are identical.",
     {
+        { pid::mastOutput,    outdb (5.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.60f },
         { pid::oscAUnison,    uni (1) },
@@ -1945,6 +1964,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "every key: the pluck is the first impact and the droplet engine plays "
         "the rest of the pebble's run down the shingle. No effects.",
     {
+        { pid::mastOutput,    outdb (6.4f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Triangle) },
@@ -2052,6 +2072,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "through the middle. What is left is the inharmonic edges of the pluck "
         "with a hole where its body used to be.",
     {
+        { pid::mastOutput,    outdb (8.7f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (2) },
@@ -2156,6 +2177,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "envelope so the attack is all teeth and the tail is all soft. A 1/16 "
         "delay turns single notes into a skipping line.",
     {
+        { pid::mastOutput,    outdb (5.4f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.62f },
         { pid::oscAUnison,    uni (3) },
@@ -2272,6 +2294,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "tracks the key hard. Mono-narrow and very short — a percussion voice "
         "more than a pitched one.",
     {
+        { pid::mastOutput,    outdb (10.1f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.18f },
         { pid::oscAUnison,    uni (1) },
@@ -2385,6 +2408,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "note actually lives, so it reads on a laptop speaker. Mono, legato "
         "glide, key tracking near full so the top of the neck stays even.",
     {
+        { pid::mastOutput,    outdb (-8.4f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (0) },
@@ -2497,6 +2521,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "oscillators panned apart and a small resonator whose scatter is driven "
         "by CURRENT; bubble noise puts wet grit on the attack.",
     {
+        { pid::mastOutput,    outdb (-8.2f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Hollow) },
@@ -2606,6 +2631,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "slow attack — this is a bass for holding, not for plucking, and it "
         "keeps a soft top so it never turns into mud.",
     {
+        { pid::mastOutput,    outdb (-11.5f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.48f },
         { pid::oscAUnison,    uni (3) },
@@ -2712,6 +2738,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "into a driven filter, with surf noise riding the same envelope, so the "
         "note hisses as hard as it growls.",
     {
+        { pid::mastOutput,    outdb (-5.7f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (2) },
@@ -2818,6 +2845,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "rather than play. FM from a shark wave gives it a hard, thin cry that "
         "aftertouch pushes further out of tune.",
     {
+        { pid::mastOutput,    outdb (-3.3f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.64f },
         { pid::oscAUnison,    uni (2) },
@@ -2921,6 +2949,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "wobble on the pitch of every note, so the lead arrives unstable and "
         "settles — the articulation is in the first 300 ms.",
     {
+        { pid::mastOutput,    outdb (-5.0f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.58f },
         { pid::oscAUnison,    uni (3) },
@@ -3036,6 +3065,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "24 dB ladder. Aftertouch opens the filter a full octave, so the note "
         "can be leant on rather than only struck.",
     {
+        { pid::mastOutput,    outdb (-6.6f) },
         { pid::oscAWave,      wv (OscWave::Pulse) },
         { pid::oscAShape,     0.22f },
         { pid::oscAUnison,    uni (3) },
@@ -3141,6 +3171,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "held line never sounds quite the same twice. The mod wheel takes over "
         "that crossfade when you want to steer it yourself.",
     {
+        { pid::mastOutput,    outdb (-5.4f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (4) },
@@ -3253,6 +3284,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "delay fills the gaps between them. Hold one note and the rhythm plays "
         "itself; hold three and it interlocks.",
     {
+        { pid::mastOutput,    outdb (-2.8f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.64f },
         { pid::oscAUnison,    uni (2) },
@@ -3361,6 +3393,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "one dark, so the pattern limps in a useful way. Droplet density rides "
         "the same clock a beat behind.",
     {
+        { pid::mastOutput,    outdb (-1.1f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.72f },
         { pid::oscAUnison,    uni (3) },
@@ -3476,6 +3509,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "long rise and a fast fall, which is the shape of a small wave rather "
         "than a gate. Quarter-triplet delay pulls it off the grid.",
     {
+        { pid::mastOutput,    outdb (-6.8f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.56f },
         { pid::oscAUnison,    uni (3) },
@@ -3590,6 +3624,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "the voice while note-mode droplets scatter around it and a per-note "
         "random throws each hit somewhere new in the field. No effects.",
     {
+        { pid::mastOutput,    outdb (-1.9f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -3705,6 +3740,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "1/16 triangle tide. The interval is deliberately sour, so the pattern "
         "reads as metal on water rather than as a chord.",
     {
+        { pid::mastOutput,    outdb (-4.5f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.54f },
         { pid::oscAUnison,    uni (2) },
@@ -3821,6 +3857,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "at almost no level, air noise doing the work, and DRIFT and CURRENT "
         "running at very different rates on opposite sides of the image.",
     {
+        { pid::mastOutput,    outdb (3.6f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -3928,6 +3965,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "shifting formant on a glass wave, and a thick cloud of small, fast "
         "droplets sits on top like spray caught in a light.",
     {
+        { pid::mastOutput,    outdb (-1.7f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.80f },
         { pid::oscAOctave,    oct (1) },
@@ -4045,6 +4083,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "destinations at once and the morph filter never settles, so the patch "
         "is never in the same state for more than a second.",
     {
+        { pid::mastOutput,    outdb (-5.3f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (4) },
@@ -4172,6 +4211,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "major second apart, a narrow notch and almost no fast modulation — the "
         "only movement is a 30 second drift on the detuning.",
     {
+        { pid::mastOutput,    outdb (9.0f) },
         { pid::oscAWave,      wv (OscWave::Sine) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (3) },
@@ -4282,6 +4322,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "than by keys, so bursts of noise and filter movement arrive on the "
         "droplet engine's schedule and never on yours.",
     {
+        { pid::mastOutput,    outdb (-11.5f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.66f },
         { pid::oscAUnison,    uni (3) },
@@ -4401,6 +4442,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "two oscillators back and forth while a second, slower one pulls the "
         "resonator size with it — a glitter that is never quite periodic.",
     {
+        { pid::mastOutput,    outdb (-3.3f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.86f },
         { pid::oscAOctave,    oct (1) },
@@ -4523,6 +4565,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "the sub is barely there, and the envelope has no decay stage worth the "
         "name — press a key and it simply stays, very slowly beating.",
     {
+        { pid::mastOutput,    outdb (7.9f) },
         { pid::oscAWave,      wv (OscWave::Glass) },
         { pid::oscAShape,     0.68f },
         { pid::oscAUnison,    uni (6) },
@@ -4635,6 +4678,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "reverb, and three modulators at unrelated rates keeping the image from "
         "ever collapsing to the middle.",
     {
+        { pid::mastOutput,    outdb (3.5f) },
         RIPPLES_FX_BYPASSED,
 
         { pid::oscAWave,      wv (OscWave::Water) },
@@ -4744,6 +4788,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "swell tide runs the noise level and the filter together, so the drone "
         "breathes in and out at about eight seconds a cycle.",
     {
+        { pid::mastOutput,    outdb (3.8f) },
         { pid::oscAWave,      wv (OscWave::Hollow) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (5) },
@@ -4861,6 +4906,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "partials of two slowly beating waves, and the sub is silent. The one "
         "drone in the bank with no bottom octave at all.",
     {
+        { pid::mastOutput,    outdb (12.0f) },
         { pid::oscAWave,      wv (OscWave::Triangle) },
         { pid::oscAShape,     0.50f },
         { pid::oscAOctave,    oct (1) },
@@ -4970,6 +5016,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "pitch two octaves in 400 ms while a wall of surf noise collapses "
         "behind it; the droplet engine handles the debris.",
     {
+        { pid::mastOutput,    outdb (0.0f) },
         { pid::oscAWave,      wv (OscWave::Shark) },
         { pid::oscAShape,     0.62f },
         { pid::oscAOctave,    oct (-1) },
@@ -5094,6 +5141,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "note off, so the impact, the pitch collapse and the spray all land on "
         "the release — a tail with no head.",
     {
+        { pid::mastOutput,    outdb (0.3f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.52f },
         { pid::oscAUnison,    uni (4) },
@@ -5220,6 +5268,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "single very slow swell drives cutoff, noise level and delay feedback "
         "together, so everything arrives at the top at once.",
     {
+        { pid::mastOutput,    outdb (4.7f) },
         { pid::oscAWave,      wv (OscWave::Saw) },
         { pid::oscAShape,     0.50f },
         { pid::oscAUnison,    uni (6) },
@@ -5336,6 +5385,7 @@ void addSurfaceBank (std::vector<Preset>& out)
         "STEREO CURRENT at full amount and a slow CURRENT on pan sweep the whole "
         "noise bed across the image over about twelve seconds.",
     {
+        { pid::mastOutput,    outdb (0.5f) },
         { pid::oscAWave,      wv (OscWave::Water) },
         { pid::oscAShape,     0.44f },
         { pid::oscAOctave,    oct (-1) },
