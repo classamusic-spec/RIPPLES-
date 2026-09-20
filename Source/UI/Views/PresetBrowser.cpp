@@ -354,6 +354,11 @@ void PresetBrowser::saveCurrentPreset()
 //==============================================================================
 void PresetBrowser::resized()
 {
+    // Let the vessel work out its own glass area first; getContentBounds()
+    // below depends on it, and without this the panel silently paints no
+    // glass at all.
+    GlassPanel::resized();
+
     const auto& t = RippleTheme::get();
 
     auto content = getContentBounds();
@@ -435,6 +440,10 @@ void PresetBrowser::resized()
 
 void PresetBrowser::paintOverChildren (juce::Graphics& g)
 {
+    // The near wall of the vessel goes on first, then this panel's own
+    // overlay. Skipping the base call loses the glass rim entirely.
+    GlassPanel::paintOverChildren (g);
+
     const auto& t = RippleTheme::get();
 
     if (! categoryLabelArea.isEmpty())

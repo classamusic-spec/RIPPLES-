@@ -35,6 +35,17 @@ public:
 
     //==========================================================================
     void paint (juce::Graphics&) override;
+    void paintOverChildren (juce::Graphics&) override;
+
+private:
+    /** Renders the static liquid and rim layers once per size / device scale. */
+    void ensureGlassCache (juce::Graphics&);
+    void invalidateGlassCache() { liquidLayer = {}; rimLayer = {}; }
+
+    juce::Image liquidLayer, rimLayer;
+    float glassCacheScale = 0.0f;
+
+public:
     void resized() override;
 
 private:

@@ -68,6 +68,11 @@ MacroStrip::~MacroStrip() = default;
 //==============================================================================
 void MacroStrip::resized()
 {
+    // Let the vessel work out its own glass area first; getContentBounds()
+    // below depends on it, and without this the panel silently paints no
+    // glass at all.
+    GlassPanel::resized();
+
     auto content = getContentBounds();
 
     if (content.isEmpty())
@@ -99,6 +104,10 @@ void MacroStrip::resized()
 
 void MacroStrip::paintOverChildren (juce::Graphics& g)
 {
+    // The near wall of the vessel goes on first, then this panel's own
+    // overlay. Skipping the base call loses the glass rim entirely.
+    GlassPanel::paintOverChildren (g);
+
     if (captionArea.isEmpty())
         return;
 

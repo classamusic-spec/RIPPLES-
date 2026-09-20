@@ -43,6 +43,15 @@ public:
     ~MainView() override;
 
     void paint (juce::Graphics&) override;
+
+private:
+    /** Renders the static water backdrop once per size / device scale. */
+    void rebuildBackdrop (float deviceScale);
+
+    juce::Image backdrop;
+    float       backdropScale = 0.0f;
+
+public:
     void resized() override;
 
 private:

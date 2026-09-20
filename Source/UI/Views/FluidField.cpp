@@ -1,4 +1,5 @@
 #include "UI/Views/FluidField.h"
+#include "UI/Theme/RippleLookAndFeel.h"
 
 #include "Parameters/ParameterIDs.h"
 #include "UI/Theme/RippleTheme.h"
@@ -825,6 +826,13 @@ void FluidField::paint (juce::Graphics& g)
         rebuildBackdrop (deviceScale);
     }
 
+    if (vessel.isNull()
+         || std::abs (deviceScale - vesselScale) > kScaleEpsilon
+         || vessel.getWidth() != wantedW)
+    {
+        rebuildVessel (deviceScale);
+    }
+
     if (backdrop.isValid())
     {
         g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
@@ -842,6 +850,92 @@ void FluidField::paint (juce::Graphics& g)
     paintGuides (g);
     paintNode (g);
     paintLabels (g);
+    paintVessel (g);
+}
+
+void FluidField::paintVessel (juce::Graphics& g)
+{
+    // The tank never changes between frames, so it is rendered once into an
+    // image and blitted. Drawing it live cost about 25 ms a frame at 1600x950,
+    // which is most of a 60fps budget spent on something static.
+    if (vessel.isValid())
+    {
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (vessel, getLocalBounds().toFloat());
+    }
+}
+
+void FluidField::rebuildVessel (float scale)
+{
+    const auto& t = RippleTheme::get();
+
+    const int pw = juce::jmax (1, juce::roundToInt ((float) getWidth()  * scale));
+    const int ph = juce::jmax (1, juce::roundToInt ((float) getHeight() * scale));
+
+    if (getWidth() < 8 || getHeight() < 8)
+    {
+        vessel = {};
+        return;
+    }
+
+    vessel = juce::Image (juce::Image::ARGB, pw, ph, true);
+    vesselScale = scale;
+
+    juce::Graphics g (vessel);
+    g.addTransform (juce::AffineTransform::scale (scale));
+
+    const auto bounds = getLocalBounds().toFloat();
+
+    // The field is the largest body of water in the instrument, so it is the
+    // one that most has to read as water HELD IN SOMETHING. Everything else
+    // paints the water; this paints the tank around it.
+    g.saveState();
+
+    juce::Path shape;
+    shape.addRoundedRectangle (bounds, t.panelRadius);
+    g.reduceClipRegion (shape, {});
+
+    const auto inner = bounds.reduced (t.glassWallThickness);
+    const float band = juce::jmax (6.0f, bounds.getWidth() * t.refractionBandRatio * 0.8f);
+
+    // Light bending through the side walls, brighter than on a small panel
+    // because there is far more water behind it.
+    g.setGradientFill ({ t.edgeRefraction, inner.getX(), inner.getCentreY(),
+                         t.edgeRefraction.withAlpha (0.0f), inner.getX() + band, inner.getCentreY(), false });
+    g.fillRect (inner.withWidth (band));
+
+    auto right = inner;
+    g.setGradientFill ({ t.edgeRefraction.withMultipliedAlpha (0.7f), inner.getRight(), inner.getCentreY(),
+                         t.edgeRefraction.withAlpha (0.0f), inner.getRight() - band, inner.getCentreY(), false });
+    g.fillRect (right.removeFromRight (band));
+
+    // The surface of the water, just under the top wall.
+    {
+        const float y = inner.getY() + t.meniscusInset;
+        const float fade = inner.getWidth() * 0.28f;
+
+        juce::ColourGradient m (t.meniscus.withAlpha (0.0f), inner.getX(), y,
+                                t.meniscus.withAlpha (0.0f), inner.getRight(), y, false);
+        m.addColour (juce::jlimit (0.01, 0.49, (double) (fade / inner.getWidth())),
+                     t.meniscus.withMultipliedAlpha (0.75f));
+        m.addColour (juce::jlimit (0.51, 0.99, (double) (1.0f - fade / inner.getWidth())),
+                     t.meniscus.withMultipliedAlpha (0.75f));
+        g.setGradientFill (m);
+        g.fillRect (inner.getX(), y, inner.getWidth(), t.meniscusThickness);
+    }
+
+    // Light pooling on the floor of the tank.
+    {
+        const float h = bounds.getHeight() * t.causticHeightRatio;
+        const auto pool = bounds.withTop (bounds.getBottom() - h);
+
+        g.setGradientFill ({ t.causticFloor.withAlpha (0.0f),          pool.getCentreX(), pool.getY(),
+                             t.causticFloor.withMultipliedAlpha (0.8f), pool.getCentreX(), pool.getBottom(), false });
+        g.fillRect (pool);
+    }
+
+    g.restoreState();
+    ui::drawGlassRim (g, bounds, t.panelRadius, t.cyan);
 }
 
 void FluidField::paintDepthWell (juce::Graphics& g) const

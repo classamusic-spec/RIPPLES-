@@ -52,9 +52,16 @@ void drawSoftShadow (juce::Graphics& g, juce::Rectangle<float> bounds, float cor
 void drawSoftCircleShadow (juce::Graphics& g, juce::Point<float> centre, float radius,
                            juce::Colour colour, float spread, float yOffset);
 
-/** One layer of glass: translucent fill, mild internal top highlight, thin edge. */
+/** The liquid inside a glass vessel: water column, edge refraction, caustic
+    floor, specular streaks and the meniscus. Draw this BEFORE the contents. */
 void drawGlassSurface (juce::Graphics& g, juce::Rectangle<float> bounds, float cornerRadius,
                        juce::Colour accent, bool withHighlight);
+
+/** The glass wall: a lit outer rim plus the refracted inner edge behind it.
+    Call AFTER a panel's contents so the wall sits in front of the liquid — that
+    separation is what gives the panel thickness. */
+void drawGlassRim (juce::Graphics& g, juce::Rectangle<float> bounds, float cornerRadius,
+                   juce::Colour accent);
 
 /** Flat dark well used by selectors, buttons and toggles. */
 void drawControlWell (juce::Graphics& g, juce::Rectangle<float> bounds, float cornerRadius,

@@ -29,6 +29,7 @@ void GlassPanel::setTitle (const juce::String& title)
     juce::Component::setTitle (title);
 
     resized();
+    invalidateGlassCache();
     repaint();
 }
 
@@ -38,6 +39,7 @@ void GlassPanel::setAccent (juce::Colour accent)
         return;
 
     accentColour = accent;
+    invalidateGlassCache();
     repaint();
 }
 
@@ -69,14 +71,71 @@ juce::Rectangle<int> GlassPanel::getContentBounds() const
     return inner;
 }
 
+void GlassPanel::paintOverChildren (juce::Graphics& g)
+{
+    if (glassArea.isEmpty())
+        return;
+
+    // The near wall of the vessel, drawn over the contents.
+    ensureGlassCache (g);
+
+    if (rimLayer.isValid())
+    {
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (rimLayer, getLocalBounds().toFloat());
+    }
+}
+
 void GlassPanel::resized()
 {
+    invalidateGlassCache();
+
     const auto& theme = RippleTheme::get();
 
     glassArea = getGlassBounds().toFloat();
 
     titleArea = getGlassBounds().reduced (contentInset);
     titleArea = titleArea.removeFromTop (theme.panelTitleHeight);
+}
+
+void GlassPanel::ensureGlassCache (juce::Graphics& g)
+{
+    const auto& theme = RippleTheme::get();
+
+    const float scale = juce::jlimit (0.5f, 4.0f,
+                                      g.getInternalContext().getPhysicalPixelScaleFactor());
+
+    const int pw = juce::jmax (1, juce::roundToInt ((float) getWidth()  * scale));
+    const int ph = juce::jmax (1, juce::roundToInt ((float) getHeight() * scale));
+
+    if (liquidLayer.isValid() && std::abs (scale - glassCacheScale) < 0.01f
+         && liquidLayer.getWidth() == pw && liquidLayer.getHeight() == ph)
+        return;
+
+    glassCacheScale = scale;
+
+    if (getWidth() < 4 || getHeight() < 4 || glassArea.isEmpty())
+    {
+        liquidLayer = {};
+        rimLayer = {};
+        return;
+    }
+
+    liquidLayer = juce::Image (juce::Image::ARGB, pw, ph, true);
+    {
+        juce::Graphics lg (liquidLayer);
+        lg.addTransform (juce::AffineTransform::scale (scale));
+        ui::drawSoftShadow (lg, glassArea, theme.panelRadius, theme.shadow,
+                            theme.panelShadowSpread * 0.5f, theme.panelShadowOffset * 0.5f);
+        ui::drawGlassSurface (lg, glassArea, theme.panelRadius, accentColour, true);
+    }
+
+    rimLayer = juce::Image (juce::Image::ARGB, pw, ph, true);
+    {
+        juce::Graphics rg (rimLayer);
+        rg.addTransform (juce::AffineTransform::scale (scale));
+        ui::drawGlassRim (rg, glassArea, theme.panelRadius, accentColour);
+    }
 }
 
 void GlassPanel::paint (juce::Graphics& g)
@@ -86,11 +145,22 @@ void GlassPanel::paint (juce::Graphics& g)
     if (glassArea.isEmpty())
         return;
 
-    // Depth first: a soft outer shadow, then exactly one layer of glass.
-    ui::drawSoftShadow (g, glassArea, theme.panelRadius, theme.shadow,
-                        theme.panelShadowSpread * 0.5f, theme.panelShadowOffset * 0.5f);
+    // Depth first: a soft outer shadow, then the liquid inside the vessel. The
+    // glass WALL is deliberately not drawn here -- it goes on in
+    // paintOverChildren, so the wall sits in front of the panel's contents the
+    // way a real one would. That front/back separation is what gives the panel
+    // thickness instead of making it look like a printed card.
+    //
+    // Both layers are static for a given size, so they are cached as images
+    // and blitted; drawing the gradients live made a full repaint several
+    // times more expensive for no visible difference.
+    ensureGlassCache (g);
 
-    ui::drawGlassSurface (g, glassArea, theme.panelRadius, accentColour, true);
+    if (liquidLayer.isValid())
+    {
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (liquidLayer, getLocalBounds().toFloat());
+    }
 
     if (panelTitle.isEmpty())
         return;

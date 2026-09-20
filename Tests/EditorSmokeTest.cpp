@@ -85,6 +85,40 @@ int main()
     }
     std::puts("preset changes with editor open: ok");
 
+    // --- paint cost -------------------------------------------------------
+    // The glass passes run on every frame in the Fluid Field, so measure the
+    // real cost rather than assuming it is negligible.
+    {
+        editor->setSize (1600, 950);
+
+        juce::Image frame (juce::Image::ARGB, editor->getWidth(), editor->getHeight(), true);
+
+        constexpr int warmup = 10;
+        constexpr int frames = 120;
+
+        for (int i = 0; i < warmup; ++i)
+        {
+            juce::Graphics g (frame);
+            editor->paintEntireComponent (g, true);
+        }
+
+        const auto start = juce::Time::getHighResolutionTicks();
+
+        for (int i = 0; i < frames; ++i)
+        {
+            juce::Graphics g (frame);
+            editor->paintEntireComponent (g, true);
+        }
+
+        const auto seconds = juce::Time::highResolutionTicksToSeconds (
+                                 juce::Time::getHighResolutionTicks() - start);
+
+        const double msPerFrame = seconds * 1000.0 / (double) frames;
+
+        std::printf ("paint cost: %.2f ms/frame at 1600x950  (%.0f fps headroom, 60fps budget is 16.7 ms)\n",
+                     msPerFrame, 1000.0 / msPerFrame);
+    }
+
     editor.reset();
     std::puts("editor destroyed cleanly");
     std::puts("EDITOR SMOKE TEST PASSED");

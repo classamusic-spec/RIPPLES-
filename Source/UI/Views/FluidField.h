@@ -123,6 +123,8 @@ private:
     void paintGuides (juce::Graphics& g) const;
     void paintNode (juce::Graphics& g) const;
     void paintLabels (juce::Graphics& g) const;
+    void paintVessel (juce::Graphics&);
+    void rebuildVessel (float deviceScale);
 
     juce::Point<float> nodeToPixels (float nx, float ny) const noexcept;
     void setNormalisedParameters (float nx, float ny, bool partOfGesture);
@@ -178,6 +180,8 @@ private:
 
     // Cached static layer: deep gradient + pool + vignette.
     juce::Image backdrop;
+    juce::Image vessel;
+    float       vesselScale = 0.0f;
     float backdropScale = 0.0f;
 
     // Reusable scratch. Cleared and rebuilt, never reallocated after warm-up.

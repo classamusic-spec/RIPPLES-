@@ -1,4 +1,7 @@
 #include "UI/Theme/RippleLookAndFeel.h"
+#include "Utilities/MathUtils.h"
+
+#include <cmath>
 
 namespace ripples::ui
 {
@@ -59,30 +62,167 @@ void drawGlassSurface (juce::Graphics& g, juce::Rectangle<float> bounds, float c
 {
     const auto& theme = RippleTheme::get();
 
-    // One layer of glass: a single translucent fill.
-    g.setGradientFill (theme.panelGradient (bounds));
-    g.fillRoundedRectangle (bounds, cornerRadius);
+    if (bounds.getWidth() < 2.0f || bounds.getHeight() < 2.0f)
+        return;
 
-    // A very mild internal highlight along the top edge only.
-    if (withHighlight)
+    juce::Path shape;
+    shape.addRoundedRectangle (bounds, cornerRadius);
+
+    //--------------------------------------------------------------------------
+    // 1. The water column. More water to look through at the bottom, so it is
+    //    denser and darker there. The accent tints the body very slightly, which
+    //    is what keeps a violet-accented panel from looking like a cyan one.
+    //--------------------------------------------------------------------------
     {
-        const juce::Graphics::ScopedSaveState state (g);
-
-        juce::Path clip;
-        clip.addRoundedRectangle (bounds, cornerRadius);
-        g.reduceClipRegion (clip, {});
-
-        auto band = bounds.withHeight (bounds.getHeight() * theme.panelHighlightRatio);
-        g.setGradientFill ({ theme.panelHighlight,           bounds.getCentreX(), bounds.getY(),
-                             theme.panelHighlight.withAlpha (0.0f), bounds.getCentreX(), band.getBottom(),
-                             false });
-        g.fillRect (band);
+        juce::ColourGradient column (theme.liquidTop,  bounds.getCentreX(), bounds.getY(),
+                                     theme.liquidDeep, bounds.getCentreX(), bounds.getBottom(), false);
+        column.addColour (0.45, theme.liquidMid.interpolatedWith (accent.withAlpha (theme.liquidMid.getFloatAlpha()), 0.10f));
+        g.setGradientFill (column);
+        g.fillPath (shape);
     }
 
-    // Subtle cyan edge, tinted toward the panel's accent.
-    const auto edge = theme.panelBorder.interpolatedWith (accent.withAlpha (theme.panelBorder.getFloatAlpha()), 0.5f);
-    g.setColour (edge);
-    g.drawRoundedRectangle (bounds.reduced (theme.borderWidth * 0.5f), cornerRadius, theme.borderWidth);
+    const juce::Graphics::ScopedSaveState inside (g);
+    g.reduceClipRegion (shape, {});
+
+    const auto inner = bounds.reduced (theme.glassWallThickness);
+    auto       work  = inner;   // scratch copy for the passes that slice
+
+    //--------------------------------------------------------------------------
+    // 2. Edge refraction. Light bending through the curved wall concentrates in
+    //    a narrow band against each side, brightest low down where the glass is
+    //    looking through the most liquid.
+    //--------------------------------------------------------------------------
+    {
+        const float band = juce::jmax (4.0f, bounds.getWidth() * theme.refractionBandRatio);
+
+        g.setGradientFill ({ theme.edgeRefraction,                inner.getX(), inner.getCentreY(),
+                             theme.edgeRefraction.withAlpha (0.0f), inner.getX() + band, inner.getCentreY(), false });
+        g.fillRect (inner.withWidth (band));
+
+        g.setGradientFill ({ theme.edgeRefraction.withMultipliedAlpha (0.62f), inner.getRight(), inner.getCentreY(),
+                             theme.edgeRefraction.withAlpha (0.0f), inner.getRight() - band, inner.getCentreY(), false });
+        g.fillRect (work.removeFromRight (band));
+    }
+
+    //--------------------------------------------------------------------------
+    // 3. Caustic floor — light focused through the water pools at the base.
+    //--------------------------------------------------------------------------
+    {
+        const float h = juce::jmax (6.0f, bounds.getHeight() * theme.causticHeightRatio);
+        const auto pool = bounds.withTop (bounds.getBottom() - h);
+
+        g.setGradientFill ({ theme.causticFloor.withAlpha (0.0f), pool.getCentreX(), pool.getY(),
+                             theme.causticFloor,                  pool.getCentreX(), pool.getBottom(), false });
+        g.fillRect (pool);
+    }
+
+    //--------------------------------------------------------------------------
+    // 4. Specular streaks. Cylindrical glass catches light in a LINE down its
+    //    length, not as a wash across the top — this is the cue that reads as a
+    //    curved surface. The opposite side gets a weaker catch.
+    //--------------------------------------------------------------------------
+    if (withHighlight)
+    {
+        const float w = juce::jmax (2.0f, bounds.getWidth() * theme.specularWidthRatio);
+
+        // A light catch on curved glass is an elongated soft highlight, not a
+        // bar: it fades out at BOTH ends as the wall turns away from the light.
+        //
+        // Drawn as a circular radial gradient squashed into an ellipse by a
+        // transform. An earlier version stacked horizontal slices to shape the
+        // falloff, which banded visibly on short wide panels like the macro
+        // strip -- a gradient under a transform has no seams to show.
+        const auto streak = [&] (float centreRatio, float strength)
+        {
+            const juce::Graphics::ScopedSaveState local (g);
+
+            const float cx = bounds.getX() + bounds.getWidth() * centreRatio;
+            const float cy = inner.getY() + inner.getHeight() * 0.38f;
+            const float hw = juce::jmax (1.5f, w * 0.5f);
+            const float hh = inner.getHeight() * 0.62f;
+
+            g.addTransform (juce::AffineTransform::translation (-cx, -cy)
+                                .scaled (1.0f, hh / hw)
+                                .translated (cx, cy));
+
+            juce::ColourGradient bead (theme.glassSpecular.withMultipliedAlpha (strength), cx, cy,
+                                       theme.glassSpecular.withAlpha (0.0f), cx + hw, cy, true);
+            bead.isRadial = true;
+            g.setGradientFill (bead);
+            g.fillEllipse (cx - hw, cy - hw, hw * 2.0f, hw * 2.0f);
+        };
+
+        streak (theme.specularLeftRatio,  1.0f);
+        streak (theme.specularRightRatio, 0.38f);
+    }
+
+    //--------------------------------------------------------------------------
+    // 5. The meniscus — liquid climbing the inside of the glass. Brightest
+    //    across the middle and fading into the corners, where the curve of the
+    //    wall turns it away from the eye.
+    //--------------------------------------------------------------------------
+    {
+        const float y = inner.getY() + theme.meniscusInset;
+        const float fade = juce::jmin (cornerRadius * 2.0f, inner.getWidth() * 0.32f);
+
+        juce::ColourGradient m (theme.meniscus.withAlpha (0.0f), inner.getX(), y,
+                                theme.meniscus.withAlpha (0.0f), inner.getRight(), y, false);
+        m.addColour (juce::jlimit (0.01, 0.49, (double) (fade / inner.getWidth())), theme.meniscus);
+        m.addColour (juce::jlimit (0.51, 0.99, (double) (1.0f - fade / inner.getWidth())), theme.meniscus);
+        g.setGradientFill (m);
+        g.fillRect (inner.getX(), y, inner.getWidth(), theme.meniscusThickness);
+    }
+}
+
+//==============================================================================
+/** The glass wall: a lit outer rim and the refracted inner edge behind it.
+    Drawn after the contents so the wall sits in front of the liquid, which is
+    what gives a panel its thickness. */
+void drawGlassRim (juce::Graphics& g, juce::Rectangle<float> bounds, float cornerRadius,
+                   juce::Colour accent)
+{
+    const auto& theme = RippleTheme::get();
+
+    if (bounds.getWidth() < 2.0f || bounds.getHeight() < 2.0f)
+        return;
+
+    // Inner wall first — the back of the glass, seen through the liquid.
+    g.setColour (theme.glassInnerWall);
+    g.drawRoundedRectangle (bounds.reduced (theme.glassWallThickness),
+                            juce::jmax (0.0f, cornerRadius - theme.glassWallThickness),
+                            theme.borderWidth);
+
+    // Then the outer rim, lit from above: bright along the top, almost gone by
+    // the base. A single flat stroke is what makes glass look like a sticker.
+    const auto top = theme.glassRimTop.interpolatedWith (
+                         accent.withAlpha (theme.glassRimTop.getFloatAlpha()), 0.35f);
+
+    g.setGradientFill ({ top,                  bounds.getCentreX(), bounds.getY(),
+                         theme.glassRimBottom, bounds.getCentreX(), bounds.getBottom(), false });
+
+    juce::Path rim;
+    rim.addRoundedRectangle (bounds.reduced (theme.glassRimWidth * 0.5f), cornerRadius);
+    g.strokePath (rim, juce::PathStrokeType (theme.glassRimWidth));
+
+    // The lit upper lip. On a real vessel this is the single brightest thing:
+    // the top edge of the glass catching the light square-on. Without it the
+    // wall reads as a drawn outline rather than a physical edge. It fades into
+    // the corners, where the curve turns away.
+    {
+        const float y  = bounds.getY() + theme.glassLipWidth * 0.5f;
+        const float x0 = bounds.getX() + cornerRadius * 0.75f;
+        const float x1 = bounds.getRight() - cornerRadius * 0.75f;
+
+        if (x1 > x0)
+        {
+            juce::ColourGradient lip (top.withAlpha (0.0f), x0, y,
+                                      top.withAlpha (0.0f), x1, y, false);
+            lip.addColour (0.22, top);
+            lip.addColour (0.78, top);
+            g.setGradientFill (lip);
+            g.fillRect (x0, bounds.getY(), x1 - x0, theme.glassLipWidth);
+        }
+    }
 }
 
 void drawControlWell (juce::Graphics& g, juce::Rectangle<float> bounds, float cornerRadius,
@@ -220,6 +360,33 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
         shade.addColour (0.55, theme.knobBody.withMultipliedAlpha (alpha));
         g.setGradientFill (shade);
         g.fillEllipse (body);
+    }
+
+    //--- glass cap: a specular bead high on the body -------------------------
+    // Every other surface in the instrument is glass, so the knobs are too.
+    // A real dome catches the light in a small bright bead up and to the left,
+    // with a much fainter bounce coming back off the opposite inner wall.
+    if (ornament)
+    {
+        const auto bead = juce::Point<float> (centre.x - bodyRadius * 0.34f,
+                                              centre.y - bodyRadius * 0.40f);
+        const float beadR = bodyRadius * 0.52f;
+
+        juce::ColourGradient spec (theme.glassSpecular.withMultipliedAlpha (0.55f * alpha), bead.x, bead.y,
+                                   theme.glassSpecular.withAlpha (0.0f), bead.x, bead.y + beadR, true);
+        spec.isRadial = true;
+        g.setGradientFill (spec);
+        g.fillEllipse (juce::Rectangle<float> (beadR * 1.7f, beadR * 1.25f).withCentre (bead));
+
+        const auto bounce = juce::Point<float> (centre.x + bodyRadius * 0.30f,
+                                                centre.y + bodyRadius * 0.44f);
+        const float bounceR = bodyRadius * 0.46f;
+
+        juce::ColourGradient back (theme.edgeRefraction.withMultipliedAlpha (0.30f * alpha), bounce.x, bounce.y,
+                                   theme.edgeRefraction.withAlpha (0.0f), bounce.x, bounce.y + bounceR, true);
+        back.isRadial = true;
+        g.setGradientFill (back);
+        g.fillEllipse (juce::Rectangle<float> (bounceR * 1.8f, bounceR * 1.1f).withCentre (bounce));
     }
 
     //--- mild inner highlight across the top of the body ---------------------

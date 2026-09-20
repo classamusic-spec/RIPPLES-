@@ -182,6 +182,11 @@ void OscillatorPanel::setMoreVisible (bool shouldBeVisible)
 //==============================================================================
 void OscillatorPanel::resized()
 {
+    // Let the vessel work out its own glass area first; getContentBounds()
+    // below depends on it, and without this the panel silently paints no
+    // glass at all.
+    GlassPanel::resized();
+
     const auto& t = RippleTheme::get();
 
     auto content = getContentBounds();

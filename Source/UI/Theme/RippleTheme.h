@@ -138,6 +138,53 @@ struct RippleTheme
         return g;
     }
 
+    //==========================================================================
+    // GLASS VESSEL
+    //
+    // A panel is a glass container with water in it, not a flat dark card. The
+    // cues that actually sell that, in order of how much they matter:
+    //
+    //   1. WALL THICKNESS — two edge strokes a couple of pixels apart (a lit
+    //      outer rim and a darker inner wall). Without this, glass reads as a
+    //      sticker. With it, everything else becomes believable.
+    //   2. A LIQUID COLUMN — denser and darker at the bottom than the top,
+    //      because there is more water to look through down there.
+    //   3. A MENISCUS — the bright line where liquid climbs the inside of the
+    //      glass. It is what makes the fill read as a LIQUID rather than paint.
+    //   4. EDGE REFRACTION — light bending through the curved wall makes the
+    //      liquid brighter in a narrow band against each side.
+    //   5. A SPECULAR STREAK — a vertical highlight, not a wash. Cylindrical
+    //      glass catches light in a line down its length.
+    //   6. A CAUSTIC FLOOR — light focused through the water pools at the base.
+    //==========================================================================
+
+    // The water column, top (aerated, lighter) to bottom (dense, dark).
+    juce::Colour liquidTop        { 0x9c1a3350 };
+    juce::Colour liquidMid        { 0xa60e1d31 };
+    juce::Colour liquidDeep       { 0xbe050b15 };
+
+    // Glass itself. The rim is lit from above, so its top is far brighter than
+    // its bottom; the inner wall is the refracted back edge seen through the
+    // liquid.
+    juce::Colour glassRimTop      { 0xbcc6f0ff };
+    juce::Colour glassRimBottom   { 0x3a4a9ab4 };
+    juce::Colour glassInnerWall   { 0x3a0a1420 };
+    juce::Colour glassSpecular    { 0x30dff8ff };
+    juce::Colour meniscus         { 0x6693e4f2 };
+    juce::Colour causticFloor     { 0x264fd8ee };
+    juce::Colour edgeRefraction   { 0x337fdcea };
+
+    float glassWallThickness   = 1.8f;   // px between the outer rim and inner wall
+    float glassRimWidth        = 1.5f;   // the wall reads as thin below about this
+    float glassLipWidth        = 2.2f;   // the lit upper lip, brightest part of the vessel
+    float meniscusInset        = 3.2f;   // px below the inner top edge
+    float meniscusThickness    = 1.1f;
+    float specularWidthRatio   = 0.085f; // of panel width
+    float specularLeftRatio    = 0.10f;  // where the main streak sits
+    float specularRightRatio   = 0.93f;  // the weaker opposite catch
+    float refractionBandRatio  = 0.055f; // how far the edge band reaches inward
+    float causticHeightRatio   = 0.15f;  // how tall the pool of light at the base is
+
     /** The single shared instance. Components read tokens from here. */
     static const RippleTheme& get()
     {
