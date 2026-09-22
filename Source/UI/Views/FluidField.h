@@ -17,12 +17,12 @@ namespace ripples
 /**
     FLUID FIELD — the visual centrepiece of RIPPLES.
 
-    A large elliptical XY field: a pool of bioluminescent water seen slightly
-    from above. Everything is drawn procedurally from concentric undulating
-    ellipses, radial gradients, suspended particles and expanding ripple pulses.
-    There is no bitmap art anywhere in this component; the only juce::Image it
-    owns is a cache of its own static backdrop, rendered at the real device
-    scale so the field stays crisp from 100% to 200% UI scaling.
+    A rectangular XY field: a pool of bioluminescent water that fills the whole
+    card, seen from above. The water is a live damped-wave height field (see
+    WaterSurface), lit per pixel into a flat top-down pool -- ripples spread
+    edge to edge, interfere, reflect off the walls and decay. The tank walls,
+    meniscus and floor caustic are cached; only the water and the node move.
+    There is no bitmap art anywhere in this component.
 
       X axis:  CALM (left)    <-> CHAOS (right)   -> pid::fluidX
       Y axis:  SURFACE (top)  <-> DEPTH (bottom)  -> pid::fluidY

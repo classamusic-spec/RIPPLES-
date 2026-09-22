@@ -174,6 +174,13 @@ void LiquidBackdrop::renderInto (juce::Image& image) const
 
             c = c * 0.5f + 0.5f;                        // -> 0..1
             c = c * c;                                  // sharpen into bands
+
+            // Broad, slow light shafts drifting sideways, as light coming down
+            // through a moving surface. Gives the flow a clear direction rather
+            // than an even shimmer.
+            const float shaft = 0.5f + 0.5f * std::sin (wx * 2.3f - ph * 0.9f + wy * 0.8f);
+            c *= 0.55f + 0.75f * shaft;
+
             c *= glow;
 
             // A soft vignette so the edges sit down into the frame.
