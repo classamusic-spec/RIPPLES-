@@ -1353,7 +1353,7 @@ void FluidField::renderWater()
             const float lap = (hl + hr + hu + hd) * 0.25f - hc;
             const float caustic = math::clamp (lap * causticGain, -0.6f, 1.2f);
 
-            float dev = dDiff * 0.80f + caustic * 0.20f;
+            float dev = dDiff * 1.05f + caustic * 0.26f;
 
             // Soft saturation rather than a clamp. A hard limit plateaus over
             // any area that exceeds it, and the border of that plateau reads as
@@ -1364,11 +1364,11 @@ void FluidField::renderWater()
 
             if (dev >= 0.0f)
             {
-                const float k = dev * 0.80f;               // dev is already <= 1
+                const float k = dev * 0.78f;               // dev is already <= 1
                 cr = crR + (whR - crR) * k;
                 cg = crG + (whG - crG) * k;
                 cb = crB + (whB - crB) * k;
-                a  = dev * 0.80f * glow;
+                a  = dev * 0.95f * glow;
             }
             else
             {
@@ -1384,7 +1384,7 @@ void FluidField::renderWater()
                 cr += (whR - cr) * k;
                 cg += (whG - cg) * k;
                 cb += (whB - cb) * k;
-                a   = a + k * 0.66f;
+                a   = a + k * 0.72f;
             }
 
             // Hand the limb back to the cached sphere: its fresnel rim and
