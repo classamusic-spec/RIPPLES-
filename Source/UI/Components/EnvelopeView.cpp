@@ -29,9 +29,11 @@ namespace
 
     constexpr int   kStagePoints    = 44;
     constexpr float kAmplitudeRatio = 0.92f;  // of the plot height
+    constexpr float kPlotInsetRatio = 0.16f;  // vertical inset, capped at RippleTheme::sm —
+                                              // a short well gives its room to the envelope
 
-    constexpr float kFillAlphaTop   = 1.00f;  // multiples of the traceFill token alpha
-    constexpr float kFillAlphaMid   = 0.42f;
+    constexpr float kFillAlphaTop   = 1.45f;  // multiples of the traceFill token alpha
+    constexpr float kFillAlphaMid   = 0.55f;
     constexpr float kFillMidStop    = 0.55f;
 
     constexpr float kGuideAlpha       = 0.55f;   // of panelBorderSoft
@@ -205,9 +207,14 @@ void EnvelopeView::setPlayhead (float normalisedPosition)
 //==============================================================================
 void EnvelopeView::resized()
 {
-    auto inner = getLocalBounds().toFloat()
-                                 .reduced ((float) RippleTheme::xs)
-                                 .reduced ((float) RippleTheme::sm);
+    const auto well = getLocalBounds().toFloat().reduced ((float) RippleTheme::xs);
+
+    // In a short panel the fixed inset would leave the envelope a few pixels of
+    // travel, so it shrinks with the well rather than eating it.
+    const float inset = juce::jmin ((float) RippleTheme::sm,
+                                 juce::jmax (0.0f, well.getHeight()) * kPlotInsetRatio);
+
+    auto inner = well.reduced ((float) RippleTheme::sm, inset);
 
     showStageLabels = getHeight() >= RippleTheme::grid (14);
 
@@ -221,7 +228,6 @@ void EnvelopeView::resized()
     // The well outline, cached so the bloom can spill against the rounded
     // corners without a Path being built inside paint().
     const auto& theme = RippleTheme::get();
-    const auto  well  = getLocalBounds().toFloat().reduced ((float) RippleTheme::xs);
 
     wellClip.clear();
 

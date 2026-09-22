@@ -19,13 +19,15 @@ namespace
     constexpr float kPointsPerPixel = 1.0f;
 
     constexpr float kAmplitudeRatio = 0.84f;   // of the plot half-height
+    constexpr float kPlotInsetRatio = 0.16f;   // vertical inset, capped at RippleTheme::sm —
+                                               // a short well gives its room to the wave
     constexpr float kSwellRise      = 0.82f;   // Swell spends this much of the cycle rising
     constexpr float kFlowScale      = 0.98f;   // keeps the Flow contour inside -1..1
 
     // The rear wave: the same shape at full depth, trimmed in amplitude and
     // shifted in phase, so the two crests overlap rather than coincide.
-    constexpr float kGhostAmpRatio    = 0.82f;   // of the full-depth amplitude
-    constexpr float kGhostPhaseOffset = 0.07f;   // cycles
+    constexpr float kGhostAmpRatio    = 0.72f;   // of the full-depth amplitude
+    constexpr float kGhostPhaseOffset = 0.13f;   // cycles — far enough to clear the main bloom
     constexpr float kGhostHaloAlpha   = 0.60f;   // multiples of the traceGhost token alpha
     constexpr float kGhostCoreAlpha   = 1.00f;
     constexpr float kTintGhost        = 0.35f;
@@ -187,13 +189,16 @@ void LFOView::resized()
 {
     const auto& theme = RippleTheme::get();
 
-    plotBounds = getLocalBounds().toFloat()
-                                 .reduced ((float) RippleTheme::xs)
-                                 .reduced ((float) RippleTheme::sm);
-
     // The well outline, cached so the bloom can spill against the rounded
     // corners without a Path being built inside paint().
     const auto well = getLocalBounds().toFloat().reduced ((float) RippleTheme::xs);
+
+    // In a short panel the fixed inset would leave the wave a few pixels of
+    // travel, so it shrinks with the well rather than eating it.
+    const float inset = juce::jmin ((float) RippleTheme::sm,
+                                 juce::jmax (0.0f, well.getHeight()) * kPlotInsetRatio);
+
+    plotBounds = well.reduced ((float) RippleTheme::sm, inset);
 
     wellClip.clear();
 

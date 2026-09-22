@@ -322,13 +322,6 @@ namespace
         luminous token is used exactly as it was authored. */
     constexpr float kAccentHueFloor = 0.06f;
 
-    /** The outer, widest bloom ring under a value arc, as a multiple of
-        arcBloomWidth. */
-    constexpr float kArcBloomOuterScale = 1.6f;
-
-    /** How much of arcBloomAlpha that outer ring keeps. */
-    constexpr float kArcBloomOuterAlpha = 0.45f;
-
     /** Extra bloom, as a fraction of the resting alpha, once a knob is hovered. */
     constexpr float kArcBloomHoverLift = 0.30f;
 
@@ -482,44 +475,37 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
 
     if (std::abs (valueAngle - originAngle) > theme.modRingEpsilon)
     {
-        // A bloom is a stroke, so it spreads BOTH ways from the arc it sits
-        // under. Pull its centreline inward by however much it would otherwise
-        // overhang the control's own square: a component clip slicing a hard
-        // edge across a soft halo is far worse than a slightly tighter glow.
-        const auto bloomRadiusFor = [arcRadius, radius] (float width)
-        {
-            const auto overhang = juce::jmax (0.0f, width * 0.5f - (radius - arcRadius));
-            return juce::jmax (width * 0.5f, arcRadius - overhang);
-        };
-
-        const auto bloomAlpha = theme.arcBloomAlpha * (1.0f + kArcBloomHoverLift * hover) * alpha;
+        const auto bloomAlpha = juce::jlimit (0.0f, 1.0f,
+                                    theme.arcBloomAlpha * (1.0f + kArcBloomHoverLift * hover) * alpha);
         const auto from       = juce::jmin (originAngle, valueAngle);
         const auto to         = juce::jmax (originAngle, valueAngle);
 
-        // Stacked strokes — widest and faintest underneath, the crisp core on
-        // top — exactly the trick the wave traces use. No blur, no image, no
-        // DropShadow: three arcs and the arc reads from across a room.
-        const auto bloomPass = [&] (float width, float strength)
-        {
-            const auto r = bloomRadiusFor (width);
-
-            scratch.clear();
-            scratch.addCentredArc (centre.x, centre.y, r, r, 0.0f, from, to, true);
-
-            g.setColour (arcBloomColour.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, bloomAlpha * strength)));
-            g.strokePath (scratch, juce::PathStrokeType (width, juce::PathStrokeType::curved,
-                                                                juce::PathStrokeType::rounded));
-        };
-
-        if (ornament)
-            bloomPass (theme.arcBloomWidth * kArcBloomOuterScale * stroke, kArcBloomOuterAlpha);
-
-        // Small knobs drop the outer ring but never this one: the bloom is what
-        // carries the value at a glance, so it is not the layer that gets cut.
-        bloomPass (theme.arcBloomWidth * stroke, 1.0f);
+        // A bloom is a stroke, so it spreads BOTH ways from the arc beneath it.
+        // Pull its centreline inward by whatever it would otherwise overhang the
+        // control's own square: a component clip slicing a hard edge across a
+        // soft halo is far worse than a slightly tighter glow. At any ordinary
+        // knob size nothing overhangs, so both passes share one path.
+        const auto bloomWidth = theme.arcBloomWidth * stroke;
+        const auto overhang   = juce::jmax (0.0f, bloomWidth * 0.5f - (radius - arcRadius));
+        const auto bloomR     = juce::jmax (bloomWidth * 0.5f, arcRadius - overhang);
 
         scratch.clear();
-        scratch.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f, from, to, true);
+        scratch.addCentredArc (centre.x, centre.y, bloomR, bloomR, 0.0f, from, to, true);
+
+        // Stacked strokes — the soft bloom underneath, the crisp core on top —
+        // exactly the trick the wave traces use. No blur, no image, no
+        // DropShadow, and no extra cost over the flat arc it replaces. Small
+        // knobs keep this: the bloom is what carries the value at a glance, so
+        // it is never the layer that gets dropped for detail.
+        g.setColour (arcBloomColour.withMultipliedAlpha (bloomAlpha));
+        g.strokePath (scratch, juce::PathStrokeType (bloomWidth, juce::PathStrokeType::curved,
+                                                                 juce::PathStrokeType::rounded));
+
+        if (! juce::approximatelyEqual (bloomR, arcRadius))
+        {
+            scratch.clear();
+            scratch.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f, from, to, true);
+        }
 
         g.setColour (arcCoreColour.withMultipliedAlpha (alpha));
         g.strokePath (scratch, arcStroke);

@@ -19,13 +19,33 @@ namespace
     constexpr float kCentreTickRatio  = 0.74f; // of the well height
     constexpr float kMinBarWidthScale = 1.0f;  // multiples of theme.borderWidth
 
-    constexpr float kFillAlphaInner = 0.40f;   // at the centre of the bar
-    constexpr float kGlowAlpha      = 0.30f;   // scaled by theme.glowAmount
-    constexpr float kGlowSpread     = 2.0f;    // multiples of theme.borderWidth
-    constexpr float kCapWidthScale  = 1.6f;    // multiples of theme.borderWidth
-    constexpr float kCapBrighten    = 0.25f;
+    constexpr float kFillAlphaInner = 0.35f;   // at the centre of the bar
+    constexpr float kCapAlpha        = 0.85f;
     constexpr float kCentreTickAlpha = 0.55f;
     constexpr float kTrackLineAlpha  = 0.80f;  // of panelBorderSoft
+
+    //==========================================================================
+    // LUMINOUS TRACE, TURNED DOWN
+    //
+    // The same bloom / halo / core stack the graphs use, so this belongs to the
+    // family — but twelve of these sit in the modulation matrix at once, so the
+    // layers are a fraction of the theme widths and the alphas are scaled back.
+    // Three rounded rectangles: no blur, no image, nothing cached to go stale.
+    //==========================================================================
+
+    constexpr float kMeterTraceScale = 0.20f;  // of the theme trace widths
+    constexpr float kQuietAlpha      = 0.55f;  // the family look, turned down
+
+    constexpr float kTintCore  = 0.22f;        // how far each layer leans toward the row accent
+    constexpr float kTintGlow  = 0.62f;
+    constexpr float kTintBloom = 0.78f;
+
+    /** Leans a trace token toward the row accent without inventing a colour: the
+        token keeps its own alpha, only its hue moves. */
+    juce::Colour tinted (juce::Colour token, juce::Colour accent, float amount) noexcept
+    {
+        return token.interpolatedWith (accent.withAlpha (token.getFloatAlpha()), amount);
+    }
 }
 
 //==============================================================================
@@ -149,20 +169,27 @@ void ModulationMeter::paint (juce::Graphics& g)
     g.drawRoundedRectangle (track.reduced (theme.borderWidth * 0.5f), radius, theme.borderWidth);
 
     //--------------------------------------------------------------------------
-    // Centre-zero tick.
+    // Centre-zero tick. Drawn after the glow below when there is a bar, so the
+    // zero mark never disappears under it.
     const float centreX  = well.getCentreX();
     const float tickHalf = well.getHeight() * kCentreTickRatio * 0.5f;
 
-    g.setColour (theme.cyanDim.withAlpha (kCentreTickAlpha));
-    g.drawLine (centreX, well.getCentreY() - tickHalf,
-                centreX, well.getCentreY() + tickHalf, theme.borderWidth);
+    const auto drawCentreTick = [&]
+    {
+        g.setColour (theme.cyanDim.withAlpha (kCentreTickAlpha));
+        g.drawLine (centreX, well.getCentreY() - tickHalf,
+                    centreX, well.getCentreY() + tickHalf, theme.borderWidth);
+    };
 
     //--------------------------------------------------------------------------
     // The bar, growing out of the centre.
     const float value = math::clamp (displayedValue, -1.0f, 1.0f);
 
     if (std::abs (value) <= kSettleEpsilon)
+    {
+        drawCentreTick();
         return;
+    }
 
     const float halfSpan = track.getWidth() * 0.5f - theme.borderWidth;
     const float tipX = centreX + value * halfSpan;
@@ -173,21 +200,49 @@ void ModulationMeter::paint (juce::Graphics& g)
     const auto bar = juce::Rectangle<float> (leftX, track.getY() + theme.borderWidth,
                                              barWidth, track.getHeight() - theme.borderWidth * 2.0f);
 
-    // Faint bloom under the bar — a single extra rounded rect, not a blur.
-    const float spread = theme.borderWidth * kGlowSpread;
-    g.setColour (accentColour.withAlpha (kGlowAlpha * theme.glowAmount));
-    g.fillRoundedRectangle (bar.expanded (spread, spread), radius + spread);
+    //--------------------------------------------------------------------------
+    // Bloom, then halo: two extra rounded rectangles at a fraction of the trace
+    // widths. Quiet enough to live in twelve rows at once.
+    const float bloomSpread = theme.traceBloomWidth * kMeterTraceScale;
+    const float glowSpread  = theme.traceGlowWidth  * kMeterTraceScale;
 
-    juce::ColourGradient body (accentColour.withAlpha (kFillAlphaInner), centreX, bar.getCentreY(),
-                               accentColour, tipX, bar.getCentreY(), false);
+    // The corner radius is capped so a short bar keeps its ends square-ish
+    // instead of swelling into a pill.
+    const auto haloRect = [&bar] (float spread)
+    {
+        return bar.expanded (spread, spread);
+    };
+
+    const auto haloRadius = [&bar, radius] (float spread)
+    {
+        return juce::jmin (radius + spread, (bar.getHeight() + spread * 2.0f) * 0.4f);
+    };
+
+    g.setColour (tinted (theme.traceBloom, accentColour, kTintBloom)
+                     .withAlpha (theme.traceBloomAlpha * kQuietAlpha));
+    g.fillRoundedRectangle (haloRect (bloomSpread), haloRadius (bloomSpread));
+
+    g.setColour (tinted (theme.traceGlow, accentColour, kTintGlow)
+                     .withAlpha (theme.traceGlowAlpha * kQuietAlpha));
+    g.fillRoundedRectangle (haloRect (glowSpread), haloRadius (glowSpread));
+
+    drawCentreTick();
+
+    //--------------------------------------------------------------------------
+    // The bar itself, gathering strength out of the centre.
+    const auto barColour = tinted (theme.traceGlow, accentColour, kTintGlow);
+
+    juce::ColourGradient body (barColour.withMultipliedAlpha (kFillAlphaInner),
+                               centreX, bar.getCentreY(),
+                               barColour, tipX, bar.getCentreY(), false);
     g.setGradientFill (body);
     g.fillRoundedRectangle (bar, juce::jmin (radius, barWidth * 0.5f));
 
-    // A brighter cap at the tip so the reading is precise at a glance.
-    const float capWidth = theme.borderWidth * kCapWidthScale;
+    // A crisp core cap at the tip so the reading is precise at a glance.
+    const float capWidth = juce::jmin (theme.traceCoreWidth, barWidth);
     const float capX = value >= 0.0f ? bar.getRight() - capWidth : bar.getX();
 
-    g.setColour (accentColour.brighter (kCapBrighten));
+    g.setColour (tinted (theme.traceCore, accentColour, kTintCore).withAlpha (kCapAlpha));
     g.fillRoundedRectangle (juce::Rectangle<float> (capX, bar.getY(), capWidth, bar.getHeight()),
                             juce::jmin (radius, capWidth * 0.5f));
 }

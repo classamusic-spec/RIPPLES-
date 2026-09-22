@@ -33,8 +33,9 @@ namespace
     //--- Concentric ring construction --------------------------------------
     // The water sphere.
     constexpr float kSphereFit        = 0.86f;   // of the smaller field half-axis
-    constexpr int   kCausticVeins     = 7;       // refracted filaments across the face
-    constexpr int   kSurfaceRings     = 11;      // ripple rings wrapped on the surface
+    constexpr int   kCausticVeins     = 5;       // drifting pools of focused light
+    constexpr int   kSurfaceRings     = 18;      // contour rings over the sphere's face
+    constexpr int   kNodeRings        = 6;       // ripples spreading from the node
 
     constexpr float kRingInnerRadius  = 0.17f;   // radius of the innermost ring
     // The ring family is drawn inside this fraction of the field radius so that
@@ -1007,12 +1008,12 @@ void FluidField::rebuildSphere (float scale)
     {
         const juce::Point<float> lit { c.x - R * 0.30f, c.y - R * 0.32f };
 
-        juce::ColourGradient body (t.cyanBright.withMultipliedAlpha (0.34f), lit.x, lit.y,
-                                   t.backgroundDeep, lit.x, lit.y + R * 1.62f, true);
+        juce::ColourGradient body (t.cyanBright.withMultipliedAlpha (0.62f), lit.x, lit.y,
+                                   t.backgroundDeep, lit.x, lit.y + R * 1.70f, true);
         body.isRadial = true;
-        body.addColour (0.26, t.cyan.withMultipliedAlpha (0.24f));
-        body.addColour (0.52, t.cyanDim.withMultipliedAlpha (0.20f));
-        body.addColour (0.76, t.background.withMultipliedAlpha (0.94f));
+        body.addColour (0.22, t.cyan.withMultipliedAlpha (0.46f));
+        body.addColour (0.46, t.cyan.withMultipliedAlpha (0.26f));
+        body.addColour (0.72, t.cyanDim.withMultipliedAlpha (0.16f));
         g.setGradientFill (body);
         g.fillEllipse (sphereBounds);
     }
@@ -1025,10 +1026,19 @@ void FluidField::rebuildSphere (float scale)
     // --- limb darkening: the edge of a sphere turns away from the eye -------
     {
         juce::ColourGradient limb (t.backgroundDeep.withAlpha (0.0f), c.x, c.y,
-                                   t.backgroundDeep.withMultipliedAlpha (0.85f), c.x, c.y + R, true);
+                                   t.backgroundDeep.withMultipliedAlpha (0.88f), c.x, c.y + R, true);
         limb.isRadial = true;
-        limb.addColour (0.74, t.backgroundDeep.withAlpha (0.0f));
+        limb.addColour (0.70, t.backgroundDeep.withAlpha (0.0f));
         g.setGradientFill (limb);
+        g.fillEllipse (sphereBounds);
+
+        // Terminator: the side away from the light is simply darker. Without
+        // this the ball is evenly lit and reads as a flat disc.
+        juce::ColourGradient away (t.backgroundDeep.withAlpha (0.0f),
+                                   c.x - R * 0.55f, c.y - R * 0.55f,
+                                   t.backgroundDeep.withMultipliedAlpha (0.62f),
+                                   c.x + R * 0.85f, c.y + R * 0.9f, false);
+        g.setGradientFill (away);
         g.fillEllipse (sphereBounds);
     }
 
@@ -1057,15 +1067,15 @@ void FluidField::rebuildSphere (float scale)
 
         // A wide, very faint sheen with a small hot core inside it. A single
         // soft blob reads as a smudge on the glass rather than a reflection.
-        const float wide = R * 0.34f;
-        juce::ColourGradient sheen (t.cyanBright.withMultipliedAlpha (0.16f), spec.x, spec.y,
+        const float wide = R * 0.30f;
+        juce::ColourGradient sheen (t.cyanBright.withMultipliedAlpha (0.26f), spec.x, spec.y,
                                     t.cyanBright.withAlpha (0.0f), spec.x, spec.y + wide, true);
         sheen.isRadial = true;
         g.setGradientFill (sheen);
         g.fillEllipse (juce::Rectangle<float> (wide * 2.0f, wide * 1.4f).withCentre (spec));
 
-        const float core = R * 0.085f;
-        juce::ColourGradient hot (t.primaryText.withMultipliedAlpha (0.62f), spec.x, spec.y,
+        const float core = R * 0.055f;
+        juce::ColourGradient hot (t.primaryText.withMultipliedAlpha (0.95f), spec.x, spec.y,
                                   t.primaryText.withAlpha (0.0f), spec.x, spec.y + core, true);
         hot.isRadial = true;
         g.setGradientFill (hot);
@@ -1099,80 +1109,106 @@ void FluidField::paintSphereSurface (juce::Graphics& g) const
 
     const float glow = 0.55f + 0.45f * glowSmoothed;
 
-    const auto node = nodeToPixels (nodeX, nodeY);
-
-    // --- the surface is water, so it ripples --------------------------------
-    // Concentric rings radiating from the node and wrapped onto the sphere:
-    // each ring is foreshortened more as it climbs toward the limb, which is
-    // what makes the set read as sitting ON a curved surface rather than
-    // floating in front of it. An earlier version drew evenly spaced latitude
-    // lines and looked like a wireframe globe.
+    // --- the sphere's own surface -------------------------------------------
+    // Contour circles about the centre, spaced by sin(theta) for equal steps in
+    // angle, so they bunch toward the limb exactly as latitude lines do on a
+    // ball. Each radius is perturbed by a couple of slow sines, which turns a
+    // wireframe globe into a rippling body of water. Brightest face-on, fading
+    // as the surface turns away.
+    //
+    // This replaced two earlier attempts: evenly spaced horizontal lines (read
+    // as a wireframe) and long meridian curves (read as scratches on glass).
     {
         juce::Path ring;
 
-        for (int i = 0; i < kSurfaceRings; ++i)
+        for (int i = 1; i <= kSurfaceRings; ++i)
         {
-            const float f = (float) i / (float) kSurfaceRings;
-            const float phase = std::fmod (driftPhaseB * 0.22f + f, 1.0f);
+            const float theta = (float) i / (float) (kSurfaceRings + 1) * math::halfPi;
+            const float cosT  = std::cos (theta);
 
-            const float rr = R * (0.06f + phase * 1.18f);
+            // Per-ring amplitude as well as per-ring phase: with a single shared
+            // amplitude the set still read as evenly spaced contours, like a
+            // dartboard, rather than as water.
+            const float amp = 0.030f + 0.026f * std::sin ((float) i * 0.87f + 1.3f);
 
-            if (rr < 2.0f)
+            const float wobble = R * amp * (std::sin (driftPhaseA * 1.6f + (float) i * 0.62f)
+                                          + 0.62f * std::sin (driftPhaseB * 2.3f - (float) i * 1.13f)
+                                          + 0.34f * std::sin (driftPhaseA * 3.1f + (float) i * 2.41f));
+
+            const float rr = R * std::sin (theta) + wobble;
+
+            if (rr < 2.0f || rr > R * 0.995f)
                 continue;
 
-            // Flatten with distance from the node: the far side of a sphere is
-            // seen at a glancing angle.
-            const float squash = juce::jlimit (0.18f, 0.92f, 1.0f - phase * 0.78f);
+            // Face-on contours are seen flat; the ones near the limb are edge-on.
+            const float a = std::pow (cosT, 0.55f) * 0.22f * glow;
 
-            // Fade in from the centre, out again past the limb.
-            const float a = std::sin (phase * math::pi) * 0.30f * glow;
+            ring.clear();
+            ring.addEllipse (centreX - rr, centreY - rr, rr * 2.0f, rr * 2.0f);
 
-            if (a <= 0.005f)
+            // The glow pass doubles the stroke count, so spend it only where it
+            // is visible: near the limb the contours are too faint to bloom.
+            if (a > 0.07f)
+            {
+                g.setColour (t.traceGlow.withMultipliedAlpha (a * 0.45f));
+                g.strokePath (ring, juce::PathStrokeType (2.4f));
+            }
+
+            g.setColour (t.traceCore.withMultipliedAlpha (a));
+            g.strokePath (ring, juce::PathStrokeType (0.85f));
+        }
+    }
+
+    // --- caustic pools -------------------------------------------------------
+    // Where the rippling surface focuses light, a soft bright patch forms and
+    // drifts. Broad and formless on purpose: anything with an edge reads as a
+    // mark on the glass rather than light inside the water.
+    {
+        for (int i = 0; i < kCausticVeins; ++i)
+        {
+            const float f = (float) i / (float) kCausticVeins;
+            const float ph = driftPhaseA * (0.22f + 0.17f * f) + f * math::twoPi;
+
+            const float px = centreX + R * 0.52f * std::sin (ph + f * 2.1f);
+            const float py = centreY + R * 0.44f * std::cos (ph * 0.83f + f * 3.7f);
+            const float pr = R * (0.16f + 0.13f * (0.5f + 0.5f * std::sin (ph * 1.3f)));
+
+            const float a = (0.05f + 0.05f * (0.5f + 0.5f * std::sin (ph * 0.7f))) * glow;
+
+            juce::ColourGradient pool (t.cyanBright.withMultipliedAlpha (a), px, py,
+                                       t.cyanBright.withAlpha (0.0f), px, py + pr, true);
+            pool.isRadial = true;
+            g.setGradientFill (pool);
+            g.fillEllipse (px - pr, py - pr * 0.8f, pr * 2.0f, pr * 1.6f);
+        }
+    }
+
+    // --- ripples from the node ----------------------------------------------
+    // The node disturbs the surface it sits on, so its rings ride the sphere's
+    // curvature: flatter the further they travel from the centre of the face.
+    {
+        const auto node = nodeToPixels (nodeX, nodeY);
+        juce::Path ring;
+
+        for (int i = 0; i < kNodeRings; ++i)
+        {
+            const float f = (float) i / (float) kNodeRings;
+            const float phase = std::fmod (driftPhaseB * 0.30f + f, 1.0f);
+
+            const float rr = R * (0.05f + phase * 0.55f);
+            const float squash = juce::jlimit (0.30f, 0.95f, 1.0f - phase * 0.52f);
+            const float a = std::sin (phase * math::pi) * 0.26f * glow;
+
+            if (a <= 0.005f || rr < 2.0f)
                 continue;
 
             ring.clear();
             ring.addEllipse (node.x - rr, node.y - rr * squash, rr * 2.0f, rr * 2.0f * squash);
 
             g.setColour (t.traceGlow.withMultipliedAlpha (a * 0.5f));
-            g.strokePath (ring, juce::PathStrokeType (2.8f));
+            g.strokePath (ring, juce::PathStrokeType (2.2f));
             g.setColour (t.traceCore.withMultipliedAlpha (a));
-            g.strokePath (ring, juce::PathStrokeType (1.0f));
-        }
-    }
-
-    // --- caustic filaments ---------------------------------------------------
-    // Light refracted through moving water gathers into a few bright sinuous
-    // veins. These run roughly with the sphere's meridians and wander, so they
-    // never resolve into a grid.
-    {
-        juce::Path vein;
-
-        for (int i = 0; i < kCausticVeins; ++i)
-        {
-            const float f = (float) (i + 0.5f) / (float) kCausticVeins;
-            const float phase = driftPhaseA * (0.35f + 0.4f * f) + f * math::twoPi;
-
-            // Where this meridian crosses the equator, drifting slowly.
-            const float x = c.x + R * (0.92f * std::sin (phase * 0.23f + f * 5.1f));
-            const float halfH = R * std::sqrt (juce::jmax (0.02f, 1.0f - std::pow ((x - c.x) / R, 2.0f)));
-
-            // Bow it, and wobble the bow, so the vein breathes.
-            const float bow = R * (0.10f + 0.22f * f) * std::sin (phase);
-
-            vein.clear();
-            vein.startNewSubPath (x, c.y - halfH);
-            vein.cubicTo (x + bow,        c.y - halfH * 0.34f,
-                          x - bow * 0.7f, c.y + halfH * 0.34f,
-                          x,              c.y + halfH);
-
-            const float a = (0.09f + 0.13f * (0.5f + 0.5f * std::sin (phase * 0.8f + f * 2.3f))) * glow;
-
-            g.setColour (t.traceBloom.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, a * 0.85f)));
-            g.strokePath (vein, juce::PathStrokeType (7.0f));
-            g.setColour (t.traceGlow.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, a * 0.7f)));
-            g.strokePath (vein, juce::PathStrokeType (2.6f));
-            g.setColour (t.traceCore.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, a * 0.8f)));
-            g.strokePath (vein, juce::PathStrokeType (0.9f));
+            g.strokePath (ring, juce::PathStrokeType (0.9f));
         }
     }
 }

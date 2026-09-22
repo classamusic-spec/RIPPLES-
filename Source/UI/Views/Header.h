@@ -92,6 +92,7 @@ private:
     juce::String presetName, presetDetail, outputValueText;
     bool presetIsModified = false;
     bool showTagLine = true;
+    bool presetHovered = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Header)
 };

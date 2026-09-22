@@ -29,8 +29,8 @@ namespace
 
     // The ghost: the same ribbon, a fraction of a cycle behind and a touch
     // lower. Two layers only — it is depth, not a second subject.
-    constexpr float kGhostPhaseOffset = 0.055f;  // cycles
-    constexpr float kGhostDropRatio   = 0.07f;   // of the plot height
+    constexpr float kGhostPhaseOffset = 0.10f;   // cycles — far enough to clear its own bloom
+    constexpr float kGhostDropRatio   = 0.18f;   // of the plot height
     constexpr float kGhostHaloAlpha   = 0.60f;   // multiples of the traceGhost token alpha
     constexpr float kGhostCoreAlpha   = 1.00f;
     constexpr float kTintGhost        = 0.35f;

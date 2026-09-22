@@ -49,11 +49,11 @@ namespace
 
     // Glyph buttons.
     constexpr int   kGlyphCell        = RippleTheme::grid (6);    // 24
-    constexpr float kGlyphInsetRatio  = 0.16f;   // of the cell, around heart / die
+    constexpr float kGlyphInsetRatio  = 0.14f;   // of the cell, around heart / die
     constexpr float kChevronHalfWidth = 0.13f;   // of the cell
     constexpr float kChevronHalfDepth = 0.22f;
     constexpr float kDiceRadiusRatio  = 0.22f;
-    constexpr float kDiceDotRatio     = 0.085f;
+    constexpr float kDiceDotRatio     = 0.10f;
     constexpr float kDiceDots[]       = { 0.28f, 0.5f, 0.72f };
 
     // Output cluster.
@@ -264,26 +264,17 @@ private:
 class Header::TextLink final : public juce::Button
 {
 public:
-    explicit TextLink (const juce::String& text)
-        : juce::Button (text)
+    explicit TextLink (const juce::String& linkText)
+        : juce::Button (linkText)
     {
-        setButtonText (text);
+        setButtonText (linkText);
         setWantsKeyboardFocus (false);
         setMouseCursor (juce::MouseCursor::PointingHandCursor);
     }
 
-    /** Built once, then shared: a Font per paint is not free. */
-    static const juce::Font& font()
-    {
-        static const juce::Font f = RippleTheme::withTracking (
-                                        RippleTheme::get().smallFont().getHeight(),
-                                        juce::Font::plain, kLinkTracking);
-        return f;
-    }
-
     int getIdealWidth() const
     {
-        return juce::roundToInt (juce::GlyphArrangement::getStringWidth (font(), getButtonText()))
+        return juce::roundToInt (juce::GlyphArrangement::getStringWidth (font, getButtonText()))
                + RippleTheme::sm;
     }
 
@@ -291,7 +282,7 @@ public:
     {
         const auto& t = RippleTheme::get();
 
-        g.setFont (font());
+        g.setFont (font);
         g.setColour (down ? t.cyan : (over ? t.cyanBright : t.tertiaryText));
         g.drawText (getButtonText(), getLocalBounds(), juce::Justification::centred, false);
 
@@ -302,6 +293,11 @@ public:
             g.fillRect (rule);
         }
     }
+
+private:
+    // Built once with the button, not per paint.
+    const juce::Font font { RippleTheme::withTracking (RippleTheme::get().smallFont().getHeight(),
+                                                       juce::Font::plain, kLinkTracking) };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TextLink)
 };
@@ -365,23 +361,17 @@ public:
         buildEnvelope (outerPath, outer, b.getX(), centreY, halfH, step);
         buildEnvelope (innerPath, inner, b.getX(), centreY, halfH, step);
 
-        g.setColour (t.traceFill);
+        // A waveform overview: the peak envelope as a glowing body, the RMS
+        // core bright inside it, and a crisp rim on the peak. Two fills and one
+        // hairline stroke over 92x28 pixels.
+        g.setColour (t.traceGlow);
         g.fillPath (outerPath);
 
-        // The halo tracks the level, so an idle scope is a hairline, not a slab.
-        if (newest > 0.0f)
-        {
-            g.setColour (t.traceGlow.withMultipliedAlpha (t.traceGlowAlpha * newest));
-            g.strokePath (outerPath, juce::PathStrokeType (t.traceGlowWidth));
-        }
-
-        g.setColour (t.traceGhost);
-        g.strokePath (innerPath, juce::PathStrokeType (t.borderWidth));
+        g.setColour (t.traceCore);
+        g.fillPath (innerPath);
 
         g.setColour (t.scopeTrace);
-        g.strokePath (outerPath, juce::PathStrokeType (t.traceCoreWidth,
-                                                       juce::PathStrokeType::curved,
-                                                       juce::PathStrokeType::rounded));
+        g.strokePath (outerPath, juce::PathStrokeType (t.borderWidth));
     }
 
 private:
@@ -440,7 +430,11 @@ public:
         setSliderStyle (juce::Slider::LinearBar);
         setTextBoxStyle (juce::Slider::NoTextBox, true, 0, 0);
         setSliderSnapsToMousePosition (true);
-        setWantsKeyboardFocus (false);
+
+        // The rotary this replaced was focusable and named; keep both.
+        setWantsKeyboardFocus (true);
+        setTitle ("OUTPUT");
+        setDescription ("Output level");
     }
 
     void attach (juce::AudioProcessorValueTreeState& apvts, const juce::String& paramID)
@@ -514,7 +508,7 @@ public:
         const float gx = track.getX()
                            + track.getWidth() * (float) valueToProportionOfLength (getValue());
 
-        g.setColour (isMouseOverOrDragging() ? t.cyanBright : t.cyan);
+        g.setColour (isMouseOverOrDragging() ? t.cyanBright : t.knobIndicator);
         g.fillRoundedRectangle (juce::Rectangle<float> (t.borderWidth * 2.0f,
                                                         track.getHeight() + (float) RippleTheme::xs)
                                     .withCentre ({ gx, track.getCentreY() }),
@@ -522,10 +516,18 @@ public:
 
         g.setColour (t.panelBorderSoft);
         g.drawRoundedRectangle (track, t.meterBarRadius, t.borderWidth);
+
+        if (hasKeyboardFocus (false))
+        {
+            const auto ring = track.expanded (t.focusRingPadding);
+            g.setColour (t.focusRing);
+            g.drawRoundedRectangle (ring, t.meterBarRadius + t.focusRingPadding, t.focusRingWidth);
+        }
     }
 
-    void mouseEnter (const juce::MouseEvent& e) override { juce::Slider::mouseEnter (e); repaint(); }
-    void mouseExit  (const juce::MouseEvent& e) override { juce::Slider::mouseExit  (e); repaint(); }
+    // Slider already repaints on mouse activity; focus is ours to notice.
+    void focusGained (juce::Component::FocusChangeType type) override { juce::Slider::focusGained (type); repaint(); }
+    void focusLost   (juce::Component::FocusChangeType type) override { juce::Slider::focusLost (type);   repaint(); }
 
 private:
     void valueChanged() override
@@ -817,8 +819,6 @@ void Header::placeActions (juce::Rectangle<int> area, int linkLevel)
 //==============================================================================
 void Header::resized()
 {
-    const auto& t = RippleTheme::get();
-
     auto r = getLocalBounds();
 
     if (r.isEmpty())
@@ -902,15 +902,23 @@ void Header::resized()
                              juce::jmax (kCapsuleFloorWidth, getWidth() - RippleTheme::sm),
                              capsuleW);
 
-    placeActions (juce::Rectangle<int> (rightEdge - actionsW, r.getY(),
-                                        actionsW, r.getHeight()),
-                  chosenLevel);
-
-    const int capsuleH = juce::jlimit (RippleTheme::grid (6), kCapsuleMaxHeight,
-                                       getHeight() - kCapsuleVInset * 2);
+    const int capsuleH = juce::jmin (getHeight(),
+                                     juce::jlimit (RippleTheme::grid (6), kCapsuleMaxHeight,
+                                                   getHeight() - kCapsuleVInset * 2));
 
     capsuleArea = juce::Rectangle<int> (0, 0, capsuleW, capsuleH)
                       .withCentre ({ centreX, getHeight() / 2 });
+
+    // The actions sit in the gap between the capsule and the output. Centring
+    // them there keeps a very wide window from opening one huge hole beside the
+    // capsule while the actions huddle against the meter.
+    const int span    = juce::jmax (0, rightEdge - capsuleArea.getRight());
+    const int actionX = juce::jmin (rightEdge - actionsW,
+                                    capsuleArea.getRight()
+                                        + juce::jmax (gap, (span - actionsW) / 2));
+
+    placeActions (juce::Rectangle<int> (actionX, r.getY(), actionsW, r.getHeight()),
+                  chosenLevel);
 
     // --- Inside the capsule -------------------------------------------------
     {
@@ -1019,9 +1027,14 @@ void Header::mouseDown (const juce::MouseEvent& e)
 
 void Header::mouseMove (const juce::MouseEvent& e)
 {
-    setMouseCursor (presetTextArea.contains (e.getPosition())
-                        ? juce::MouseCursor::PointingHandCursor
-                        : juce::MouseCursor::NormalCursor);
+    const bool overPreset = presetTextArea.contains (e.getPosition());
+
+    if (overPreset != presetHovered)
+    {
+        presetHovered = overPreset;
+        setMouseCursor (overPreset ? juce::MouseCursor::PointingHandCursor
+                                   : juce::MouseCursor::NormalCursor);
+    }
 }
 
 //==============================================================================

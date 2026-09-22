@@ -225,6 +225,9 @@ void TabBar::updateTimerState()
 
     if (! pillValid)
     {
+        // Nothing to glide from, so the pill simply appears where it belongs —
+        // and any flight still in progress is over.
+        stopTimer();
         pillX = target.getX();
         pillW = target.getWidth();
         pillValid = target.getWidth() > 0.0f;

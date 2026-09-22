@@ -48,8 +48,15 @@ private:
     /** Renders the static water backdrop once per size / device scale. */
     void rebuildBackdrop (float deviceScale);
 
+    /** Measures the bottom strip. Called from resized(), never from paint(). */
+    void layoutFooter();
+    void paintFooter (juce::Graphics&) const;
+
     juce::Image backdrop;
     float       backdropScale = 0.0f;
+
+    juce::Rectangle<int> footerArea, footerLeftArea, footerVersionArea,
+                         footerRightArea, footerRuleArea;
 
 public:
     void resized() override;

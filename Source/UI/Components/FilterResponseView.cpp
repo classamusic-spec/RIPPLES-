@@ -33,8 +33,8 @@ namespace
     constexpr float kQRange     = 17.0f;     // Q = kQMin * kQRange^resonance
     constexpr float kLadderMax  = 3.45f;     // ladder feedback; self-oscillates at 4
 
-    constexpr float kFillAlphaTop = 1.00f;    // multiples of the traceFill token alpha
-    constexpr float kFillAlphaMid = 0.40f;
+    constexpr float kFillAlphaTop = 1.45f;    // multiples of the traceFill token alpha
+    constexpr float kFillAlphaMid = 0.55f;
     constexpr float kFillMidStop  = 0.55f;
 
     constexpr float kGridMinorAlpha = 0.55f;   // of panelBorderSoft
