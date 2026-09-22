@@ -144,6 +144,11 @@ private:
 
     juce::RangedAudioParameter* paramX = nullptr;
     juce::RangedAudioParameter* paramY = nullptr;
+
+    // Read, never written: the RIPPLE macro sets how hard the surface is driven
+    // into its standing pattern. The visualised modulator value alone does not
+    // carry the macro, so the field has to read the knob itself.
+    juce::RangedAudioParameter* paramRipple = nullptr;
     std::unique_ptr<juce::ParameterAttachment> attachX, attachY;
 
     // Node state, all normalised 0..1.
@@ -191,11 +196,13 @@ private:
     WaterSurface   water;
     juce::Image    waterImage;
     RandomGenerator waterRng { 0x51A7E3u };
-    float          standingPhase = 0.0f;
+    float          standingPhase = 0.0f;   // slow drift of the pattern's centre
+    float          standingOsc = 0.0f;     // the resonant drive itself
     float          rippleSmoothed = 0.0f;
+    float          rippleMacro = 0.0f;
+    float          rippleEnvelope = 0.0f;   // for the rising edge
     float          breathTimer = 0.0f;
     float          breathAngle = 0.0f;
-    float          lastRippleLevel = 0.0f;
     juce::Image sphereLayer;
     float       sphereScale = 0.0f;
     float       sphereR = 1.0f;     // radius of the water sphere, in pixels

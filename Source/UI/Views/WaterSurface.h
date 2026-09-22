@@ -53,10 +53,6 @@ public:
             impulses so the surface never settles. */
         float chop = 0.0f;
 
-        /** Lateral drift, -1..1. Advects the whole field sideways, which is
-            what makes a current look like it is carrying the water. */
-        float drift = 0.0f;
-
         /** Extra smoothing between neighbours — deep, cold, viscous water. */
         float viscosity = 0.0f;
     };
@@ -69,8 +65,19 @@ public:
         down the way a real impact does before it rebounds. */
     void impact (float nx, float ny, float radius, float strength) noexcept;
 
-    /** Raises a standing pattern rather than a travelling one — the
-        vibrational, cymatic look that RIPPLE asks for. */
+    /** Selects the standing mode shape — a radial cymatic pattern centred on
+        (nx, ny) with the given wavelength. The pattern is cached, so calling
+        this every frame with unchanged arguments costs nothing. */
+    void setStandingMode (float nx, float ny, float wavelength) noexcept;
+
+    /** Adds the cached standing mode to the surface, signed. Driving this
+        continuously in step with an oscillator is what makes a pattern STAND:
+        struck once, any pattern immediately starts travelling and is gone. One
+        multiply-add per cell, so it is cheap enough to run every frame. */
+    void driveStanding (float amount) noexcept;
+
+    /** Raises a standing pattern once. Shorthand for setStandingMode followed
+        by driveStanding. */
     void exciteStanding (float nx, float ny, float wavelength, float strength) noexcept;
 
     /** Advances the simulation. dt is seconds; substeps keep behaviour stable
@@ -97,14 +104,12 @@ public:
     float getEnergy() const noexcept { return energy; }
 
 private:
-    void advect (float amount) noexcept;
-
     int size = 0;
-    std::vector<float> current, previous, scratch;
+    std::vector<float> current, previous, standing;
+    float standingX = -1.0f, standingY = -1.0f, standingWavelength = -1.0f;
     Params params;
     float energy = 0.0f;
     float accumulator = 0.0f;
-    float driftCarry = 0.0f;
 };
 
 } // namespace ripples

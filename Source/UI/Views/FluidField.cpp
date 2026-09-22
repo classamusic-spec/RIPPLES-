@@ -46,8 +46,19 @@ namespace
     // loop, which is linear in the cell count.
     constexpr int   kWaterGrid        = 144;
     constexpr float kGridReference    = 96.0f;   // the gains below were tuned here
-    constexpr float kStandingThresh   = 0.06f;   // RIPPLE swing needed to re-excite
-    constexpr float kStandingTau      = 0.05f;   // seconds, RIPPLE smoothing
+    constexpr float kWaterSway        = 0.045f;  // of the sphere radius, at full CURRENT
+    constexpr float kStandingThresh   = 0.02f;   // RIPPLE level below which nothing is driven
+    constexpr float kStandingTau      = 0.012f;  // seconds, RIPPLE smoothing
+    // Measured on the grid: the mode's resonant frequency is this over the
+    // wavelength, and the response falls away sharply either side of it.
+    constexpr float kStandingModeK    = 0.55f;
+    constexpr float kStandingWaveLong = 0.19f;   // CALM: broad, slow cymatics
+    constexpr float kStandingWaveShort = 0.075f; // CHAOS: fine, fast buzzing
+    constexpr float kStandingWaveMid  = 0.12f;   // where the drive gain is tuned
+    constexpr float kStandingDrive    = 0.55f;   // forcing per second at full RIPPLE
+    constexpr float kStandingStrike   = 0.42f;   // one-shot, on the rising edge
+    constexpr float kStandingEdge     = 0.05f;   // rise per frame that counts as an edge
+    constexpr float kStandingDriftRate = 0.55f;  // radians / second
     constexpr float kAmbientChop      = 0.055f;  // idle agitation floor
     constexpr float kBreathPeriod     = 2.30f;   // seconds between slow swells
     constexpr float kBreathStrength   = 0.075f;
@@ -265,6 +276,7 @@ FluidField::FluidField (juce::AudioProcessorValueTreeState& apvts, Visualization
 
     paramX = state.getParameter (pid::fluidX);
     paramY = state.getParameter (pid::fluidY);
+    paramRipple = state.getParameter (pid::macroRipple);
 
     if (paramX != nullptr)
     {
@@ -520,6 +532,7 @@ void FluidField::pollParameters()
     // and the field always agrees with the host.
     if (paramX != nullptr) targetX = math::clamp (paramX->getValue(), 0.0f, 1.0f);
     if (paramY != nullptr) targetY = math::clamp (paramY->getValue(), 0.0f, 1.0f);
+    if (paramRipple != nullptr) rippleMacro = math::clamp (paramRipple->getValue(), 0.0f, 1.0f);
 }
 
 void FluidField::advance (float dt)
@@ -538,6 +551,8 @@ void FluidField::advance (float dt)
 
     if (! dragging)
         pollParameters();
+    else if (paramRipple != nullptr)
+        rippleMacro = math::clamp (paramRipple->getValue(), 0.0f, 1.0f);
 
     // ---- Mood, all smoothed so nothing in the picture can snap ----------
     const float moodC = onePole (dt, kMoodTau);
@@ -589,28 +604,68 @@ void FluidField::advance (float dt)
     consumeAudioEvents();
 
     // ---- Water -----------------------------------------------------------
-    // The RIPPLE modulator is a triggered damped wave in the audio engine, so
-    // the surface answers it with a standing pattern rather than a travelling
-    // one: the water buzzes in place, cymatic rather than splashed. Only the
-    // rising edge excites, otherwise the pattern would be re-struck every frame
-    // and drown out everything else.
-    const float rippleNow = math::clamp (std::abs (visual.getRippleValue()), 0.0f, 1.0f);
-    rippleSmoothed += (rippleNow - rippleSmoothed) * onePole (dt, kStandingTau);
+    // The RIPPLE modulator is a damped wave in the audio engine, and the
+    // surface answers it by VIBRATING rather than splashing: a cymatic pattern
+    // held in place, the way a driven plate behaves.
+    //
+    // This has to be a forced oscillation, not a strike. A pattern struck once
+    // into a wave equation is just an initial condition -- it immediately
+    // breaks into travelling waves and is gone within a few hundred
+    // milliseconds, which is why the first attempt read as a vague smear. Kept
+    // driven in step with the modulator, it stands.
+    // The visualised modulator is the raw wave, the same whatever the knob is
+    // set to, so the macro has to be folded in here or the picture does not
+    // answer the control at all.
+    const float rippleRaw = math::clamp (visual.getRippleValue(), -1.0f, 1.0f) * rippleMacro;
+    rippleSmoothed += (rippleRaw - rippleSmoothed) * onePole (dt, kStandingTau);
 
-    if (rippleSmoothed - lastRippleLevel > kStandingThresh)
+    const float rippleLevel = std::abs (rippleSmoothed);
+
+    // Resonant build-up alone takes seconds to become visible, which is far too
+    // slow to feel like a response to a key. So strike the pattern once on the
+    // rising edge for the immediate answer, then keep driving it at resonance
+    // so it STANDS instead of dispersing into travelling waves. Neither half
+    // works on its own: the strike alone is gone in a few hundred milliseconds,
+    // the drive alone takes too long to arrive.
+    const bool risingEdge = rippleLevel - rippleEnvelope > kStandingEdge;
+
+    if (rippleLevel > kStandingThresh)
     {
-        standingPhase += 1.37f;              // irrational step: never repeats a pattern
+        // The pattern drifts slowly around the face so a long note does not
+        // freeze into wallpaper.
+        standingPhase += kStandingDriftRate * dt;
         if (standingPhase > math::twoPi) standingPhase -= math::twoPi;
 
-        const float wavelength = math::lerp (0.30f, 0.10f, nodeX);
-        const float strength   = 0.30f * rippleSmoothed;
+        const float wavelength = math::lerp (kStandingWaveLong, kStandingWaveShort, nodeX);
 
-        water.exciteStanding (0.5f + 0.16f * std::sin (standingPhase),
-                              0.5f + 0.16f * std::cos (standingPhase * 1.31f),
-                              wavelength, strength);
+        water.setStandingMode (0.5f + 0.10f * std::sin (standingPhase),
+                               0.5f + 0.10f * std::cos (standingPhase * 1.31f),
+                               wavelength);
+
+        // The drive has its OWN oscillator, at the mode's resonant frequency.
+        // Forcing with the modulator's raw waveform does almost nothing: a
+        // driven surface only builds a standing pattern near resonance, and a
+        // sweep of the grid shows the response falling by more than an order of
+        // magnitude a few hertz either side of it. The mode frequency tracks
+        // 1 / wavelength, hence the single constant. The modulator supplies the
+        // ENVELOPE -- how hard to shake -- not the phase.
+        standingOsc += math::twoPi * (kStandingModeK / wavelength) * dt;
+        if (standingOsc > math::twoPi) standingOsc -= math::twoPi;
+
+        // Short modes take up less energy, so even out the drive across the
+        // wavelength range.
+        const float gain = kStandingDrive * (kStandingWaveMid / wavelength);
+
+        water.driveStanding (std::sin (standingOsc) * gain * rippleLevel * dt);
+
+        if (risingEdge)
+        {
+            standingOsc = math::halfPi;              // start the drive at its crest
+            water.driveStanding (kStandingStrike * rippleLevel);
+        }
     }
 
-    lastRippleLevel = rippleSmoothed;
+    rippleEnvelope = rippleLevel;
 
     // Dragging the node drags the water with it. A height field gives this for
     // free -- the trailing disturbance is a real wake, not a drawn trail -- and
@@ -1374,8 +1429,8 @@ void FluidField::applyWaterParams()
     p.viscosity = math::clamp (depthSmoothed, 0.0f, 1.0f);
     p.damping  -= depthSmoothed * 0.0025f;
 
-    // CURRENT carries the whole surface sideways.
-    p.drift     = currentSmoothed * 0.55f;
+    // CURRENT is handled at draw time rather than in the simulation -- see the
+    // note on the sway in paintSphereBody.
 
     water.setParams (p);
 }
@@ -1422,8 +1477,18 @@ void FluidField::paintSphereBody (juce::Graphics& g)
     // field at native resolution would make it read as pixels.
     if (waterImage.isValid() && sphereR > 1.0f)
     {
+        // CURRENT sways the whole body of water. This used to be done inside
+        // the simulation, by shifting the grid sideways; whole-cell shifts
+        // smeared every standing pattern into horizontal streaks, and
+        // resampling by a fraction of a cell each frame blurs the field into
+        // soup within seconds. Sliding the finished layer instead is free,
+        // exact, and leaves the physics alone. The margin is small enough that
+        // the water's own fade at r = 0.88 keeps its edge hidden under the
+        // sphere's cached rim.
+        const float sway = math::clamp (currentSmoothed, -1.0f, 1.0f) * kWaterSway * sphereR;
+
         const auto dest = juce::Rectangle<float> (sphereR * 2.0f, sphereR * 2.0f)
-                              .withCentre ({ centreX, centreY });
+                              .withCentre ({ centreX + sway, centreY + sway * 0.35f });
 
         g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
         g.drawImage (waterImage, dest);

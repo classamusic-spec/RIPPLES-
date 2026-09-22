@@ -43,11 +43,11 @@ void WaterSurface::prepare (int gridSize)
     const size_t n = (size_t) size * (size_t) size;
     current.assign (n, 0.0f);
     previous.assign (n, 0.0f);
-    scratch.assign (n, 0.0f);
+    standing.assign (n, 0.0f);
+    standingX = standingY = standingWavelength = -1.0f;
 
     energy = 0.0f;
     accumulator = 0.0f;
-    driftCarry = 0.0f;
 }
 
 void WaterSurface::reset()
@@ -56,7 +56,6 @@ void WaterSurface::reset()
     std::fill (previous.begin(), previous.end(), 0.0f);
     energy = 0.0f;
     accumulator = 0.0f;
-    driftCarry = 0.0f;
 }
 
 //==============================================================================
@@ -96,19 +95,31 @@ void WaterSurface::impact (float nx, float ny, float radius, float strength) noe
     energy = std::max (energy, std::abs (strength));
 }
 
-void WaterSurface::exciteStanding (float nx, float ny, float wavelength, float strength) noexcept
+void WaterSurface::setStandingMode (float nx, float ny, float wavelength) noexcept
 {
     if (size <= 0)
         return;
+
+    // Rebuilding costs a cosine per cell, so only do it when the shape actually
+    // changes. Driving it is what happens every frame.
+    if (std::abs (nx - standingX) < 0.004f
+         && std::abs (ny - standingY) < 0.004f
+         && std::abs (wavelength - standingWavelength) < 0.004f
+         && standing.size() == current.size())
+        return;
+
+    standingX = nx;
+    standingY = ny;
+    standingWavelength = wavelength;
+    standing.assign (current.size(), 0.0f);
 
     const float cx = nx * (float) size;
     const float cy = ny * (float) size;
     const float k  = math::twoPi / std::max (2.0f, wavelength * (float) size);
 
-    // A radial standing pattern: concentric crests that do not travel. This is
-    // the cymatic look -- a surface vibrating in place rather than a ripple
-    // spreading out from a strike.
-    const float reach = (float) size * 0.55f;
+    // A radial cymatic pattern: concentric crests about a point, tapering to
+    // nothing before the rim so the bowl's wall is never driven directly.
+    const float reach  = (float) size * 0.52f;
     const float reach2 = reach * reach;
 
     for (int y = 0; y < size; ++y)
@@ -125,55 +136,31 @@ void WaterSurface::exciteStanding (float nx, float ny, float wavelength, float s
             const float d = std::sqrt (d2);
             const float envelope = 0.5f + 0.5f * std::cos (d / reach * math::pi);
 
-            current[(size_t) (y * size + x)] += strength * envelope * std::cos (d * k);
+            standing[(size_t) (y * size + x)] = envelope * std::cos (d * k);
         }
     }
+}
 
-    energy = std::max (energy, std::abs (strength));
+void WaterSurface::driveStanding (float amount) noexcept
+{
+    if (size <= 0 || standing.size() != current.size() || std::abs (amount) < 1.0e-5f)
+        return;
+
+    const size_t n = current.size();
+
+    for (size_t i = 0; i < n; ++i)
+        current[i] += standing[i] * amount;
+
+    energy = std::max (energy, std::abs (amount));
+}
+
+void WaterSurface::exciteStanding (float nx, float ny, float wavelength, float strength) noexcept
+{
+    setStandingMode (nx, ny, wavelength);
+    driveStanding (strength);
 }
 
 //==============================================================================
-void WaterSurface::advect (float amount) noexcept
-{
-    if (std::abs (amount) < 1.0e-4f)
-        return;
-
-    // Whole-cell shifts only: accumulate the fractional part and move when it
-    // reaches a cell. Resampling every frame for a sub-pixel slide would blur
-    // the field into soup within a few seconds.
-    driftCarry += amount;
-
-    const int shift = (int) driftCarry;
-
-    if (shift == 0)
-        return;
-
-    driftCarry -= (float) shift;
-
-    const int s = math::clamp (shift, -4, 4);
-
-    // Both buffers move together. Shifting only the current one shears the two
-    // halves of the leapfrog apart, which injects a step discontinuity into the
-    // very next iteration and shows up as a hard vertical seam.
-    for (auto* buffer : { &current, &previous })
-    {
-        for (int y = 0; y < size; ++y)
-        {
-            float* row = &(*buffer)[(size_t) (y * size)];
-            std::copy (row, row + size, &scratch[(size_t) (y * size)]);
-
-            const float* src = &scratch[(size_t) (y * size)];
-
-            for (int x = 0; x < size; ++x)
-            {
-                int from = x - s;
-                from = math::clamp (from, 0, size - 1);   // clamp, so edges do not wrap
-                row[x] = src[from];
-            }
-        }
-    }
-}
-
 void WaterSurface::step (float dt, RandomGenerator& rng) noexcept
 {
     if (size <= 0)
@@ -255,9 +242,6 @@ void WaterSurface::step (float dt, RandomGenerator& rng) noexcept
 
     if (steps == 0)
         return;
-
-    // --- lateral current ----------------------------------------------------
-    advect (params.drift * dt * (float) size * 0.35f);
 
     // --- chop: the CHAOS axis never lets the surface settle -----------------
     if (params.chop > 0.001f)

@@ -7,6 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 #include "Core/PluginProcessor.h"
+#include "Parameters/ParameterIDs.h"
 
 #if JUCE_LINUX
  #include <X11/Xlib.h>
@@ -154,67 +155,140 @@ int main (int argc, char** argv)
         // X server for atoms a bare Xvfb without a window manager does not have.
         editor->addToDesktop (0);
 
-        juce::AudioBuffer<float> audio (2, 512);
-        int sampleClock = 0;
+        auto& apvts = processor.getAPVTS();
 
-        // A few notes spread across the keyboard: low ones should push broad
-        // slow swells, high ones tight fast ripples.
-        const int notes[] = { 36, 52, 67, 79, 45, 60 };
-        int nextNote = 0;
-
-        constexpr int kFrames = 150;          // ~2.5 seconds at 60 Hz
-        constexpr int kShotEvery = 25;
-
-        for (int frame = 0; frame < kFrames; ++frame)
+        auto setParam = [&apvts] (const char* id, float value)
         {
-            juce::MidiBuffer midi;
+            if (auto* p = apvts.getParameter (id))
+                p->setValueNotifyingHost (p->convertTo0to1 (value));
+        };
 
-            if (frame % 18 == 0)
-            {
-                midi.addEvent (juce::MidiMessage::noteOn (1, notes[nextNote % 6], 0.85f), 0);
-                ++nextNote;
-            }
-            if (frame % 18 == 12 && nextNote > 0)
-                midi.addEvent (juce::MidiMessage::noteOff (1, notes[(nextNote - 1) % 6]), 0);
+        // Each of these is a behaviour the Fluid Field is supposed to show. A
+        // single generic run proves only that something moves; running them
+        // apart is the only way to tell whether CALM really rings longer than
+        // CHAOS, or whether RIPPLE actually produces a standing pattern.
+        struct Scene
+        {
+            const char* name;
+            float fluidX, fluidY;     // CALM<->CHAOS, SURFACE<->DEPTH
+            float ripple, drops;
+            int   note;               // -1 for none
+        };
 
-            // One video frame is about 735 samples at 44.1k; two blocks is close
-            // enough and keeps the audio ahead of the picture.
-            for (int b = 0; b < 2; ++b)
+        const Scene scenes[] = {
+            { "calm",      0.06f, 0.30f, 0.10f, 0.00f, 45 },
+            { "chaos",     0.95f, 0.45f, 0.10f, 0.00f, 60 },
+            { "deep",      0.35f, 0.95f, 0.10f, 0.00f, 31 },
+            { "drops",     0.25f, 0.40f, 0.00f, 0.95f, 55 },
+            { "vibration", 0.40f, 0.40f, 0.95f, 0.00f, 67 },
+            { "chord",     0.45f, 0.50f, 0.35f, 0.30f, -2 },
+        };
+
+        juce::AudioBuffer<float> audio (2, 512);
+
+        for (const auto& scene : scenes)
+        {
+            setParam (pid::fluidX, scene.fluidX);
+            setParam (pid::fluidY, scene.fluidY);
+            setParam (pid::macroRipple, scene.ripple);
+            setParam (pid::macroDrops, scene.drops);
+
+            // Let the smoothers and the field settle on the new position, and
+            // let whatever the previous scene left in the water die away.
+            for (int i = 0; i < 90; ++i)
             {
+                juce::MidiBuffer none;
                 audio.clear();
-                processor.processBlock (audio, midi);
-                midi.clear();
-                sampleClock += 512;
+                processor.processBlock (audio, none);
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (4);
             }
 
-            // One frame's worth of message loop, which is what lets the Fluid
-            // Field's timer fire and step the water.
-            juce::MessageManager::getInstance()->runDispatchLoopUntil (16);
+            constexpr int kFrames = 120;
 
-            if (frame % kShotEvery == kShotEvery - 1)
+            // What the picture is actually being driven by. Guessing at this
+            // from the screenshots alone wasted a round of tuning.
+            float rippleMin = 1.0f, rippleMax = -1.0f, rmsMax = 0.0f;
+            uint32_t drops0 = processor.getVisualisation().getDropletCount();
+
+            for (int frame = 0; frame < kFrames; ++frame)
             {
-                juce::Image img (juce::Image::ARGB, editor->getWidth(), editor->getHeight(), true);
+                juce::MidiBuffer midi;
+
+                if (frame == 4)
                 {
-                    juce::Graphics g (img);
-                    editor->paintEntireComponent (g, true);
+                    if (scene.note == -2)
+                    {
+                        for (int semis : { 0, 7, 12, 19 })
+                            midi.addEvent (juce::MidiMessage::noteOn (1, 40 + semis, 0.8f), 0);
+                    }
+                    else if (scene.note >= 0)
+                    {
+                        midi.addEvent (juce::MidiMessage::noteOn (1, scene.note, 0.9f), 0);
+                    }
                 }
 
-                auto out = juce::File::getCurrentWorkingDirectory()
-                               .getChildFile ("ripples_anim_" + juce::String (frame + 1) + ".png");
-                out.deleteFile();
-
-                if (auto stream = out.createOutputStream())
+                if (frame == 50)
                 {
-                    juce::PNGImageFormat png;
-                    png.writeImageToStream (img, *stream);
-                    std::printf ("  animated frame %3d -> %s\n", frame + 1,
-                                 out.getFileName().toRawUTF8());
+                    if (scene.note == -2)
+                    {
+                        for (int semis : { 0, 7, 12, 19 })
+                            midi.addEvent (juce::MidiMessage::noteOff (1, 40 + semis), 0);
+                    }
+                    else if (scene.note >= 0)
+                    {
+                        midi.addEvent (juce::MidiMessage::noteOff (1, scene.note), 0);
+                    }
+                }
+
+                // One video frame is about 735 samples at 44.1k; two blocks is
+                // close enough and keeps the audio ahead of the picture.
+                for (int b = 0; b < 2; ++b)
+                {
+                    audio.clear();
+                    processor.processBlock (audio, midi);
+                    midi.clear();
+                }
+
+                juce::MessageManager::getInstance()->runDispatchLoopUntil (16);
+
+                {
+                    auto& vis = processor.getVisualisation();
+                    const float rv = vis.getRippleValue();
+                    rippleMin = juce::jmin (rippleMin, rv);
+                    rippleMax = juce::jmax (rippleMax, rv);
+                    rmsMax    = juce::jmax (rmsMax, vis.getOutputRMS());
+                }
+
+                if (frame == 10 || frame == 20 || frame == 60 || frame == 110)
+                {
+                    juce::Image img (juce::Image::ARGB, editor->getWidth(), editor->getHeight(), true);
+                    {
+                        juce::Graphics g (img);
+                        editor->paintEntireComponent (g, true);
+                    }
+
+                    auto out = juce::File::getCurrentWorkingDirectory()
+                                   .getChildFile (juce::String ("ripples_anim_") + scene.name
+                                                  + "_" + juce::String (frame) + ".png");
+                    out.deleteFile();
+
+                    if (auto stream = out.createOutputStream())
+                    {
+                        juce::PNGImageFormat png;
+                        png.writeImageToStream (img, *stream);
+                        std::printf ("  %-10s frame %3d -> %s\n", scene.name, frame,
+                                     out.getFileName().toRawUTF8());
+                    }
                 }
             }
+
+            std::printf ("  %-10s ripple %+.3f..%+.3f   peak rms %.3f   droplets %u\n",
+                         scene.name, rippleMin, rippleMax, rmsMax,
+                         processor.getVisualisation().getDropletCount() - drops0);
         }
 
         // Cost with the simulation actually running, which is the number that
-        // matters — the static figure above never touches the water.
+        // matters -- the static figure above never touches the water.
         {
             juce::Image frame (juce::Image::ARGB, editor->getWidth(), editor->getHeight(), true);
 
@@ -234,7 +308,6 @@ int main (int argc, char** argv)
         }
 
         editor->removeFromDesktop();
-        juce::ignoreUnused (sampleClock);
     }
 
     editor.reset();
