@@ -18,24 +18,30 @@ namespace ripples
     A height field does all three for free, which is what actually reads as
     water.
 
-    The scheme is the standard two-buffer discretisation of the wave equation:
+    The scheme is the standard two-buffer discretisation of the wave equation
+    with an isotropic nine-point laplacian, so a circular impact spreads as a
+    circle rather than a diamond. It is unconditionally cheap — a handful of
+    multiply-adds per cell — and stable as long as the tension stays under the
+    von Neumann limit. Everything is plain floats on a fixed grid allocated
+    once in prepare(); step() never allocates.
 
-        next = (sum of four neighbours) / 2 - prev,  then damped
-
-    It is unconditionally cheap — a couple of multiply-adds per cell — and
-    stable as long as the damping stays below one. Everything is plain floats
-    on a fixed grid allocated once in prepare(); step() never allocates.
-
-    Coordinates are normalised 0..1 across the grid so callers never have to
-    know the resolution.
+    The grid may be RECTANGULAR. Cells are square, so as long as the caller
+    sizes the grid to the aspect ratio of the area it fills, a ripple that is
+    round in grid space is round on screen. Coordinates handed in are
+    normalised 0..1 across each axis, and a radius or wavelength is a fraction
+    of the SHORTER axis, so a strike is the same physical size whatever the
+    aspect.
 */
 class WaterSurface
 {
 public:
     WaterSurface() = default;
 
-    /** Allocates the grid. Call from the message thread. */
-    void prepare (int gridSize);
+    /** Allocates a square grid. */
+    void prepare (int gridSize) { prepare (gridSize, gridSize); }
+
+    /** Allocates a rectangular grid, width by height cells. */
+    void prepare (int gridWidth, int gridHeight);
 
     /** Flattens the water without reallocating. */
     void reset();
@@ -60,9 +66,10 @@ public:
     void setParams (const Params& p) noexcept { params = p; }
     const Params& getParams() const noexcept { return params; }
 
-    /** Strikes the surface. Position is normalised 0..1; radius is a fraction
-        of the grid; strength is signed, so a negative value pulls the surface
-        down the way a real impact does before it rebounds. */
+    /** Strikes the surface. Position is normalised 0..1 across each axis;
+        radius is a fraction of the shorter axis; strength is signed, so a
+        negative value pulls the surface down the way a real impact does before
+        it rebounds. */
     void impact (float nx, float ny, float radius, float strength) noexcept;
 
     /** Selects the standing mode shape — a radial cymatic pattern centred on
@@ -84,17 +91,19 @@ public:
         and frame-rate independent. */
     void step (float dt, RandomGenerator& rng) noexcept;
 
-    int getSize() const noexcept { return size; }
-    bool isReady() const noexcept { return size > 0; }
+    int  getWidth()  const noexcept { return width; }
+    int  getHeight() const noexcept { return height; }
+    int  getSize()   const noexcept { return width; }   // back-compat: square grids
+    bool isReady()   const noexcept { return width > 0 && height > 0; }
 
     /** Current height at a cell. Out-of-range reads return zero, so callers
         may sample the neighbourhood of an edge cell without bounds checks. */
     float heightAt (int x, int y) const noexcept
     {
-        if (x < 0 || y < 0 || x >= size || y >= size)
+        if (x < 0 || y < 0 || x >= width || y >= height)
             return 0.0f;
 
-        return current[(size_t) (y * size + x)];
+        return current[(size_t) (y * width + x)];
     }
 
     const float* raw() const noexcept { return current.data(); }
@@ -104,7 +113,7 @@ public:
     float getEnergy() const noexcept { return energy; }
 
 private:
-    int size = 0;
+    int width = 0, height = 0;
     std::vector<float> current, previous, standing;
     float standingX = -1.0f, standingY = -1.0f, standingWavelength = -1.0f;
     Params params;

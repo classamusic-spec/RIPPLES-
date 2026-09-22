@@ -15,9 +15,10 @@ namespace
     constexpr float kFixedStep     = 1.0f / 120.0f;
     constexpr int   kMaxSubsteps   = 4;
 
-    // The wave equation goes unstable as the neighbour weight approaches 1.
+    // The wave equation goes unstable as the neighbour weight approaches the
+    // von Neumann limit.
     constexpr float kMinTension    = 0.18f;
-    constexpr float kMaxTension    = 0.47f;   // 0.5 is the stability limit; stay under it
+    constexpr float kMaxTension    = 0.47f;   // stay under the 0.6 nine-point limit
 
     constexpr float kMinDamping    = 0.9000f;
     constexpr float kMaxDamping    = 0.9985f;
@@ -36,11 +37,12 @@ namespace
 }
 
 //==============================================================================
-void WaterSurface::prepare (int gridSize)
+void WaterSurface::prepare (int gridWidth, int gridHeight)
 {
-    size = math::clamp (gridSize, 16, 512);
+    width  = math::clamp (gridWidth,  16, 512);
+    height = math::clamp (gridHeight, 16, 512);
 
-    const size_t n = (size_t) size * (size_t) size;
+    const size_t n = (size_t) width * (size_t) height;
     current.assign (n, 0.0f);
     previous.assign (n, 0.0f);
     standing.assign (n, 0.0f);
@@ -61,18 +63,22 @@ void WaterSurface::reset()
 //==============================================================================
 void WaterSurface::impact (float nx, float ny, float radius, float strength) noexcept
 {
-    if (size <= 0)
+    if (! isReady())
         return;
 
-    const float cx = nx * (float) size;
-    const float cy = ny * (float) size;
-    const float r  = std::max (1.0f, radius * (float) size);
+    // Radius is a fraction of the shorter axis, so a strike is the same shape
+    // whatever the grid's aspect ratio, and round on screen because cells are
+    // square there.
+    const float shortAxis = (float) std::min (width, height);
+    const float cx = nx * (float) width;
+    const float cy = ny * (float) height;
+    const float r  = std::max (1.0f, radius * shortAxis);
     const float r2 = r * r;
 
     const int x0 = std::max (0, (int) std::floor (cx - r));
-    const int x1 = std::min (size - 1, (int) std::ceil (cx + r));
+    const int x1 = std::min (width  - 1, (int) std::ceil (cx + r));
     const int y0 = std::max (0, (int) std::floor (cy - r));
-    const int y1 = std::min (size - 1, (int) std::ceil (cy + r));
+    const int y1 = std::min (height - 1, (int) std::ceil (cy + r));
 
     for (int y = y0; y <= y1; ++y)
     {
@@ -88,7 +94,7 @@ void WaterSurface::impact (float nx, float ny, float radius, float strength) noe
             // A raised cosine, so the dent has no hard edge to ring against.
             const float falloff = 0.5f + 0.5f * std::cos (std::sqrt (d2 / r2) * math::pi);
 
-            current[(size_t) (y * size + x)] += strength * falloff;
+            current[(size_t) (y * width + x)] += strength * falloff;
         }
     }
 
@@ -97,7 +103,7 @@ void WaterSurface::impact (float nx, float ny, float radius, float strength) noe
 
 void WaterSurface::setStandingMode (float nx, float ny, float wavelength) noexcept
 {
-    if (size <= 0)
+    if (! isReady())
         return;
 
     // Rebuilding costs a cosine per cell, so only do it when the shape actually
@@ -113,18 +119,20 @@ void WaterSurface::setStandingMode (float nx, float ny, float wavelength) noexce
     standingWavelength = wavelength;
     standing.assign (current.size(), 0.0f);
 
-    const float cx = nx * (float) size;
-    const float cy = ny * (float) size;
-    const float k  = math::twoPi / std::max (2.0f, wavelength * (float) size);
+    const float shortAxis = (float) std::min (width, height);
+    const float cx = nx * (float) width;
+    const float cy = ny * (float) height;
+    const float k  = math::twoPi / std::max (2.0f, wavelength * shortAxis);
 
     // A radial cymatic pattern: concentric crests about a point, tapering to
-    // nothing before the rim so the bowl's wall is never driven directly.
-    const float reach  = (float) size * 0.52f;
+    // nothing before the shorter reach so the bowl's wall is never driven
+    // directly.
+    const float reach  = shortAxis * 0.52f;
     const float reach2 = reach * reach;
 
-    for (int y = 0; y < size; ++y)
+    for (int y = 0; y < height; ++y)
     {
-        for (int x = 0; x < size; ++x)
+        for (int x = 0; x < width; ++x)
         {
             const float dx = (float) x + 0.5f - cx;
             const float dy = (float) y + 0.5f - cy;
@@ -136,14 +144,14 @@ void WaterSurface::setStandingMode (float nx, float ny, float wavelength) noexce
             const float d = std::sqrt (d2);
             const float envelope = 0.5f + 0.5f * std::cos (d / reach * math::pi);
 
-            standing[(size_t) (y * size + x)] = envelope * std::cos (d * k);
+            standing[(size_t) (y * width + x)] = envelope * std::cos (d * k);
         }
     }
 }
 
 void WaterSurface::driveStanding (float amount) noexcept
 {
-    if (size <= 0 || standing.size() != current.size() || std::abs (amount) < 1.0e-5f)
+    if (! isReady() || standing.size() != current.size() || std::abs (amount) < 1.0e-5f)
         return;
 
     const size_t n = current.size();
@@ -163,7 +171,7 @@ void WaterSurface::exciteStanding (float nx, float ny, float wavelength, float s
 //==============================================================================
 void WaterSurface::step (float dt, RandomGenerator& rng) noexcept
 {
-    if (size <= 0)
+    if (! isReady())
         return;
 
     accumulator += math::clamp (dt, 0.0f, 0.1f);
@@ -183,9 +191,10 @@ void WaterSurface::step (float dt, RandomGenerator& rng) noexcept
         const float damping = math::clamp (params.damping, kMinDamping, kMaxDamping)
                                 * (1.0f - 0.03f * math::clamp (params.viscosity, 0.0f, 1.0f));
 
-        const int w = size;
+        const int w = width;
+        const int h = height;
 
-        for (int y = 1; y < w - 1; ++y)
+        for (int y = 1; y < h - 1; ++y)
         {
             const float* cRow = &current[(size_t) (y * w)];
             const float* cUp  = &current[(size_t) ((y - 1) * w)];
@@ -207,11 +216,8 @@ void WaterSurface::step (float dt, RandomGenerator& rng) noexcept
                 // this job: it propagates faster along the axes than across the
                 // diagonals, so a circular impact spreads as a diamond and the
                 // interference pattern comes out of the shader as hard-edged
-                // rectangular patches. That is not a rendering artefact and no
-                // amount of filtering hides it -- the wavefronts really are
-                // square. Weighting the diagonals restores a round wave.
-                //
-                // Gathered, with c^2 = tension:
+                // rectangular patches. Weighting the diagonals restores a round
+                // wave. Gathered, with c^2 = tension:
                 float next = orth * (kOrthWeight * tension)
                                + diag * (kDiagWeight * tension)
                                + cRow[x] * (2.0f - kCentreWeight * tension)
@@ -219,22 +225,25 @@ void WaterSurface::step (float dt, RandomGenerator& rng) noexcept
 
                 next *= damping;
 
-                // The nine-point stencil's largest eigenvalue is 20/3, so von
-                // Neumann stability needs c^2 <= 3/5; the tension range caps it
-                // well below that. This clamp is a backstop only, so a
-                // pathological parameter can never put NaN on screen.
+                // Von Neumann stability needs c^2 <= 3/5 for the nine-point
+                // stencil; the tension range caps it well below that. This
+                // clamp is a backstop only, so a pathological parameter can
+                // never put NaN on screen.
                 pRow[x] = math::clamp (math::sanitise (next), -4.0f, 4.0f);
             }
         }
 
         // The rim is a wall: zero the border so waves reflect off the bowl
         // instead of leaking out and vanishing.
-        for (int i = 0; i < w; ++i)
+        for (int x = 0; x < w; ++x)
         {
-            previous[(size_t) i] = 0.0f;
-            previous[(size_t) ((w - 1) * w + i)] = 0.0f;
-            previous[(size_t) (i * w)] = 0.0f;
-            previous[(size_t) (i * w + w - 1)] = 0.0f;
+            previous[(size_t) x] = 0.0f;
+            previous[(size_t) ((h - 1) * w + x)] = 0.0f;
+        }
+        for (int y = 0; y < h; ++y)
+        {
+            previous[(size_t) (y * w)] = 0.0f;
+            previous[(size_t) (y * w + w - 1)] = 0.0f;
         }
 
         current.swap (previous);

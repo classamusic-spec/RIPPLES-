@@ -117,16 +117,11 @@ private:
 
     void recomputeGeometry();
     void rebuildBackdrop (float deviceScale);
-    void rebuildSphere (float deviceScale);
     void renderWater();
     void applyWaterParams();
     void strikeWater (float ox, float oy, float intensity, bool droplet);
-    void paintSphereBody (juce::Graphics&);
-    void paintSphereSurface (juce::Graphics&) const;
+    void paintWater (juce::Graphics&);
 
-    void paintDepthWell (juce::Graphics& g) const;
-    void paintRings (juce::Graphics& g);
-    void paintRipples (juce::Graphics& g) const;
     void paintParticles (juce::Graphics& g) const;
     void paintGuides (juce::Graphics& g) const;
     void paintNode (juce::Graphics& g) const;
@@ -185,7 +180,8 @@ private:
     std::array<float, kHarmonics> harmonicPhase {};
 
     // Geometry in logical pixels, recomputed on resize.
-    juce::Rectangle<float> fieldArea;
+    juce::Rectangle<float> fieldArea;       // interaction frame (node, labels)
+    juce::Rectangle<float> poolArea;        // the water fills this, edge to edge
     float centreX = 0.0f, centreY = 0.0f;   // static centre of the field
     float fieldCx = 0.0f, fieldCy = 0.0f;   // live centre, including the slow current drift
     float fieldRx = 1.0f, fieldRy = 1.0f;
@@ -203,9 +199,6 @@ private:
     float          rippleEnvelope = 0.0f;   // for the rising edge
     float          breathTimer = 0.0f;
     float          breathAngle = 0.0f;
-    juce::Image sphereLayer;
-    float       sphereScale = 0.0f;
-    float       sphereR = 1.0f;     // radius of the water sphere, in pixels
     juce::Image vessel;
     float       vesselScale = 0.0f;
     float backdropScale = 0.0f;
