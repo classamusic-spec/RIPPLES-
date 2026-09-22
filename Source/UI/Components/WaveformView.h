@@ -71,8 +71,12 @@ private:
     float morphPhase[3] { 0.0f, 0.33f, 0.66f };
     int   framesSinceRebuild = 0;
 
-    // Cached geometry.
+    // Cached geometry. The three stroked ribbons that make up the luminous
+    // trace are built alongside the curve, so a frame is three fills of cached
+    // geometry — nothing is stroked, allocated or blurred in paint().
     juce::Path             curve;
+    juce::Path             coreStroke, glowStroke, bloomStroke;
+    juce::Path             wellClip;
     juce::Rectangle<float> plotBounds;
     float                  pixelsPerCycle = 0.0f;
     std::vector<float>     scratch;          // reused sample buffer, never sized in paint()

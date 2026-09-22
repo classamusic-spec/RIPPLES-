@@ -316,6 +316,42 @@ void drawSwitch (juce::Graphics& g, juce::Rectangle<float> bounds, juce::Colour 
 }
 
 //==============================================================================
+namespace
+{
+    /** Below this saturation an accent has no hue worth preserving, so the
+        luminous token is used exactly as it was authored. */
+    constexpr float kAccentHueFloor = 0.06f;
+
+    /** The outer, widest bloom ring under a value arc, as a multiple of
+        arcBloomWidth. */
+    constexpr float kArcBloomOuterScale = 1.6f;
+
+    /** How much of arcBloomAlpha that outer ring keeps. */
+    constexpr float kArcBloomOuterAlpha = 0.45f;
+
+    /** Extra bloom, as a fraction of the resting alpha, once a knob is hovered. */
+    constexpr float kArcBloomHoverLift = 0.30f;
+
+    /** Takes saturation, brightness and alpha from a LUMINOUS PASS token but
+        keeps the control's own hue, so a violet knob never turns cyan and an
+        aqua one never turns generic. */
+    juce::Colour luminousTint (juce::Colour accent, juce::Colour character) noexcept
+    {
+        float h = 0.0f, s = 0.0f, b = 0.0f;
+        accent.getHSB (h, s, b);
+
+        if (s < kAccentHueFloor)
+            return character;
+
+        float ch = 0.0f, cs = 0.0f, cb = 0.0f;
+        character.getHSB (ch, cs, cb);
+
+        return juce::Colour::fromHSV (h, juce::jmax (s, cs), juce::jmax (b, cb),
+                                      character.getFloatAlpha());
+    }
+}
+
+//==============================================================================
 void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& style)
 {
     const auto& theme = RippleTheme::get();
@@ -337,6 +373,11 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
     const auto ornament  = style.detail >= theme.knobDetailThreshold;
     const auto alpha     = style.enabled ? 1.0f : theme.disabledAlpha;
     const auto accent    = style.accent.brighter (theme.hoverBrighten * hover);
+
+    // The value arc is the loudest colour on the instrument. arcCore and
+    // arcBloom decide how luminous it reads; the accent keeps its own hue.
+    const auto arcCoreColour  = luminousTint (accent, theme.arcCore);
+    const auto arcBloomColour = luminousTint (accent, theme.arcBloom);
 
     const auto bodyRadius = radius * theme.knobBodyRadiusRatio;
     const auto ringRadius = radius * theme.knobRingRadiusRatio;
@@ -389,22 +430,27 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
         g.fillEllipse (juce::Rectangle<float> (bounceR * 1.8f, bounceR * 1.1f).withCentre (bounce));
     }
 
+    // One scratch path serves every stroked layer below. Path::clear() keeps the
+    // storage it has already grown, so a knob costs a single path allocation no
+    // matter how many arcs it ends up drawing — and knobs are drawn dozens at a
+    // time.
+    juce::Path scratch;
+
     //--- mild inner highlight across the top of the body ---------------------
     if (ornament)
     {
         const auto hlRadius = radius * theme.knobHighlightRadiusRatio;
 
-        juce::Path highlight;
-        highlight.addCentredArc (centre.x, centre.y, hlRadius, hlRadius, 0.0f,
-                                 -juce::MathConstants<float>::halfPi * 1.15f,
-                                  juce::MathConstants<float>::halfPi * 1.15f, true);
+        scratch.addCentredArc (centre.x, centre.y, hlRadius, hlRadius, 0.0f,
+                               -juce::MathConstants<float>::halfPi * 1.15f,
+                                juce::MathConstants<float>::halfPi * 1.15f, true);
 
         g.setGradientFill ({ theme.knobHighlight.withMultipliedAlpha (alpha), centre.x, centre.y - hlRadius,
                              theme.knobHighlight.withAlpha (0.0f),            centre.x, centre.y,
                              false });
-        g.strokePath (highlight, juce::PathStrokeType (theme.knobRingThickness * stroke,
-                                                       juce::PathStrokeType::curved,
-                                                       juce::PathStrokeType::rounded));
+        g.strokePath (scratch, juce::PathStrokeType (theme.knobRingThickness * stroke,
+                                                     juce::PathStrokeType::curved,
+                                                     juce::PathStrokeType::rounded));
     }
 
     //--- thin outer ring -----------------------------------------------------
@@ -416,6 +462,10 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
     }
 
     //--- value arc: unfilled track, then the bright accent arc ---------------
+    // knobStartAngle and knobEndAngle are 1.25*pi and 2.75*pi, measured
+    // clockwise from twelve o'clock. The sweep therefore starts at seven
+    // o'clock, climbs the LEFT side of the knob, crosses the top and finishes
+    // at five, leaving the gap across the bottom of the control.
     const auto sweep       = theme.knobEndAngle - theme.knobStartAngle;
     const auto valueAngle  = theme.knobStartAngle + sweep * juce::jlimit (0.0f, 1.0f, style.value01);
     const auto originAngle = style.bipolar ? theme.knobStartAngle + sweep * 0.5f : theme.knobStartAngle;
@@ -423,31 +473,56 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
                                                    juce::PathStrokeType::curved,
                                                    juce::PathStrokeType::rounded);
     {
-        juce::Path track;
-        track.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
-                             theme.knobStartAngle, theme.knobEndAngle, true);
+        scratch.clear();
+        scratch.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
+                               theme.knobStartAngle, theme.knobEndAngle, true);
         g.setColour (theme.knobTrack.withMultipliedAlpha (alpha));
-        g.strokePath (track, arcStroke);
+        g.strokePath (scratch, arcStroke);
     }
 
     if (std::abs (valueAngle - originAngle) > theme.modRingEpsilon)
     {
-        juce::Path value;
-        value.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f,
-                             juce::jmin (originAngle, valueAngle),
-                             juce::jmax (originAngle, valueAngle), true);
-
-        // A restrained bloom under the arc — never a neon halo.
-        if (ornament)
+        // A bloom is a stroke, so it spreads BOTH ways from the arc it sits
+        // under. Pull its centreline inward by however much it would otherwise
+        // overhang the control's own square: a component clip slicing a hard
+        // edge across a soft halo is far worse than a slightly tighter glow.
+        const auto bloomRadiusFor = [arcRadius, radius] (float width)
         {
-            g.setColour (accent.withAlpha (theme.arcGlowAlpha * theme.glowAmount * (0.4f + 0.6f * hover) * alpha));
-            g.strokePath (value, juce::PathStrokeType (theme.knobArcThickness * stroke * 2.4f,
-                                                       juce::PathStrokeType::curved,
-                                                       juce::PathStrokeType::rounded));
-        }
+            const auto overhang = juce::jmax (0.0f, width * 0.5f - (radius - arcRadius));
+            return juce::jmax (width * 0.5f, arcRadius - overhang);
+        };
 
-        g.setColour (accent.withMultipliedAlpha (alpha));
-        g.strokePath (value, arcStroke);
+        const auto bloomAlpha = theme.arcBloomAlpha * (1.0f + kArcBloomHoverLift * hover) * alpha;
+        const auto from       = juce::jmin (originAngle, valueAngle);
+        const auto to         = juce::jmax (originAngle, valueAngle);
+
+        // Stacked strokes — widest and faintest underneath, the crisp core on
+        // top — exactly the trick the wave traces use. No blur, no image, no
+        // DropShadow: three arcs and the arc reads from across a room.
+        const auto bloomPass = [&] (float width, float strength)
+        {
+            const auto r = bloomRadiusFor (width);
+
+            scratch.clear();
+            scratch.addCentredArc (centre.x, centre.y, r, r, 0.0f, from, to, true);
+
+            g.setColour (arcBloomColour.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, bloomAlpha * strength)));
+            g.strokePath (scratch, juce::PathStrokeType (width, juce::PathStrokeType::curved,
+                                                                juce::PathStrokeType::rounded));
+        };
+
+        if (ornament)
+            bloomPass (theme.arcBloomWidth * kArcBloomOuterScale * stroke, kArcBloomOuterAlpha);
+
+        // Small knobs drop the outer ring but never this one: the bloom is what
+        // carries the value at a glance, so it is not the layer that gets cut.
+        bloomPass (theme.arcBloomWidth * stroke, 1.0f);
+
+        scratch.clear();
+        scratch.addCentredArc (centre.x, centre.y, arcRadius, arcRadius, 0.0f, from, to, true);
+
+        g.setColour (arcCoreColour.withMultipliedAlpha (alpha));
+        g.strokePath (scratch, arcStroke);
     }
 
     //--- modulation ring: how far the matrix is pushing this value -----------
@@ -456,15 +531,15 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
         const auto target   = juce::jlimit (0.0f, 1.0f, style.value01 + style.modAmount);
         const auto modAngle = theme.knobStartAngle + sweep * target;
 
-        juce::Path mod;
-        mod.addCentredArc (centre.x, centre.y, modRadius, modRadius, 0.0f,
-                           juce::jmin (valueAngle, modAngle),
-                           juce::jmax (valueAngle, modAngle), true);
+        scratch.clear();
+        scratch.addCentredArc (centre.x, centre.y, modRadius, modRadius, 0.0f,
+                               juce::jmin (valueAngle, modAngle),
+                               juce::jmax (valueAngle, modAngle), true);
 
         g.setColour (theme.modRing.withMultipliedAlpha (theme.modRingAlpha * alpha));
-        g.strokePath (mod, juce::PathStrokeType (theme.knobModArcThickness * stroke,
-                                                 juce::PathStrokeType::curved,
-                                                 juce::PathStrokeType::rounded));
+        g.strokePath (scratch, juce::PathStrokeType (theme.knobModArcThickness * stroke,
+                                                     juce::PathStrokeType::curved,
+                                                     juce::PathStrokeType::rounded));
 
         if (ornament)
         {
@@ -475,15 +550,18 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
     }
 
     //--- small crisp indicator ----------------------------------------------
+    // A short bright line from mid-radius out to just inside the rim. It is the
+    // only near-white mark on the control, and it is what states the value when
+    // colour cannot be relied on at all.
     {
-        juce::Path indicator;
-        indicator.startNewSubPath (centre.getPointOnCircumference (radius * theme.knobIndicatorInnerRatio, valueAngle));
-        indicator.lineTo          (centre.getPointOnCircumference (radius * theme.knobIndicatorOuterRatio, valueAngle));
+        scratch.clear();
+        scratch.startNewSubPath (centre.getPointOnCircumference (radius * theme.knobIndicatorInnerRatio, valueAngle));
+        scratch.lineTo          (centre.getPointOnCircumference (radius * theme.knobIndicatorOuterRatio, valueAngle));
 
         g.setColour (theme.knobIndicator.withMultipliedAlpha (alpha));
-        g.strokePath (indicator, juce::PathStrokeType (theme.knobIndicatorThickness * stroke,
-                                                       juce::PathStrokeType::curved,
-                                                       juce::PathStrokeType::rounded));
+        g.strokePath (scratch, juce::PathStrokeType (theme.knobIndicatorThickness * stroke,
+                                                     juce::PathStrokeType::curved,
+                                                     juce::PathStrokeType::rounded));
     }
 
     if (style.focused)
@@ -492,7 +570,6 @@ void drawKnob (juce::Graphics& g, juce::Rectangle<float> area, const KnobStyle& 
         g.drawEllipse (square.reduced (theme.focusRingWidth * 0.5f), theme.focusRingWidth);
     }
 }
-
 } // namespace ripples::ui
 
 //==============================================================================

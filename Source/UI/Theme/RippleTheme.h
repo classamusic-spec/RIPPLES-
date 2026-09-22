@@ -185,6 +185,65 @@ struct RippleTheme
     float refractionBandRatio  = 0.055f; // how far the edge band reaches inward
     float causticHeightRatio   = 0.15f;  // how tall the pool of light at the base is
 
+    //==========================================================================
+    // LUMINOUS PASS
+    //
+    // The reference art is markedly brighter than a first implementation tends
+    // to be: the waves are thick glowing ribbons rather than hairlines, knob
+    // arcs read from across a room, and the active tab is a filled pill. These
+    // tokens exist so that character lives in one place instead of being
+    // scattered as magic numbers.
+    //==========================================================================
+
+    // Waveform / graph traces. A trace is built from a wide, very faint bloom,
+    // a mid halo, then the crisp core line on top.
+    juce::Colour traceCore        { 0xffbdf2ff };
+    juce::Colour traceGlow        { 0x8c4fd8ee };
+    juce::Colour traceBloom       { 0x3322b8d8 };
+    juce::Colour traceFill        { 0x2a1f9fc4 };   // wash under a curve
+    juce::Colour traceGhost       { 0x33307a92 };   // the layer behind the main one
+
+    float traceCoreWidth   = 1.8f;
+    float traceGlowWidth   = 4.5f;
+    float traceBloomWidth  = 11.0f;
+    float traceGlowAlpha   = 0.55f;
+    float traceBloomAlpha  = 0.28f;
+
+    // Knob arc: the single loudest colour in the interface.
+    juce::Colour arcCore          { 0xff5fe3f7 };
+    juce::Colour arcBloom         { 0x664fd8ee };
+    float arcBloomWidth    = 5.0f;
+    float arcBloomAlpha    = 0.40f;
+
+    // Active-tab pill and other filled chips.
+    juce::Colour pillFill         { 0xff123044 };
+    juce::Colour pillFillActive   { 0xff1d5f7a };
+    juce::Colour pillBorder       { 0x665fe3f7 };
+    juce::Colour pillText         { 0xffe8fbff };
+    float pillRadius       = 16.0f;
+
+    // Header preset capsule.
+    juce::Colour capsuleFill      { 0x66091726 };
+    juce::Colour capsuleBorder    { 0x4a4fd8ee };
+    float capsuleRadius    = 22.0f;
+
+    // Output meter bar and the header oscilloscope.
+    juce::Colour meterTrack       { 0xff0c1a26 };
+    juce::Colour meterFillLow     { 0xff2ad4e8 };
+    juce::Colour meterFillHigh    { 0xffa8f0ff };
+    juce::Colour scopeTrace       { 0xffdff6ff };
+    float meterBarHeight   = 8.0f;
+    float meterBarRadius   = 4.0f;
+
+    // Section-title glyphs.
+    juce::Colour glyphStroke      { 0xff7fe4f6 };
+    float glyphSize        = 18.0f;
+    float glyphStrokeWidth = 1.4f;
+
+    // Footer strip.
+    juce::Colour footerText       { 0xff3d5568 };
+    float footerHeight     = 26.0f;
+
     /** The single shared instance. Components read tokens from here. */
     static const RippleTheme& get()
     {

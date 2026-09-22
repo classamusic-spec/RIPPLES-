@@ -65,8 +65,12 @@ private:
 
     juce::Colour accentColour = RippleTheme::get().cyan;
 
-    // Cached geometry.
+    // Cached geometry. The three stroked ribbons that make up the luminous
+    // trace are built alongside the curve, so a frame is the wash plus three
+    // fills of cached geometry — nothing is stroked or allocated in paint().
     juce::Path             curve, fill;
+    juce::Path             coreStroke, glowStroke, bloomStroke;
+    juce::Path             wellClip;
     juce::Rectangle<float> plotBounds, labelBounds;
     bool                   showAxisLabels = false;
     float                  cutoffX = 0.0f, cutoffY = 0.0f;

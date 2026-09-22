@@ -115,6 +115,9 @@ private:
 
     void recomputeGeometry();
     void rebuildBackdrop (float deviceScale);
+    void rebuildSphere (float deviceScale);
+    void paintSphereBody (juce::Graphics&);
+    void paintSphereSurface (juce::Graphics&) const;
 
     void paintDepthWell (juce::Graphics& g) const;
     void paintRings (juce::Graphics& g);
@@ -180,6 +183,9 @@ private:
 
     // Cached static layer: deep gradient + pool + vignette.
     juce::Image backdrop;
+    juce::Image sphereLayer;
+    float       sphereScale = 0.0f;
+    float       sphereR = 1.0f;     // radius of the water sphere, in pixels
     juce::Image vessel;
     float       vesselScale = 0.0f;
     float backdropScale = 0.0f;

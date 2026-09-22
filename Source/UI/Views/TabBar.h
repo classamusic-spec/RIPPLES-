@@ -11,10 +11,12 @@ namespace ripples
 /**
     The page selector that sits between the macro strip and the tabbed content.
 
-    Deliberately typographic: widely tracked capitals, a hairline rule across the
-    full width and a single bright underline that slides to the selected tab. The
-    underline is the only thing that animates, and its timer stops the instant it
-    arrives, so a settled interface costs nothing.
+    Deliberately typographic: widely tracked capitals and a hairline rule across
+    the full width. The selected page is a filled rounded pill behind its label;
+    every other tab is plain dim text with no decoration at all. The pill glides
+    between tabs rather than jumping, and it is the only thing that animates —
+    its timer stops the instant it arrives and whenever the bar is hidden, so a
+    settled interface costs nothing.
 */
 class TabBar final : public juce::Component,
                      private juce::Timer
@@ -49,6 +51,13 @@ private:
     void updateTimerState();
     void recomputeTabWidths();
     juce::Rectangle<float> tabBounds (int index) const;
+
+    /** Where the pill wants to be for a given tab: horizontal extent only. */
+    juce::Rectangle<float> pillTargetFor (int index) const;
+
+    /** The pill as it should be drawn right now, inside the given text strip. */
+    juce::Rectangle<float> pillArea (juce::Rectangle<float> strip) const;
+
     int tabAt (juce::Point<int> p) const;
 
     juce::StringArray   tabs;
@@ -56,9 +65,10 @@ private:
     int   selected = 0;
     int   hovered  = -1;
 
-    float underlineX = 0.0f;
-    float underlineW = 0.0f;
-    bool  underlineValid = false;
+    // The animated pill, in horizontal terms; its height comes from the bar.
+    float pillX = 0.0f;
+    float pillW = 0.0f;
+    bool  pillValid = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (TabBar)
 };

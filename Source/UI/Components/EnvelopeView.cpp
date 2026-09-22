@@ -30,22 +30,93 @@ namespace
     constexpr int   kStagePoints    = 44;
     constexpr float kAmplitudeRatio = 0.92f;  // of the plot height
 
-    constexpr float kStrokeScale    = 1.7f;   // multiples of theme.borderWidth
-    constexpr float kGlowWidthInner = 3.0f;   // multiples of the crisp stroke width
-    constexpr float kGlowWidthOuter = 6.5f;
-    constexpr float kGlowAlphaInner = 0.34f;  // scaled by theme.glowAmount
-    constexpr float kGlowAlphaOuter = 0.16f;
-
-    constexpr float kFillAlphaTop   = 0.30f;
-    constexpr float kFillAlphaMid   = 0.11f;
+    constexpr float kFillAlphaTop   = 1.00f;  // multiples of the traceFill token alpha
+    constexpr float kFillAlphaMid   = 0.42f;
     constexpr float kFillMidStop    = 0.55f;
 
     constexpr float kGuideAlpha       = 0.55f;   // of panelBorderSoft
-    constexpr float kPlayheadLineAlpha = 0.30f;
-    constexpr float kPlayheadDotScale = 2.2f;    // multiples of theme.borderWidth
-    constexpr float kPlayheadHaloScale = 3.4f;
-    constexpr float kPlayheadHaloAlpha = 0.28f;
+    constexpr float kPlayheadLineAlpha = 0.34f;
+    constexpr float kPlayheadDotRatio  = 1.25f;  // multiples of the core trace width
+    constexpr float kPlayheadHaloRatio = 2.30f;
+    constexpr float kPlayheadHaloAlpha = 0.30f;
     constexpr float kRepaintThresholdPx = 0.5f;  // sub-pixel playhead moves are not worth a frame
+
+    //==========================================================================
+    // LUMINOUS TRACE
+    //
+    // A trace is three strokes of one piece of geometry: a very wide, very faint
+    // bloom, a mid halo, then the crisp core on top. The stroked outlines are
+    // built once, when the envelope or the bounds change, and paint() only fills
+    // them — so a frame is three fills of cached geometry, with no blur, no
+    // DropShadow and no image anywhere.
+    //==========================================================================
+
+    constexpr float kTraceRefHeight = 46.0f;   // plot height the theme widths are drawn for
+    constexpr float kTraceScaleMin  = 0.55f;   // a short graph must not be swallowed by its glow
+    constexpr float kTraceScaleMax  = 1.75f;   // ... and a 2560-wide editor keeps its proportions
+    constexpr float kMinGlowRatio   = 2.0f;    // the halo never collapses onto the core
+    constexpr float kMinBloomRatio  = 4.2f;
+
+    constexpr float kTintCore  = 0.22f;        // how far each layer leans toward the panel accent
+    constexpr float kTintGlow  = 0.62f;
+    constexpr float kTintBloom = 0.78f;
+    constexpr float kTintFill  = 0.70f;
+
+    struct TraceWidths { float core, glow, bloom; };
+
+    /** Theme trace widths, scaled to the height of the graph they belong to. */
+    TraceWidths traceWidthsFor (const RippleTheme& t, float plotHeight) noexcept
+    {
+        const float s    = juce::jlimit (kTraceScaleMin, kTraceScaleMax, plotHeight / kTraceRefHeight);
+        const float core = t.traceCoreWidth * juce::jmax (1.0f, s);
+
+        return { core,
+                 juce::jmax (t.traceGlowWidth  * s, core * kMinGlowRatio),
+                 juce::jmax (t.traceBloomWidth * s, core * kMinBloomRatio) };
+    }
+
+    /** Leans a trace token toward a panel accent without inventing a colour: the
+        token keeps its own alpha, only its hue moves. */
+    juce::Colour tinted (juce::Colour token, juce::Colour accent, float amount) noexcept
+    {
+        return token.interpolatedWith (accent.withAlpha (token.getFloatAlpha()), amount);
+    }
+
+    /** Strokes one ribbon into a cached outline. From a rebuild, never paint(). */
+    void buildRibbon (juce::Path& dest, const juce::Path& source, float width)
+    {
+        dest.clear();
+
+        if (source.isEmpty() || width <= 0.0f)
+            return;
+
+        juce::PathStrokeType (width, juce::PathStrokeType::curved,
+                              juce::PathStrokeType::rounded).createStrokedPath (dest, source);
+    }
+
+    /** Builds the three stroked ribbons for a curve. */
+    void buildTrace (const juce::Path& source, TraceWidths w,
+                     juce::Path& core, juce::Path& glow, juce::Path& bloom)
+    {
+        buildRibbon (bloom, source, w.bloom);
+        buildRibbon (glow,  source, w.glow);
+        buildRibbon (core,  source, w.core);
+    }
+
+    /** Fills a prepared trace back to front: bloom, halo, core. */
+    void paintTrace (juce::Graphics& g, const RippleTheme& t, juce::Colour accent,
+                     const juce::Path& core, const juce::Path& glow, const juce::Path& bloom,
+                     juce::AffineTransform transform = {})
+    {
+        g.setColour (tinted (t.traceBloom, accent, kTintBloom).withAlpha (t.traceBloomAlpha));
+        g.fillPath (bloom, transform);
+
+        g.setColour (tinted (t.traceGlow, accent, kTintGlow).withAlpha (t.traceGlowAlpha));
+        g.fillPath (glow, transform);
+
+        g.setColour (tinted (t.traceCore, accent, kTintCore));
+        g.fillPath (core, transform);
+    }
 
     /** log time compression — turns a duration into an axis length. */
     inline float timeToAxis (float seconds) noexcept
@@ -146,6 +217,17 @@ void EnvelopeView::resized()
         labelBounds = {};
 
     plotBounds = inner;
+
+    // The well outline, cached so the bloom can spill against the rounded
+    // corners without a Path being built inside paint().
+    const auto& theme = RippleTheme::get();
+    const auto  well  = getLocalBounds().toFloat().reduced ((float) RippleTheme::xs);
+
+    wellClip.clear();
+
+    if (well.getWidth() > 0.0f && well.getHeight() > 0.0f)
+        wellClip.addRoundedRectangle (well.reduced (theme.borderWidth), theme.controlRadius);
+
     rebuildPaths();
 }
 
@@ -155,6 +237,9 @@ void EnvelopeView::rebuildPaths()
     curve.clear();
     fill.clear();
     points.clear();
+    coreStroke.clear();
+    glowStroke.clear();
+    bloomStroke.clear();
 
     if (plotBounds.getWidth() <= 0.0f || plotBounds.getHeight() <= 0.0f)
         return;
@@ -255,6 +340,10 @@ void EnvelopeView::rebuildPaths()
     fill.lineTo (points.back().x, bottom);
     fill.lineTo (points.front().x, bottom);
     fill.closeSubPath();
+
+    // The ribbons are stroked here, once, and only filled from paint().
+    buildTrace (curve, traceWidthsFor (RippleTheme::get(), plotBounds.getHeight()),
+                coreStroke, glowStroke, bloomStroke);
 }
 
 //==============================================================================
@@ -290,14 +379,11 @@ void EnvelopeView::paint (juce::Graphics& g)
 
     drawWell (g, well, theme);
 
-    if (curve.isEmpty())
+    if (coreStroke.isEmpty() || wellClip.isEmpty())
         return;
 
-    juce::Path clipShape;
-    clipShape.addRoundedRectangle (well.reduced (theme.borderWidth), theme.controlRadius);
-
     const juce::Graphics::ScopedSaveState saved (g);
-    g.reduceClipRegion (clipShape);
+    g.reduceClipRegion (wellClip);
 
     //--------------------------------------------------------------------------
     // Quiet guides: the sustain level and the stage boundaries.
@@ -308,29 +394,20 @@ void EnvelopeView::paint (juce::Graphics& g)
         g.drawLine (x, plotBounds.getY(), x, plotBounds.getBottom(), theme.borderWidth);
 
     //--------------------------------------------------------------------------
-    // Soft vertical gradient under the curve.
-    juce::ColourGradient body (accentColour.withAlpha (kFillAlphaTop),
+    // Soft wash under the envelope, fading to nothing at the floor.
+    const auto wash = tinted (theme.traceFill, accentColour, kTintFill);
+
+    juce::ColourGradient body (wash.withMultipliedAlpha (kFillAlphaTop),
                                plotBounds.getCentreX(), plotBounds.getY(),
-                               accentColour.withAlpha (0.0f),
+                               wash.withAlpha (0.0f),
                                plotBounds.getCentreX(), plotBounds.getBottom(), false);
-    body.addColour (kFillMidStop, accentColour.withAlpha (kFillAlphaMid));
+    body.addColour (kFillMidStop, wash.withMultipliedAlpha (kFillAlphaMid));
     g.setGradientFill (body);
     g.fillPath (fill);
 
     //--------------------------------------------------------------------------
-    // Restrained bloom, then the crisp line.
-    const float stroke = theme.borderWidth * kStrokeScale;
-    const auto  joint  = juce::PathStrokeType::curved;
-    const auto  cap    = juce::PathStrokeType::rounded;
-
-    g.setColour (accentColour.withAlpha (kGlowAlphaOuter * theme.glowAmount));
-    g.strokePath (curve, juce::PathStrokeType (stroke * kGlowWidthOuter, joint, cap));
-
-    g.setColour (accentColour.withAlpha (kGlowAlphaInner * theme.glowAmount));
-    g.strokePath (curve, juce::PathStrokeType (stroke * kGlowWidthInner, joint, cap));
-
-    g.setColour (accentColour);
-    g.strokePath (curve, juce::PathStrokeType (stroke, joint, cap));
+    // The envelope itself: bloom, halo, crisp core.
+    paintTrace (g, theme, accentColour, coreStroke, glowStroke, bloomStroke);
 
     //--------------------------------------------------------------------------
     if (showStageLabels && ! labelBounds.isEmpty())
@@ -352,18 +429,21 @@ void EnvelopeView::paint (juce::Graphics& g)
     //--------------------------------------------------------------------------
     if (playhead >= 0.0f)
     {
+        const auto  widths = traceWidthsFor (theme, plotBounds.getHeight());
         const float x = plotBounds.getX() + playhead * plotBounds.getWidth();
         const float y = curveYAt (x);
 
-        g.setColour (accentColour.withAlpha (kPlayheadLineAlpha));
+        g.setColour (tinted (theme.traceGlow, accentColour, kTintGlow)
+                         .withAlpha (kPlayheadLineAlpha));
         g.drawLine (x, plotBounds.getY(), x, plotBounds.getBottom(), theme.borderWidth);
 
-        const float halo = theme.borderWidth * kPlayheadHaloScale;
-        g.setColour (accentColour.withAlpha (kPlayheadHaloAlpha));
+        const float halo = widths.core * kPlayheadHaloRatio;
+        g.setColour (tinted (theme.traceGlow, accentColour, kTintGlow)
+                         .withAlpha (kPlayheadHaloAlpha));
         g.fillEllipse (x - halo, y - halo, halo * 2.0f, halo * 2.0f);
 
-        const float dot = theme.borderWidth * kPlayheadDotScale;
-        g.setColour (theme.primaryText);
+        const float dot = widths.core * kPlayheadDotRatio;
+        g.setColour (tinted (theme.traceCore, accentColour, kTintCore));
         g.fillEllipse (x - dot, y - dot, dot * 2.0f, dot * 2.0f);
     }
 

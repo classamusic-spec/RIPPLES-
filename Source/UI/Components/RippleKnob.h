@@ -82,13 +82,21 @@ private:
     void refreshHoverFromMouse();
     float getNormalisedValue();
     float getDetailLevel() const;
-    juce::Font getLabelFontForSize() const;
-    juce::Font getValueFontForSize() const;
+    void refreshValueText();
+
+    static juce::Font labelFontForSize (Size size);
+    static juce::Font valueFontForSize (Size size);
 
     juce::String labelText;
+    juce::String labelUpper;    // cached: paint() must not build a String
+    juce::String valueString;   // cached: refreshed when the value changes
     juce::String tooltipText;
     Size         knobSize { Size::Medium };
     juce::Colour accentColour { RippleTheme::get().cyan };
+
+    // Fonts are fixed by the knob's size, so they are built once rather than on
+    // every paint — knobs are drawn dozens at a time.
+    const juce::Font labelFont, valueFont;
 
     KnobSlider slider { *this };
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> attachment;

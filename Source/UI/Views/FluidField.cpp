@@ -31,6 +31,11 @@ namespace
     constexpr float kUiScaleMax       = 2.30f;
 
     //--- Concentric ring construction --------------------------------------
+    // The water sphere.
+    constexpr float kSphereFit        = 0.86f;   // of the smaller field half-axis
+    constexpr int   kCausticVeins     = 7;       // refracted filaments across the face
+    constexpr int   kSurfaceRings     = 11;      // ripple rings wrapped on the surface
+
     constexpr float kRingInnerRadius  = 0.17f;   // radius of the innermost ring
     // The ring family is drawn inside this fraction of the field radius so that
     // kRingFit * kRingScaleSurface * (1 + kRingPerturbLimit) stays <= 1.0.
@@ -347,6 +352,8 @@ void FluidField::recomputeGeometry()
     uiScale = juce::jlimit (kUiScaleMin, kUiScaleMax,
                             juce::jmin (fieldRx, fieldRy) * 2.0f
                                 / (float) RippleTheme::grid (kScaleRefSteps));
+
+    sphereR = juce::jmax (1.0f, juce::jmin (fieldRx, fieldRy) * kSphereFit);
 }
 
 void FluidField::rebuildBackdrop (float deviceScale)
@@ -817,18 +824,29 @@ void FluidField::paint (juce::Graphics& g)
     const float deviceScale = math::clamp (g.getInternalContext().getPhysicalPixelScaleFactor(),
                                            kMinDeviceScale, kMaxDeviceScale);
 
-    const int wantedW = juce::jmax (1, juce::roundToInt ((float) getWidth() * deviceScale));
+    const int wantedW = juce::jmax (1, juce::roundToInt ((float) getWidth()  * deviceScale));
+    const int wantedH = juce::jmax (1, juce::roundToInt ((float) getHeight() * deviceScale));
 
     if (backdrop.isNull()
          || std::abs (deviceScale - backdropScale) > kScaleEpsilon
-         || backdrop.getWidth() != wantedW)
+         || backdrop.getWidth() != wantedW
+         || backdrop.getHeight() != wantedH)
     {
         rebuildBackdrop (deviceScale);
     }
 
+    if (sphereLayer.isNull()
+         || std::abs (deviceScale - sphereScale) > kScaleEpsilon
+         || sphereLayer.getWidth() != wantedW
+         || sphereLayer.getHeight() != wantedH)
+    {
+        rebuildSphere (deviceScale);
+    }
+
     if (vessel.isNull()
          || std::abs (deviceScale - vesselScale) > kScaleEpsilon
-         || vessel.getWidth() != wantedW)
+         || vessel.getWidth() != wantedW
+         || vessel.getHeight() != wantedH)
     {
         rebuildVessel (deviceScale);
     }
@@ -843,8 +861,8 @@ void FluidField::paint (juce::Graphics& g)
         g.fillAll (t.background);
     }
 
-    paintDepthWell (g);
-    paintRings (g);
+    paintSphereBody (g);
+    paintSphereSurface (g);
     paintRipples (g);
     paintParticles (g);
     paintGuides (g);
@@ -936,6 +954,227 @@ void FluidField::rebuildVessel (float scale)
 
     g.restoreState();
     ui::drawGlassRim (g, bounds, t.panelRadius, t.cyan);
+}
+
+
+//==============================================================================
+// THE WATER SPHERE
+//
+// A body of water held as a sphere, lit from the upper left. Built in two
+// parts: everything static (halo, body shading, rim light, specular) is
+// rendered once into an image, and only the things that actually move
+// (caustic veins drifting across the surface, ripple rings expanding on the
+// front face) are drawn per frame. Painting the whole thing live was not
+// affordable -- a radial gradient across this area costs milliseconds.
+//==============================================================================
+
+void FluidField::rebuildSphere (float scale)
+{
+    const auto& t = RippleTheme::get();
+
+    const int pw = juce::jmax (1, juce::roundToInt ((float) getWidth()  * scale));
+    const int ph = juce::jmax (1, juce::roundToInt ((float) getHeight() * scale));
+
+    if (getWidth() < 16 || getHeight() < 16 || sphereR <= 1.0f)
+    {
+        sphereLayer = {};
+        return;
+    }
+
+    sphereLayer = juce::Image (juce::Image::ARGB, pw, ph, true);
+    sphereScale = scale;
+
+    juce::Graphics g (sphereLayer);
+    g.addTransform (juce::AffineTransform::scale (scale));
+
+    const juce::Point<float> c { centreX, centreY };
+    const float R = sphereR;
+
+    // --- atmosphere: the sphere lights the water around it ------------------
+    {
+        const float haloR = R * 1.55f;
+        juce::ColourGradient halo (t.cyan.withMultipliedAlpha (0.16f), c.x, c.y,
+                                   t.cyan.withAlpha (0.0f), c.x, c.y + haloR, true);
+        halo.isRadial = true;
+        halo.addColour (0.62, t.cyan.withMultipliedAlpha (0.07f));
+        g.setGradientFill (halo);
+        g.fillEllipse (c.x - haloR, c.y - haloR, haloR * 2.0f, haloR * 2.0f);
+    }
+
+    const auto sphereBounds = juce::Rectangle<float> (R * 2.0f, R * 2.0f).withCentre (c);
+
+    // --- body: brightest toward the upper left, falling to near black -------
+    {
+        const juce::Point<float> lit { c.x - R * 0.30f, c.y - R * 0.32f };
+
+        juce::ColourGradient body (t.cyanBright.withMultipliedAlpha (0.34f), lit.x, lit.y,
+                                   t.backgroundDeep, lit.x, lit.y + R * 1.62f, true);
+        body.isRadial = true;
+        body.addColour (0.26, t.cyan.withMultipliedAlpha (0.24f));
+        body.addColour (0.52, t.cyanDim.withMultipliedAlpha (0.20f));
+        body.addColour (0.76, t.background.withMultipliedAlpha (0.94f));
+        g.setGradientFill (body);
+        g.fillEllipse (sphereBounds);
+    }
+
+    const juce::Graphics::ScopedSaveState inside (g);
+    juce::Path clip;
+    clip.addEllipse (sphereBounds);
+    g.reduceClipRegion (clip, {});
+
+    // --- limb darkening: the edge of a sphere turns away from the eye -------
+    {
+        juce::ColourGradient limb (t.backgroundDeep.withAlpha (0.0f), c.x, c.y,
+                                   t.backgroundDeep.withMultipliedAlpha (0.85f), c.x, c.y + R, true);
+        limb.isRadial = true;
+        limb.addColour (0.74, t.backgroundDeep.withAlpha (0.0f));
+        g.setGradientFill (limb);
+        g.fillEllipse (sphereBounds);
+    }
+
+    // --- fresnel rim: a sphere of water is brightest at its edge ------------
+    {
+        juce::Path rim;
+        rim.addEllipse (sphereBounds.reduced (1.0f));
+
+        juce::ColourGradient edge (t.cyanBright.withMultipliedAlpha (0.85f),
+                                   c.x - R * 0.72f, c.y - R * 0.72f,
+                                   t.cyan.withMultipliedAlpha (0.20f),
+                                   c.x + R * 0.72f, c.y + R * 0.80f, false);
+        edge.addColour (0.55, t.cyan.withMultipliedAlpha (0.42f));
+        g.setGradientFill (edge);
+        g.strokePath (rim, juce::PathStrokeType (2.2f));
+
+        // A second, softer pass just inside it reads as the thickness of the
+        // water rather than a drawn outline.
+        g.setGradientFill (edge);
+        g.strokePath (rim, juce::PathStrokeType (6.0f));
+    }
+
+    // --- specular: the light source seen in the surface ---------------------
+    {
+        const juce::Point<float> spec { c.x - R * 0.42f, c.y - R * 0.48f };
+
+        // A wide, very faint sheen with a small hot core inside it. A single
+        // soft blob reads as a smudge on the glass rather than a reflection.
+        const float wide = R * 0.34f;
+        juce::ColourGradient sheen (t.cyanBright.withMultipliedAlpha (0.16f), spec.x, spec.y,
+                                    t.cyanBright.withAlpha (0.0f), spec.x, spec.y + wide, true);
+        sheen.isRadial = true;
+        g.setGradientFill (sheen);
+        g.fillEllipse (juce::Rectangle<float> (wide * 2.0f, wide * 1.4f).withCentre (spec));
+
+        const float core = R * 0.085f;
+        juce::ColourGradient hot (t.primaryText.withMultipliedAlpha (0.62f), spec.x, spec.y,
+                                  t.primaryText.withAlpha (0.0f), spec.x, spec.y + core, true);
+        hot.isRadial = true;
+        g.setGradientFill (hot);
+        g.fillEllipse (juce::Rectangle<float> (core * 2.2f, core * 1.6f).withCentre (spec));
+    }
+}
+
+void FluidField::paintSphereBody (juce::Graphics& g)
+{
+    if (sphereLayer.isValid())
+    {
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (sphereLayer, getLocalBounds().toFloat());
+    }
+}
+
+void FluidField::paintSphereSurface (juce::Graphics& g) const
+{
+    const auto& t = RippleTheme::get();
+
+    if (sphereR <= 1.0f)
+        return;
+
+    const juce::Point<float> c { fieldCx, fieldCy };
+    const float R = sphereR;
+
+    const juce::Graphics::ScopedSaveState state (g);
+    juce::Path clip;
+    clip.addEllipse (juce::Rectangle<float> (R * 2.0f, R * 2.0f).withCentre ({ centreX, centreY }));
+    g.reduceClipRegion (clip, {});
+
+    const float glow = 0.55f + 0.45f * glowSmoothed;
+
+    const auto node = nodeToPixels (nodeX, nodeY);
+
+    // --- the surface is water, so it ripples --------------------------------
+    // Concentric rings radiating from the node and wrapped onto the sphere:
+    // each ring is foreshortened more as it climbs toward the limb, which is
+    // what makes the set read as sitting ON a curved surface rather than
+    // floating in front of it. An earlier version drew evenly spaced latitude
+    // lines and looked like a wireframe globe.
+    {
+        juce::Path ring;
+
+        for (int i = 0; i < kSurfaceRings; ++i)
+        {
+            const float f = (float) i / (float) kSurfaceRings;
+            const float phase = std::fmod (driftPhaseB * 0.22f + f, 1.0f);
+
+            const float rr = R * (0.06f + phase * 1.18f);
+
+            if (rr < 2.0f)
+                continue;
+
+            // Flatten with distance from the node: the far side of a sphere is
+            // seen at a glancing angle.
+            const float squash = juce::jlimit (0.18f, 0.92f, 1.0f - phase * 0.78f);
+
+            // Fade in from the centre, out again past the limb.
+            const float a = std::sin (phase * math::pi) * 0.30f * glow;
+
+            if (a <= 0.005f)
+                continue;
+
+            ring.clear();
+            ring.addEllipse (node.x - rr, node.y - rr * squash, rr * 2.0f, rr * 2.0f * squash);
+
+            g.setColour (t.traceGlow.withMultipliedAlpha (a * 0.5f));
+            g.strokePath (ring, juce::PathStrokeType (2.8f));
+            g.setColour (t.traceCore.withMultipliedAlpha (a));
+            g.strokePath (ring, juce::PathStrokeType (1.0f));
+        }
+    }
+
+    // --- caustic filaments ---------------------------------------------------
+    // Light refracted through moving water gathers into a few bright sinuous
+    // veins. These run roughly with the sphere's meridians and wander, so they
+    // never resolve into a grid.
+    {
+        juce::Path vein;
+
+        for (int i = 0; i < kCausticVeins; ++i)
+        {
+            const float f = (float) (i + 0.5f) / (float) kCausticVeins;
+            const float phase = driftPhaseA * (0.35f + 0.4f * f) + f * math::twoPi;
+
+            // Where this meridian crosses the equator, drifting slowly.
+            const float x = c.x + R * (0.92f * std::sin (phase * 0.23f + f * 5.1f));
+            const float halfH = R * std::sqrt (juce::jmax (0.02f, 1.0f - std::pow ((x - c.x) / R, 2.0f)));
+
+            // Bow it, and wobble the bow, so the vein breathes.
+            const float bow = R * (0.10f + 0.22f * f) * std::sin (phase);
+
+            vein.clear();
+            vein.startNewSubPath (x, c.y - halfH);
+            vein.cubicTo (x + bow,        c.y - halfH * 0.34f,
+                          x - bow * 0.7f, c.y + halfH * 0.34f,
+                          x,              c.y + halfH);
+
+            const float a = (0.09f + 0.13f * (0.5f + 0.5f * std::sin (phase * 0.8f + f * 2.3f))) * glow;
+
+            g.setColour (t.traceBloom.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, a * 0.85f)));
+            g.strokePath (vein, juce::PathStrokeType (7.0f));
+            g.setColour (t.traceGlow.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, a * 0.7f)));
+            g.strokePath (vein, juce::PathStrokeType (2.6f));
+            g.setColour (t.traceCore.withMultipliedAlpha (juce::jlimit (0.0f, 1.0f, a * 0.8f)));
+            g.strokePath (vein, juce::PathStrokeType (0.9f));
+        }
+    }
 }
 
 void FluidField::paintDepthWell (juce::Graphics& g) const

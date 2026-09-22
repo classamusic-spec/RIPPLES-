@@ -44,7 +44,11 @@ void RippleKnob::KnobSlider::focusLost (juce::Component::FocusChangeType type)
 
 //==============================================================================
 RippleKnob::RippleKnob (const juce::String& label, Size size)
-    : labelText (label), knobSize (size)
+    : labelText (label),
+      labelUpper (label.toUpperCase()),
+      knobSize (size),
+      labelFont (labelFontForSize (size)),
+      valueFont (valueFontForSize (size))
 {
     const auto& theme = RippleTheme::get();
 
@@ -73,6 +77,8 @@ RippleKnob::RippleKnob (const juce::String& label, Size size)
 
     setTitle (labelText);
     setInterceptsMouseClicks (false, true);
+
+    refreshValueText();
 }
 
 RippleKnob::~RippleKnob()
@@ -119,16 +125,29 @@ float RippleKnob::getDetailLevel() const
     }
 }
 
-juce::Font RippleKnob::getLabelFontForSize() const
+juce::Font RippleKnob::labelFontForSize (Size size)
 {
     const auto& theme = RippleTheme::get();
-    return knobSize == Size::Small ? theme.smallFont() : theme.labelFont();
+    return size == Size::Small ? theme.smallFont() : theme.labelFont();
 }
 
-juce::Font RippleKnob::getValueFontForSize() const
+juce::Font RippleKnob::valueFontForSize (Size size)
 {
     const auto& theme = RippleTheme::get();
-    return knobSize == Size::Small ? theme.smallFont() : theme.valueFont();
+    return size == Size::Small ? theme.smallFont() : theme.valueFont();
+}
+
+void RippleKnob::refreshValueText()
+{
+    // Formatting a value allocates a String, so it happens when the value moves
+    // rather than on every frame of a hover fade.
+    auto text = slider.getTextFromValue (slider.getValue());
+
+    if (text == valueString)
+        return;
+
+    valueString = std::move (text);
+    repaint (valueArea);
 }
 
 //==============================================================================
@@ -150,6 +169,7 @@ void RippleKnob::attach (juce::AudioProcessorValueTreeState& apvts, const juce::
         slider.setDescription (name);
     }
 
+    refreshValueText();
     repaint();
 }
 
@@ -168,7 +188,8 @@ void RippleKnob::setLabel (const juce::String& label)
     if (labelText == label)
         return;
 
-    labelText = label;
+    labelText  = label;
+    labelUpper = label.toUpperCase();
     slider.setTitle (labelText);
     setTitle (labelText);
     repaint (labelArea);
@@ -239,22 +260,23 @@ void RippleKnob::paint (juce::Graphics& g)
 
     ui::drawKnob (g, knobArea.toFloat(), style);
 
-    // Never an unlabelled mystery control: name above, value below.
-    if (labelText.isNotEmpty())
+    // Never an unlabelled mystery control: small tracked capitals above, the
+    // formatted value below. Both strings and both fonts are cached, so a hover
+    // fade repaints without allocating anything.
+    if (labelUpper.isNotEmpty())
     {
-        g.setFont (getLabelFontForSize());
-        g.setColour (enabled ? theme.secondaryText : theme.disabledText);
-        g.drawFittedText (labelText.toUpperCase(), labelArea, juce::Justification::centred, 1, 0.8f);
+        g.setFont (labelFont);
+        g.setColour (enabled ? theme.secondaryText.interpolatedWith (theme.primaryText, hoverAmount * 0.45f)
+                             : theme.disabledText);
+        g.drawFittedText (labelUpper, labelArea, juce::Justification::centred, 1, 0.8f);
     }
 
-    const auto valueText = slider.getTextFromValue (slider.getValue());
-
-    if (valueText.isNotEmpty())
+    if (valueString.isNotEmpty())
     {
-        g.setFont (getValueFontForSize());
+        g.setFont (valueFont);
         g.setColour (enabled ? theme.primaryText.interpolatedWith (accentColour, hoverAmount * 0.5f)
                              : theme.disabledText);
-        g.drawFittedText (valueText, valueArea, juce::Justification::centred, 1, 0.8f);
+        g.drawFittedText (valueString, valueArea, juce::Justification::centred, 1, 0.8f);
     }
 }
 
@@ -283,6 +305,7 @@ void RippleKnob::enablementChanged()
 
 void RippleKnob::sliderValueChanged (juce::Slider*)
 {
+    refreshValueText();
     repaint();
 }
 

@@ -18,19 +18,98 @@ namespace
 
     constexpr float kVisibleCycles   = 2.0f;   // cycles shown across the plot width
     constexpr float kCycleMargin     = 1.0f;   // spare cycle each side, so drift never runs out
-    constexpr float kPointsPerPixel  = 1.6f;   // curve resolution
+    constexpr float kPointsPerPixel  = 1.0f;   // curve resolution, samples per path pixel
     constexpr int   kMinPoints       = 128;
-    constexpr int   kMaxPoints       = 1024;
+    constexpr int   kMaxPoints       = 768;
 
-    constexpr float kAmplitudeRatio  = 0.80f;  // of the plot half-height
-    constexpr float kStrokeScale     = 1.7f;   // multiples of theme.borderWidth
-    constexpr float kGlowWidthInner  = 3.0f;   // multiples of the crisp stroke width
-    constexpr float kGlowWidthOuter  = 6.5f;
-    constexpr float kGlowAlphaInner  = 0.34f;  // scaled by theme.glowAmount
-    constexpr float kGlowAlphaOuter  = 0.16f;
+    constexpr float kAmplitudeRatio  = 0.86f;  // of the plot half-height — the wave fills its well
 
     constexpr float kAutoGainMin     = 0.5f;   // bounds on the per-rebuild normalisation
     constexpr float kAutoGainMax     = 2.0f;
+
+    // The ghost: the same ribbon, a fraction of a cycle behind and a touch
+    // lower. Two layers only — it is depth, not a second subject.
+    constexpr float kGhostPhaseOffset = 0.055f;  // cycles
+    constexpr float kGhostDropRatio   = 0.07f;   // of the plot height
+    constexpr float kGhostHaloAlpha   = 0.60f;   // multiples of the traceGhost token alpha
+    constexpr float kGhostCoreAlpha   = 1.00f;
+    constexpr float kTintGhost        = 0.35f;
+
+    //==========================================================================
+    // LUMINOUS TRACE
+    //
+    // A trace is three strokes of one piece of geometry: a very wide, very faint
+    // bloom, a mid halo, then the crisp core on top. The stroked outlines are
+    // built once, when the curve or the bounds change, and paint() only fills
+    // them — so a frame is three fills of cached geometry, with no blur, no
+    // DropShadow and no image anywhere.
+    //==========================================================================
+
+    constexpr float kTraceRefHeight = 46.0f;   // plot height the theme widths are drawn for
+    constexpr float kTraceScaleMin  = 0.55f;   // a short graph must not be swallowed by its glow
+    constexpr float kTraceScaleMax  = 1.75f;   // ... and a 2560-wide editor keeps its proportions
+    constexpr float kMinGlowRatio   = 2.0f;    // the halo never collapses onto the core
+    constexpr float kMinBloomRatio  = 4.2f;
+
+    constexpr float kTintCore  = 0.22f;        // how far each layer leans toward the panel accent
+    constexpr float kTintGlow  = 0.62f;
+    constexpr float kTintBloom = 0.78f;
+
+    struct TraceWidths { float core, glow, bloom; };
+
+    /** Theme trace widths, scaled to the height of the graph they belong to. */
+    TraceWidths traceWidthsFor (const RippleTheme& t, float plotHeight) noexcept
+    {
+        const float s    = juce::jlimit (kTraceScaleMin, kTraceScaleMax, plotHeight / kTraceRefHeight);
+        const float core = t.traceCoreWidth * juce::jmax (1.0f, s);
+
+        return { core,
+                 juce::jmax (t.traceGlowWidth  * s, core * kMinGlowRatio),
+                 juce::jmax (t.traceBloomWidth * s, core * kMinBloomRatio) };
+    }
+
+    /** Leans a trace token toward a panel accent without inventing a colour: the
+        token keeps its own alpha, only its hue moves. */
+    juce::Colour tinted (juce::Colour token, juce::Colour accent, float amount) noexcept
+    {
+        return token.interpolatedWith (accent.withAlpha (token.getFloatAlpha()), amount);
+    }
+
+    /** Strokes one ribbon into a cached outline. From a rebuild, never paint(). */
+    void buildRibbon (juce::Path& dest, const juce::Path& source, float width)
+    {
+        dest.clear();
+
+        if (source.isEmpty() || width <= 0.0f)
+            return;
+
+        juce::PathStrokeType (width, juce::PathStrokeType::curved,
+                              juce::PathStrokeType::rounded).createStrokedPath (dest, source);
+    }
+
+    /** Builds the three stroked ribbons for a curve. */
+    void buildTrace (const juce::Path& source, TraceWidths w,
+                     juce::Path& core, juce::Path& glow, juce::Path& bloom)
+    {
+        buildRibbon (bloom, source, w.bloom);
+        buildRibbon (glow,  source, w.glow);
+        buildRibbon (core,  source, w.core);
+    }
+
+    /** Fills a prepared trace back to front: bloom, halo, core. */
+    void paintTrace (juce::Graphics& g, const RippleTheme& t, juce::Colour accent,
+                     const juce::Path& core, const juce::Path& glow, const juce::Path& bloom,
+                     juce::AffineTransform transform = {})
+    {
+        g.setColour (tinted (t.traceBloom, accent, kTintBloom).withAlpha (t.traceBloomAlpha));
+        g.fillPath (bloom, transform);
+
+        g.setColour (tinted (t.traceGlow, accent, kTintGlow).withAlpha (t.traceGlowAlpha));
+        g.fillPath (glow, transform);
+
+        g.setColour (tinted (t.traceCore, accent, kTintCore));
+        g.fillPath (core, transform);
+    }
 
     // Water only: rebuild the cached path every N frames (20 Hz at 60 fps).
     // Its internal motion has a period of many seconds, so this is invisibly
@@ -116,7 +195,19 @@ void WaveformView::setAnimated (bool shouldAnimate)
 //==============================================================================
 void WaveformView::resized()
 {
+    const auto& theme = RippleTheme::get();
+
     plotBounds = getLocalBounds().toFloat().reduced ((float) RippleTheme::sm);
+
+    // The well outline, cached so the bloom can spill against the rounded
+    // corners without a Path being built inside paint().
+    const auto well = getLocalBounds().toFloat().reduced ((float) RippleTheme::xs);
+
+    wellClip.clear();
+
+    if (well.getWidth() > 0.0f && well.getHeight() > 0.0f)
+        wellClip.addRoundedRectangle (well.reduced (theme.borderWidth), theme.controlRadius);
+
     rebuildPath();
 }
 
@@ -288,6 +379,9 @@ float WaveformView::waveSample (float phase01) const noexcept
 void WaveformView::rebuildPath()
 {
     curve.clear();
+    coreStroke.clear();
+    glowStroke.clear();
+    bloomStroke.clear();
 
     if (plotBounds.getWidth() <= 0.0f || plotBounds.getHeight() <= 0.0f)
         return;
@@ -330,6 +424,10 @@ void WaveformView::rebuildPath()
         if (i == 0) curve.startNewSubPath (x, y);
         else        curve.lineTo (x, y);
     }
+
+    // The ribbons are stroked here, once, and only filled from paint().
+    buildTrace (curve, traceWidthsFor (RippleTheme::get(), plotBounds.getHeight()),
+                coreStroke, glowStroke, bloomStroke);
 }
 
 //==============================================================================
@@ -348,14 +446,11 @@ void WaveformView::paint (juce::Graphics& g)
     if (animated && ! isTimerRunning())
         updateTimerState();
 
-    if (curve.isEmpty())
+    if (coreStroke.isEmpty() || wellClip.isEmpty())
         return;
 
-    juce::Path clipShape;
-    clipShape.addRoundedRectangle (well.reduced (theme.borderWidth), theme.controlRadius);
-
     const juce::Graphics::ScopedSaveState saved (g);
-    g.reduceClipRegion (clipShape);
+    g.reduceClipRegion (wellClip);
 
     // Zero axis.
     g.setColour (theme.panelBorderSoft);
@@ -364,20 +459,23 @@ void WaveformView::paint (juce::Graphics& g)
 
     const auto drift = juce::AffineTransform::translation (-driftPhase * pixelsPerCycle, 0.0f);
 
-    const float stroke = theme.borderWidth * kStrokeScale;
-    const auto  joint  = juce::PathStrokeType::curved;
-    const auto  cap    = juce::PathStrokeType::rounded;
+    //--------------------------------------------------------------------------
+    // The ghost: the same ribbon a fraction of a cycle behind and slightly
+    // lower. Two layers, dim — it is what gives the wave depth rather than
+    // reading as a decal on the glass.
+    const auto ghostShift = drift.translated (-kGhostPhaseOffset * pixelsPerCycle,
+                                              kGhostDropRatio * plotBounds.getHeight());
+    const auto ghostColour = tinted (theme.traceGhost, accentColour, kTintGhost);
 
-    // Cheap bloom: two wide, faint passes beneath the crisp line. No blurred
-    // layer, no image allocation.
-    g.setColour (accentColour.withAlpha (kGlowAlphaOuter * theme.glowAmount));
-    g.strokePath (curve, juce::PathStrokeType (stroke * kGlowWidthOuter, joint, cap), drift);
+    g.setColour (ghostColour.withMultipliedAlpha (kGhostHaloAlpha));
+    g.fillPath (glowStroke, ghostShift);
 
-    g.setColour (accentColour.withAlpha (kGlowAlphaInner * theme.glowAmount));
-    g.strokePath (curve, juce::PathStrokeType (stroke * kGlowWidthInner, joint, cap), drift);
+    g.setColour (ghostColour.withMultipliedAlpha (kGhostCoreAlpha));
+    g.fillPath (coreStroke, ghostShift);
 
-    g.setColour (accentColour);
-    g.strokePath (curve, juce::PathStrokeType (stroke, joint, cap), drift);
+    //--------------------------------------------------------------------------
+    // The wave itself: bloom, halo, crisp core.
+    paintTrace (g, theme, accentColour, coreStroke, glowStroke, bloomStroke, drift);
 }
 
 } // namespace ripples

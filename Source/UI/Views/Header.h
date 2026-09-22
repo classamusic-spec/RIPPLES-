@@ -4,8 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "Presets/PresetManager.h"
-#include "UI/Components/RippleButton.h"
-#include "UI/Components/RippleKnob.h"
+#include "UI/Theme/RippleTheme.h"
 #include "Utilities/VisualizationState.h"
 
 #include <functional>
@@ -16,12 +15,18 @@ namespace ripples
 
 //==============================================================================
 /**
-    The top band: identity on the left, the preset on the centre line, the
-    preset actions next to it, and the output on the right.
+    The top band.
 
-    The only moving part is the output meter, which is driven by a timer that
-    stops the moment the header is off screen, so a hidden or minimised editor
-    costs nothing.
+        WORDMARK        R I P P L E S  /  D I V E   I N T O   S O U N D
+        CAPSULE         ‹  preset name  /  CATEGORY · TAG · TAG  ›
+        ACTIONS         heart, die, then BROWSE / INIT / SETTINGS as plain links
+        OUTPUT          a live scope over a horizontal level bar
+
+    The capsule, the wordmark metrics and every glyph path are built in
+    resized(); paint() only fills already-measured rectangles and already-built
+    paths. The one moving part is the output cluster, whose two small children
+    repaint themselves so a level change never invalidates the whole band, and
+    whose timer stops the moment the header is off screen.
 */
 class Header final : public juce::Component,
                      private juce::Timer
@@ -42,35 +47,51 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void mouseDown (const juce::MouseEvent&) override;
+    void mouseMove (const juce::MouseEvent&) override;
     void visibilityChanged() override;
     void parentHierarchyChanged() override;
 
 private:
     //==========================================================================
-    class LevelMeter;      // vertical stereo output meter
+    class GlyphButton;     // heart / die / chevron, drawn as a cached path
+    class TextLink;        // dim, letter-spaced text button
+    class Scope;           // rolling output waveform
+    class OutputBar;       // level readout that doubles as the output gain
     class SettingsPanel;   // voice + master controls, shown in a call-out
 
     void timerCallback() override;
     void updateTimerState();
     void showSettings();
-    void updateButtonTexts (bool compact);
+
+    /** Width the action row needs with `linkLevel` text links visible (0..3). */
+    int measureActions (int linkLevel) const;
+    void placeActions (juce::Rectangle<int> area, int linkLevel);
+
+    /** Re-fits the wordmark and the preset name to the space they were given. */
+    void updateWordmarkFont (int maxWidth, bool compact);
+    void updatePresetFont();
 
     //==========================================================================
     juce::AudioProcessorValueTreeState& state;
     VisualizationState& visuals;
     PresetManager& presetManager;
 
-    RippleButton prevButton, nextButton;
-    RippleButton favouriteButton, browseButton, randomButton, initButton, settingsButton;
+    std::unique_ptr<GlyphButton> prevButton, nextButton, favouriteButton, randomButton;
+    std::unique_ptr<TextLink>    browseLink, initLink, settingsLink;
+    std::unique_ptr<Scope>       scope;
+    std::unique_ptr<OutputBar>   outputBar;
 
-    std::unique_ptr<LevelMeter> meter;
-    std::unique_ptr<RippleKnob> outputGain;
+    // Painted areas, all filled in by resized().
+    juce::Rectangle<int> logoArea, taglineArea, capsuleArea;
+    juce::Rectangle<int> presetTextArea, presetNameArea, presetTagArea;
+    juce::Rectangle<int> outLabelArea;
 
-    // Painted areas, filled in by resized().
-    juce::Rectangle<int> logoArea, presetArea;
+    juce::Font wordmarkFont { RippleTheme::get().titleFont() };
+    juce::Font presetFont   { RippleTheme::get().sectionFont() };
 
-    juce::String presetName, presetDetail;
+    juce::String presetName, presetDetail, outputValueText;
     bool presetIsModified = false;
+    bool showTagLine = true;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Header)
 };

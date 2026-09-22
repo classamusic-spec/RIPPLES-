@@ -58,8 +58,12 @@ private:
     float        playhead        = -1.0f;   // <0 = hidden
     float        playheadPainted = -1.0f;   // last position actually drawn
 
-    // Cached geometry.
+    // Cached geometry. The three stroked ribbons that make up the luminous
+    // trace are built alongside the curve, so a frame is the wash plus three
+    // fills of cached geometry — nothing is stroked or allocated in paint().
     juce::Path                      curve, fill;
+    juce::Path                      coreStroke, glowStroke, bloomStroke;
+    juce::Path                      wellClip;
     std::vector<juce::Point<float>> points;     // x-monotonic, for the playhead lookup
     juce::Rectangle<float>          plotBounds, labelBounds;
     float                           stageX[3] {};   // x at the end of A, D and S
