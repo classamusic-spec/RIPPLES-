@@ -159,9 +159,9 @@ struct RippleTheme
     //==========================================================================
 
     // The water column, top (aerated, lighter) to bottom (dense, dark).
-    juce::Colour liquidTop        { 0x9c1a3350 };
-    juce::Colour liquidMid        { 0xa60e1d31 };
-    juce::Colour liquidDeep       { 0xbe050b15 };
+    juce::Colour liquidTop        { 0x5c1a3350 };
+    juce::Colour liquidMid        { 0x780e1d31 };
+    juce::Colour liquidDeep       { 0x9e050b15 };
 
     // Glass itself. The rim is lit from above, so its top is far brighter than
     // its bottom; the inner wall is the refracted back edge seen through the

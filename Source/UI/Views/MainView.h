@@ -4,6 +4,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "Presets/PresetManager.h"
+#include "UI/Components/LiquidBackdrop.h"
 #include "UI/Views/EffectsPage.h"
 #include "UI/Views/FluidField.h"
 #include "UI/Views/Header.h"
@@ -43,17 +44,12 @@ public:
     ~MainView() override;
 
     void paint (juce::Graphics&) override;
+    void paintOverChildren (juce::Graphics&) override;
 
 private:
-    /** Renders the static water backdrop once per size / device scale. */
-    void rebuildBackdrop (float deviceScale);
-
     /** Measures the bottom strip. Called from resized(), never from paint(). */
     void layoutFooter();
     void paintFooter (juce::Graphics&) const;
-
-    juce::Image backdrop;
-    float       backdropScale = 0.0f;
 
     juce::Rectangle<int> footerArea, footerLeftArea, footerVersionArea,
                          footerRightArea, footerRuleArea;
@@ -68,6 +64,7 @@ private:
     PresetManager& presetManager;
     std::function<void()> previousPresetCallback;
 
+    LiquidBackdrop  backdrop;
     Header          header;
     OscillatorPanel oscillatorA, oscillatorB;
     FluidField      fluidField;

@@ -44,8 +44,8 @@ namespace
     // the blit cost is set by the destination, not the source, so resolution
     // here buys sharpness almost for nothing. What it costs is the shading
     // loop, which is linear in the cell count.
-    constexpr int   kWaterGridShort   = 132;     // cells on the pool's shorter axis
-    constexpr int   kWaterGridLong    = 300;      // cap on the longer axis
+    constexpr int   kWaterGridShort   = 116;     // cells on the pool's shorter axis
+    constexpr int   kWaterGridLong    = 248;      // cap on the longer axis
     constexpr float kGridReference    = 96.0f;   // the gains below were tuned here
     constexpr float kWaterSway        = 0.028f;  // of the pool half-width, at full CURRENT
     constexpr float kStandingThresh   = 0.02f;   // RIPPLE level below which nothing is driven

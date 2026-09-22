@@ -53,6 +53,7 @@ MainView::MainView (juce::AudioProcessorValueTreeState& apvts,
                     VisualizationState& vis,
                     PresetManager& presets)
     : presetManager (presets),
+      backdrop (vis),
       header (apvts, vis, presets),
       oscillatorA (apvts, OscillatorPanel::Slot::A),
       oscillatorB (apvts, OscillatorPanel::Slot::B),
@@ -63,6 +64,7 @@ MainView::MainView (juce::AudioProcessorValueTreeState& apvts,
       effectsPage (apvts),
       presetBrowser (presets)
 {
+    addAndMakeVisible (backdrop);   // first, so it sits behind everything
     addAndMakeVisible (header);
     addAndMakeVisible (oscillatorA);
     addAndMakeVisible (fluidField);
@@ -113,32 +115,16 @@ void MainView::showPage (int index)
 //==============================================================================
 void MainView::paint (juce::Graphics& g)
 {
-    // The whole backdrop -- water gradient, caustics and vignette -- is static
-    // for a given size. Painting it live cost roughly 35 ms a frame at
-    // 1600x950, because a radial gradient filled across 1.5 million pixels is
-    // evaluated per pixel. Rendered once and blitted, it is effectively free.
-    const float scale = juce::jlimit (0.5f, 4.0f,
-                                      g.getInternalContext().getPhysicalPixelScaleFactor());
+    // The animated water is a child (LiquidBackdrop), drawn on top of this and
+    // behind every panel. All that is left here is a solid base in case the
+    // backdrop has not been sized yet.
+    g.fillAll (RippleTheme::get().background);
+}
 
-    const int wanted = juce::jmax (1, juce::roundToInt ((float) getWidth() * scale));
-
-    if (backdrop.isNull() || std::abs (scale - backdropScale) > 0.01f
-         || backdrop.getWidth() != wanted)
-    {
-        rebuildBackdrop (scale);
-    }
-
-    if (backdrop.isValid())
-    {
-        g.setImageResamplingQuality (juce::Graphics::lowResamplingQuality);
-        g.drawImage (backdrop, getLocalBounds().toFloat());
-    }
-    else
-    {
-        g.fillAll (RippleTheme::get().background);
-    }
-
-    if (! footerArea.isEmpty() && g.getClipBounds().intersects (footerArea))
+void MainView::paintOverChildren (juce::Graphics& g)
+{
+    // The footer sits over the animated backdrop, not under it.
+    if (! footerArea.isEmpty())
         paintFooter (g);
 }
 
@@ -217,75 +203,12 @@ void MainView::paintFooter (juce::Graphics& g) const
     }
 }
 
-void MainView::rebuildBackdrop (float scale)
-{
-    const auto& t = RippleTheme::get();
-
-    const int pw = juce::jmax (1, juce::roundToInt ((float) getWidth()  * scale));
-    const int ph = juce::jmax (1, juce::roundToInt ((float) getHeight() * scale));
-
-    if (getWidth() < 4 || getHeight() < 4)
-    {
-        backdrop = {};
-        return;
-    }
-
-    backdrop = juce::Image (juce::Image::RGB, pw, ph, false);
-    backdropScale = scale;
-
-    juce::Graphics g (backdrop);
-    g.addTransform (juce::AffineTransform::scale (scale));
-
-    const auto bounds = getLocalBounds().toFloat();
-
-    // Light at the surface, darkness below: the whole instrument sits in water.
-    juce::ColourGradient water (t.backgroundLift, bounds.getCentreX(), bounds.getY(),
-                                t.backgroundDeep, bounds.getCentreX(), bounds.getBottom(),
-                                false);
-    water.addColour (0.45, t.background);
-
-    g.setGradientFill (water);
-    g.fillRect (bounds);
-
-    // Caustics: light through a moving surface lands in soft overlapping bands
-    // rather than evenly. This is what stops the backdrop reading as flat paint
-    // and gives the glass panels something to sit IN. Deliberately near the
-    // threshold of visibility -- it should be felt, not noticed.
-    {
-        const juce::Graphics::ScopedSaveState state (g);
-
-        const float w = bounds.getWidth();
-        const float h = bounds.getHeight();
-
-        for (int i = 0; i < 5; ++i)
-        {
-            // Irrational spacing so the bands never line up into a pattern.
-            const float phase  = (float) i * 0.6180339f;
-            const float cx     = bounds.getX() + w * (0.12f + 0.78f * std::fmod (phase * 1.37f, 1.0f));
-            const float radius = w * (0.28f + 0.22f * std::fmod (phase * 2.11f, 1.0f));
-            const float cy     = bounds.getY() + h * (0.05f + 0.35f * std::fmod (phase * 0.77f, 1.0f));
-
-            juce::ColourGradient pool (t.causticFloor.withMultipliedAlpha (0.22f), cx, cy,
-                                       t.causticFloor.withAlpha (0.0f),           cx, cy + radius, true);
-            pool.isRadial = true;
-            g.setGradientFill (pool);
-            g.fillEllipse (cx - radius, cy - radius * 0.62f, radius * 2.0f, radius * 1.24f);
-        }
-    }
-
-    // A vignette settles the edges so the eye lands on the Fluid Field.
-    {
-        juce::ColourGradient vig (t.backgroundDeep.withAlpha (0.0f), bounds.getCentreX(), bounds.getCentreY(),
-                                  t.backgroundDeep.withAlpha (0.55f), bounds.getCentreX(), bounds.getBottom(), true);
-        vig.isRadial = true;
-        g.setGradientFill (vig);
-        g.fillRect (bounds);
-    }
-}
-
 //==============================================================================
 void MainView::resized()
 {
+    // The animated water fills the whole window, behind everything else.
+    backdrop.setBounds (getLocalBounds());
+
     const bool compact = getWidth() < kCompactWidth || getHeight() < kCompactHeight;
 
     const int margin = compact ? RippleTheme::md : RippleTheme::lg;
