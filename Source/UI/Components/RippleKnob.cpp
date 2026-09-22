@@ -240,6 +240,10 @@ void RippleKnob::resized()
     // The slider covers the whole control, so a drag started on the label
     // works exactly like a drag started on the body.
     slider.setBounds (getLocalBounds());
+
+    // Layout is also the safety net for the cached value text: whatever the
+    // parameter's formatting ended up being, it is correct by the first paint.
+    refreshValueText();
 }
 
 void RippleKnob::paint (juce::Graphics& g)
