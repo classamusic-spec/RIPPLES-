@@ -4,6 +4,8 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "Utilities/VisualizationState.h"
+#include "UI/Views/WaterSurface.h"
+#include "Utilities/RandomGenerator.h"
 
 #include <array>
 #include <cstdint>
@@ -116,6 +118,9 @@ private:
     void recomputeGeometry();
     void rebuildBackdrop (float deviceScale);
     void rebuildSphere (float deviceScale);
+    void renderWater();
+    void applyWaterParams();
+    void strikeWater (float ox, float oy, float intensity, bool droplet);
     void paintSphereBody (juce::Graphics&);
     void paintSphereSurface (juce::Graphics&) const;
 
@@ -183,6 +188,14 @@ private:
 
     // Cached static layer: deep gradient + pool + vignette.
     juce::Image backdrop;
+    WaterSurface   water;
+    juce::Image    waterImage;
+    RandomGenerator waterRng { 0x51A7E3u };
+    float          standingPhase = 0.0f;
+    float          rippleSmoothed = 0.0f;
+    float          breathTimer = 0.0f;
+    float          breathAngle = 0.0f;
+    float          lastRippleLevel = 0.0f;
     juce::Image sphereLayer;
     float       sphereScale = 0.0f;
     float       sphereR = 1.0f;     // radius of the water sphere, in pixels

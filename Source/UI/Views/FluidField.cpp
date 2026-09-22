@@ -34,8 +34,23 @@ namespace
     // The water sphere.
     constexpr float kSphereFit        = 0.86f;   // of the smaller field half-axis
     constexpr int   kCausticVeins     = 5;       // drifting pools of focused light
-    constexpr int   kSurfaceRings     = 18;      // contour rings over the sphere's face
-    constexpr int   kNodeRings        = 6;       // ripples spreading from the node
+
+    // --- water simulation ---------------------------------------------------
+    // The grid is deliberately much coarser than the sphere on screen. Bilinear
+    // upscaling of a small field is what reads as smooth liquid; simulating at
+    // native resolution costs ~16x as much and looks worse, because the ripple
+    // wavelengths end up too short to see.
+    // The simulation itself is nearly free (0.09 ms a frame at 128 cells) and
+    // the blit cost is set by the destination, not the source, so resolution
+    // here buys sharpness almost for nothing. What it costs is the shading
+    // loop, which is linear in the cell count.
+    constexpr int   kWaterGrid        = 144;
+    constexpr float kGridReference    = 96.0f;   // the gains below were tuned here
+    constexpr float kStandingThresh   = 0.06f;   // RIPPLE swing needed to re-excite
+    constexpr float kStandingTau      = 0.05f;   // seconds, RIPPLE smoothing
+    constexpr float kAmbientChop      = 0.055f;  // idle agitation floor
+    constexpr float kBreathPeriod     = 2.30f;   // seconds between slow swells
+    constexpr float kBreathStrength   = 0.075f;
 
     constexpr float kRingInnerRadius  = 0.17f;   // radius of the innermost ring
     // The ring family is drawn inside this fraction of the field radius so that
@@ -355,6 +370,11 @@ void FluidField::recomputeGeometry()
                                 / (float) RippleTheme::grid (kScaleRefSteps));
 
     sphereR = juce::jmax (1.0f, juce::jmin (fieldRx, fieldRy) * kSphereFit);
+
+    // Allocated once and reused: the grid is a fixed resolution regardless of
+    // how large the field is drawn, so a resize never touches the simulation.
+    if (! water.isReady())
+        water.prepare (kWaterGrid);
 }
 
 void FluidField::rebuildBackdrop (float deviceScale)
@@ -484,6 +504,12 @@ void FluidField::timerCallback()
         dt = 1.0f / (float) juce::jmax (1, RippleTheme::get().targetFrameRate);
 
     advance (juce::jmin (dt, kMaxFrameDelta));
+
+    // Shading the height field is the single most expensive thing this
+    // component does, so it happens once per tick here rather than inside
+    // paint(), where a host can ask for several partial repaints per frame.
+    renderWater();
+
     repaint();
 }
 
@@ -562,6 +588,63 @@ void FluidField::advance (float dt)
     // ---- Audio events ----------------------------------------------------
     consumeAudioEvents();
 
+    // ---- Water -----------------------------------------------------------
+    // The RIPPLE modulator is a triggered damped wave in the audio engine, so
+    // the surface answers it with a standing pattern rather than a travelling
+    // one: the water buzzes in place, cymatic rather than splashed. Only the
+    // rising edge excites, otherwise the pattern would be re-struck every frame
+    // and drown out everything else.
+    const float rippleNow = math::clamp (std::abs (visual.getRippleValue()), 0.0f, 1.0f);
+    rippleSmoothed += (rippleNow - rippleSmoothed) * onePole (dt, kStandingTau);
+
+    if (rippleSmoothed - lastRippleLevel > kStandingThresh)
+    {
+        standingPhase += 1.37f;              // irrational step: never repeats a pattern
+        if (standingPhase > math::twoPi) standingPhase -= math::twoPi;
+
+        const float wavelength = math::lerp (0.30f, 0.10f, nodeX);
+        const float strength   = 0.30f * rippleSmoothed;
+
+        water.exciteStanding (0.5f + 0.16f * std::sin (standingPhase),
+                              0.5f + 0.16f * std::cos (standingPhase * 1.31f),
+                              wavelength, strength);
+    }
+
+    lastRippleLevel = rippleSmoothed;
+
+    // Dragging the node drags the water with it. A height field gives this for
+    // free -- the trailing disturbance is a real wake, not a drawn trail -- and
+    // it is the single thing that most convinces the eye the surface is liquid.
+    {
+        const float speed = std::sqrt (velX * velX + velY * velY);
+
+        if (speed > 0.02f)
+            water.impact (math::clamp (nodeX * kNodeTravel + (0.5f - 0.5f * kNodeTravel), 0.03f, 0.97f),
+                          math::clamp (nodeY * kNodeTravel + (0.5f - 0.5f * kNodeTravel), 0.03f, 0.97f),
+                          0.055f,
+                          -math::clamp (speed, 0.0f, 1.0f) * 0.18f * dt * 60.0f);
+    }
+
+    // A slow, very broad swell every couple of seconds. This is what gives the
+    // idle surface its sense of volume: the small chop alone reads as a texture,
+    // whereas a long wavelength moving through it reads as a mass of liquid.
+    breathTimer += dt;
+
+    if (breathTimer >= kBreathPeriod)
+    {
+        breathTimer -= kBreathPeriod;
+        breathAngle += 2.399963f;                 // golden angle: never repeats
+        if (breathAngle > math::twoPi) breathAngle -= math::twoPi;
+
+        water.impact (0.5f + 0.26f * std::cos (breathAngle),
+                      0.5f + 0.26f * std::sin (breathAngle),
+                      0.30f,
+                      -kBreathStrength * (0.6f + 0.6f * glowSmoothed));
+    }
+
+    applyWaterParams();
+    water.step (dt, waterRng);
+
     // ---- Particles -------------------------------------------------------
     const float swirl = (1.0f + kChaosSwirl * nodeX) * (1.0f + kMotionSwirl * motionSmoothed);
 
@@ -622,6 +705,11 @@ void FluidField::consumeAudioEvents()
                                       -kRippleOriginLimit, kRippleOriginLimit);
 
         spawnRipple (ox, oy, vel, false);
+
+        // The drawn ripple is the flourish; this is the water actually moving.
+        // Pitch is carried through oy, which is why strikeWater reads it back
+        // out rather than taking a separate argument.
+        strikeWater (ox, oy, vel, false);
     }
 
     const uint32_t drops = visual.getDropletCount();
@@ -639,9 +727,12 @@ void FluidField::consumeAudioEvents()
             const float jx = (rng.nextFloat() - 0.5f) * kDropletJitter;
             const float jy = (rng.nextFloat() - 0.5f) * kDropletYSpread;
 
-            spawnRipple (math::clamp (pan * kDropletPanSpread + jx, -kRippleOriginLimit, kRippleOriginLimit),
-                         math::clamp (jy, -kRippleOriginLimit, kRippleOriginLimit),
-                         intensity, true);
+            const float dx = math::clamp (pan * kDropletPanSpread + jx,
+                                          -kRippleOriginLimit, kRippleOriginLimit);
+            const float dy = math::clamp (jy, -kRippleOriginLimit, kRippleOriginLimit);
+
+            spawnRipple (dx, dy, intensity, true);
+            strikeWater (dx, dy, intensity, true);
         }
     }
 }
@@ -1083,12 +1174,259 @@ void FluidField::rebuildSphere (float scale)
     }
 }
 
+
+//==============================================================================
+// SHADING THE WATER
+//
+// The height field carries no colour of its own. What makes it read as water
+// is lighting it: the gradient of the surface gives a normal, the normal gives
+// a specular glint on every crest, and the curvature (the Laplacian) gives the
+// caustic brightening where the surface focuses light. The sphere's own
+// curvature is folded into the same normal, so one pass produces a ball of
+// water rather than a flat pond with a ball drawn over it.
+//==============================================================================
+
+void FluidField::renderWater()
+{
+    if (! water.isReady() || sphereR <= 1.0f)
+        return;
+
+    const auto& t = RippleTheme::get();
+    const int n = water.getSize();
+
+    if (waterImage.isNull() || waterImage.getWidth() != n || waterImage.getHeight() != n)
+        waterImage = juce::Image (juce::Image::ARGB, n, n, true);
+
+    // A still surface must leave the cached sphere exactly as it is, so when
+    // nothing has disturbed the water there is nothing to draw.
+    if (water.getEnergy() <= 0.0f)
+    {
+        waterImage.clear (waterImage.getBounds());
+        return;
+    }
+
+    juce::Image::BitmapData px (waterImage, juce::Image::BitmapData::writeOnly);
+
+    // Light from the upper left, matching every other surface in the product.
+    constexpr float lx = -0.46f, ly = -0.55f, lz = 0.70f;
+
+    const float glow = 0.60f + 0.55f * glowSmoothed;
+
+    // Colour ends, unpacked once: doing this per pixel through juce::Colour
+    // costs more than the whole lighting calculation.
+    const auto crest  = t.cyanBright;
+    const auto white  = t.primaryText;
+    const auto trough = t.backgroundDeep;
+
+    const float crR = crest.getFloatRed(),  crG = crest.getFloatGreen(),  crB = crest.getFloatBlue();
+    const float whR = white.getFloatRed(),  whG = white.getFloatGreen(),  whB = white.getFloatBlue();
+    const float trR = trough.getFloatRed(), trG = trough.getFloatGreen(), trB = trough.getFloatBlue();
+
+    // How hard the ripples tilt the surface. Deep water is heavier, so its
+    // slopes are gentler and it catches less light.
+    // Slope gain. Keep it modest: a steep surface drives the shading straight
+    // into its limits, and a saturated region is a flat patch with a hard
+    // border -- which is exactly what stopped this reading as liquid.
+    //
+    // Both this and the caustic gain below are scaled by the grid size, so the
+    // surface looks the same whatever resolution it is simulated at. A finite
+    // difference over one cell is proportional to the cell width, and the
+    // laplacian to its square.
+    const float gridK = (float) n / kGridReference;
+    const float bump  = (2.2f + 3.2f * (1.0f - depthSmoothed)) * gridK;
+    const float causticGain = 8.0f * gridK * gridK;
+    const float inv   = 2.0f / (float) n;
+
+    for (int y = 0; y < n; ++y)
+    {
+        auto* row = (juce::uint32*) px.getLinePointer (y);
+        const float v = ((float) y + 0.5f) * inv - 1.0f;
+
+        for (int x = 0; x < n; ++x)
+        {
+            const float u = ((float) x + 0.5f) * inv - 1.0f;
+            const float r2 = u * u + v * v;
+
+            if (r2 >= 1.0f)
+            {
+                row[x] = 0;
+                continue;
+            }
+
+            const float sz = std::sqrt (1.0f - r2);          // sphere normal z
+
+            // Slope of the water, from the height field.
+            const float hl = water.heightAt (x - 1, y);
+            const float hr = water.heightAt (x + 1, y);
+            const float hu = water.heightAt (x, y - 1);
+            const float hd = water.heightAt (x, y + 1);
+            const float hc = water.heightAt (x, y);
+
+            const float gx = (hr - hl) * bump;
+            const float gy = (hd - hu) * bump;
+
+            // The sphere's own normal, then the same normal tilted by the waves.
+            float wx = u - gx, wy = v - gy, wz = sz;
+            const float len = std::sqrt (wx * wx + wy * wy + wz * wz) + 1.0e-6f;
+            wx /= len; wy /= len; wz /= len;
+
+            const float diffWave = math::clamp (wx * lx + wy * ly + wz * lz, 0.0f, 1.0f);
+            const float diffFlat = math::clamp (u  * lx + v  * ly + sz * lz, 0.0f, 1.0f);
+
+            // Everything below is a DIFFERENCE from the flat surface. That is
+            // what lets this layer sit on top of the cached sphere without
+            // flattening it: still water contributes nothing, and the body,
+            // limb darkening and fresnel rim underneath survive untouched.
+            const float dDiff = diffWave - diffFlat;
+
+            // x^16 by repeated squaring. std::pow here costs more than the rest
+            // of the pixel put together, and a tighter lobe is worse anyway:
+            // on a 96-cell grid a pow-42 highlight jumps from nothing to
+            // everything between neighbours, and the upscale shows it as facets.
+            const auto pow24 = [] (float b) noexcept
+            {
+                const float b2 = b * b;
+                const float b4 = b2 * b2;
+                const float b8 = b4 * b4;
+                return b8 * b8 * b8;                    // 8 + 8 + 8
+            };
+
+            const float dSpec = juce::jmax (0.0f, pow24 (diffWave) - pow24 (diffFlat));
+
+            // Curvature focuses light: a trough concentrates it, a crest
+            // spreads it. This is what draws the bright web of caustics.
+            const float lap = (hl + hr + hu + hd) * 0.25f - hc;
+            const float caustic = math::clamp (lap * causticGain, -0.6f, 1.2f);
+
+            float dev = dDiff * 0.80f + caustic * 0.20f;
+
+            // Soft saturation rather than a clamp. A hard limit plateaus over
+            // any area that exceeds it, and the border of that plateau reads as
+            // a solid-edged patch sitting on the water instead of in it.
+            dev = dev / (1.0f + std::abs (dev));
+
+            float cr, cg, cb, a;
+
+            if (dev >= 0.0f)
+            {
+                const float k = dev * 0.80f;               // dev is already <= 1
+                cr = crR + (whR - crR) * k;
+                cg = crG + (whG - crG) * k;
+                cb = crB + (whB - crB) * k;
+                a  = dev * 0.80f * glow;
+            }
+            else
+            {
+                cr = trR; cg = trG; cb = trB;
+                a  = -dev * 0.46f;
+            }
+
+            // The glint rides on top of whichever side it lands on.
+            if (dSpec > 0.0f)
+            {
+                const float sp = dSpec * 3.4f * glow;
+                const float k  = sp / (1.0f + sp);           // saturates smoothly
+                cr += (whR - cr) * k;
+                cg += (whG - cg) * k;
+                cb += (whB - cb) * k;
+                a   = a + k * 0.66f;
+            }
+
+            // Hand the limb back to the cached sphere: its fresnel rim and
+            // limb darkening are far better than anything this coarse grid can
+            // resolve, and a hard cutoff here would alias into a dotted edge.
+            a = math::clamp (a, 0.0f, 0.95f);
+
+            const float r = std::sqrt (r2);
+
+            if (r > 0.88f)
+                a *= 1.0f - math::smootherstep (math::clamp ((r - 0.88f) / 0.12f, 0.0f, 1.0f));
+
+            // juce::Image::ARGB holds PREMULTIPLIED pixels. Writing straight
+            // colour here is what produced the coloured fringe around the limb.
+            const auto q = [] (float f) noexcept
+            {
+                return (juce::uint32) math::clamp ((int) (f * 255.0f + 0.5f), 0, 255);
+            };
+
+            row[x] = (q (a) << 24) | (q (cr * a) << 16) | (q (cg * a) << 8) | q (cb * a);
+        }
+    }
+}
+
+//==============================================================================
+void FluidField::applyWaterParams()
+{
+    WaterSurface::Params p;
+
+    // CALM to CHAOS: glassy and long-ringing, through to choppy and restless.
+    const float chaos = math::clamp (nodeX, 0.0f, 1.0f);
+
+    p.damping   = math::lerp (0.9970f, 0.9880f, chaos);
+    p.tension   = math::lerp (0.62f, 0.92f, chaos);
+
+    // A floor under the agitation, so silence still looks like a body of water
+    // rather than a polished ball. At this level it is a few faint impulses a
+    // second -- enough to keep the caustics alive, not enough to read as noise.
+    p.chop      = kAmbientChop + chaos * chaos * 0.75f + motionSmoothed * 0.15f;
+
+    // SURFACE to DEPTH: heavier, slower, more viscous water.
+    p.viscosity = math::clamp (depthSmoothed, 0.0f, 1.0f);
+    p.damping  -= depthSmoothed * 0.0025f;
+
+    // CURRENT carries the whole surface sideways.
+    p.drift     = currentSmoothed * 0.55f;
+
+    water.setParams (p);
+}
+
+void FluidField::strikeWater (float ox, float oy, float intensity, bool droplet)
+{
+    if (! water.isReady())
+        return;
+
+    // Field coordinates are -1..1 across the radius; the simulation wants 0..1.
+    const float nx = math::clamp (ox * 0.5f + 0.5f, 0.02f, 0.98f);
+    const float ny = math::clamp (oy * 0.5f + 0.5f, 0.02f, 0.98f);
+
+    if (droplet)
+    {
+        // A droplet is a small, sharp, bright strike.
+        water.impact (nx, ny, 0.016f + 0.014f * intensity, -0.34f - 0.28f * intensity);
+        return;
+    }
+
+    // A note is a bigger disturbance. Low notes push a broad slow swell, high
+    // notes make a tight fast ripple -- pitch is carried by the SIZE of the
+    // impact, which is how a real body of water tells you the size of what
+    // fell in it.
+    const float pitch = math::clamp (oy * 0.5f + 0.5f, 0.0f, 1.0f);   // 0 low .. 1 high
+    const float radius = math::lerp (0.085f, 0.022f, pitch);
+    const float force  = math::lerp (0.80f, 0.38f, pitch) * (0.30f + 0.70f * intensity);
+
+    water.impact (nx, ny, radius, -force);
+}
+
 void FluidField::paintSphereBody (juce::Graphics& g)
 {
+    // Cached: the atmosphere around the sphere, which never changes.
     if (sphereLayer.isValid())
     {
         g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
         g.drawImage (sphereLayer, getLocalBounds().toFloat());
+    }
+
+    // Live: the water itself. The simulation grid is far smaller than the
+    // sphere on screen, and that is deliberate -- scaling it up with bilinear
+    // filtering is what gives the surface its smooth, liquid look. Drawing the
+    // field at native resolution would make it read as pixels.
+    if (waterImage.isValid() && sphereR > 1.0f)
+    {
+        const auto dest = juce::Rectangle<float> (sphereR * 2.0f, sphereR * 2.0f)
+                              .withCentre ({ centreX, centreY });
+
+        g.setImageResamplingQuality (juce::Graphics::highResamplingQuality);
+        g.drawImage (waterImage, dest);
     }
 }
 
@@ -1099,7 +1437,6 @@ void FluidField::paintSphereSurface (juce::Graphics& g) const
     if (sphereR <= 1.0f)
         return;
 
-    const juce::Point<float> c { fieldCx, fieldCy };
     const float R = sphereR;
 
     const juce::Graphics::ScopedSaveState state (g);
@@ -1108,56 +1445,6 @@ void FluidField::paintSphereSurface (juce::Graphics& g) const
     g.reduceClipRegion (clip, {});
 
     const float glow = 0.55f + 0.45f * glowSmoothed;
-
-    // --- the sphere's own surface -------------------------------------------
-    // Contour circles about the centre, spaced by sin(theta) for equal steps in
-    // angle, so they bunch toward the limb exactly as latitude lines do on a
-    // ball. Each radius is perturbed by a couple of slow sines, which turns a
-    // wireframe globe into a rippling body of water. Brightest face-on, fading
-    // as the surface turns away.
-    //
-    // This replaced two earlier attempts: evenly spaced horizontal lines (read
-    // as a wireframe) and long meridian curves (read as scratches on glass).
-    {
-        juce::Path ring;
-
-        for (int i = 1; i <= kSurfaceRings; ++i)
-        {
-            const float theta = (float) i / (float) (kSurfaceRings + 1) * math::halfPi;
-            const float cosT  = std::cos (theta);
-
-            // Per-ring amplitude as well as per-ring phase: with a single shared
-            // amplitude the set still read as evenly spaced contours, like a
-            // dartboard, rather than as water.
-            const float amp = 0.030f + 0.026f * std::sin ((float) i * 0.87f + 1.3f);
-
-            const float wobble = R * amp * (std::sin (driftPhaseA * 1.6f + (float) i * 0.62f)
-                                          + 0.62f * std::sin (driftPhaseB * 2.3f - (float) i * 1.13f)
-                                          + 0.34f * std::sin (driftPhaseA * 3.1f + (float) i * 2.41f));
-
-            const float rr = R * std::sin (theta) + wobble;
-
-            if (rr < 2.0f || rr > R * 0.995f)
-                continue;
-
-            // Face-on contours are seen flat; the ones near the limb are edge-on.
-            const float a = std::pow (cosT, 0.55f) * 0.22f * glow;
-
-            ring.clear();
-            ring.addEllipse (centreX - rr, centreY - rr, rr * 2.0f, rr * 2.0f);
-
-            // The glow pass doubles the stroke count, so spend it only where it
-            // is visible: near the limb the contours are too faint to bloom.
-            if (a > 0.07f)
-            {
-                g.setColour (t.traceGlow.withMultipliedAlpha (a * 0.45f));
-                g.strokePath (ring, juce::PathStrokeType (2.4f));
-            }
-
-            g.setColour (t.traceCore.withMultipliedAlpha (a));
-            g.strokePath (ring, juce::PathStrokeType (0.85f));
-        }
-    }
 
     // --- caustic pools -------------------------------------------------------
     // Where the rippling surface focuses light, a soft bright patch forms and
@@ -1183,34 +1470,6 @@ void FluidField::paintSphereSurface (juce::Graphics& g) const
         }
     }
 
-    // --- ripples from the node ----------------------------------------------
-    // The node disturbs the surface it sits on, so its rings ride the sphere's
-    // curvature: flatter the further they travel from the centre of the face.
-    {
-        const auto node = nodeToPixels (nodeX, nodeY);
-        juce::Path ring;
-
-        for (int i = 0; i < kNodeRings; ++i)
-        {
-            const float f = (float) i / (float) kNodeRings;
-            const float phase = std::fmod (driftPhaseB * 0.30f + f, 1.0f);
-
-            const float rr = R * (0.05f + phase * 0.55f);
-            const float squash = juce::jlimit (0.30f, 0.95f, 1.0f - phase * 0.52f);
-            const float a = std::sin (phase * math::pi) * 0.26f * glow;
-
-            if (a <= 0.005f || rr < 2.0f)
-                continue;
-
-            ring.clear();
-            ring.addEllipse (node.x - rr, node.y - rr * squash, rr * 2.0f, rr * 2.0f * squash);
-
-            g.setColour (t.traceGlow.withMultipliedAlpha (a * 0.5f));
-            g.strokePath (ring, juce::PathStrokeType (2.2f));
-            g.setColour (t.traceCore.withMultipliedAlpha (a));
-            g.strokePath (ring, juce::PathStrokeType (0.9f));
-        }
-    }
 }
 
 void FluidField::paintDepthWell (juce::Graphics& g) const
@@ -1351,6 +1610,23 @@ void FluidField::paintRipples (juce::Graphics& g) const
 {
     const auto& t = RippleTheme::get();
     const float glowLift = 0.5f + 0.8f * glowSmoothed;
+
+    // These drawn rings are the disturbance spreading out into the surrounding
+    // pool. Over the sphere itself they are redundant and worse: the simulated
+    // surface already carries the real ripple there, and a perfect ellipse laid
+    // over it reads as a wireframe sitting on the glass. So cut the sphere out
+    // and let the water speak for itself inside it.
+    const juce::Graphics::ScopedSaveState outside (g);
+
+    if (sphereR > 1.0f)
+    {
+        juce::Path pool;
+        pool.addRectangle (getLocalBounds().toFloat());
+        pool.addEllipse (juce::Rectangle<float> (sphereR * 2.0f, sphereR * 2.0f)
+                             .withCentre ({ centreX, centreY }));
+        pool.setUsingNonZeroWinding (false);      // even-odd: the sphere is a hole
+        g.reduceClipRegion (pool, {});
+    }
 
     for (const auto& r : ripples)
     {

@@ -13,3 +13,6 @@ compile_commands.json
 .DS_Store
 .vscode/
 .idea/
+
+# Frames from the smoke test's --animate pass: regenerated on every run.
+ripples_anim_*.png
